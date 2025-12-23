@@ -100,6 +100,59 @@ switch ($path) {
         require __DIR__ . '/../src/views/login.php';
         break;
 
+    case '/register':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../src/Database.php';
+            require_once __DIR__ . '/../src/models/Team.php';
+            require_once __DIR__ . '/../src/models/User.php';
+
+            $inviteCode = $_POST['invite_code'] ?? '';
+            $name = $_POST['name'] ?? '';
+            $username = $_POST['username'] ?? '';
+            $password = $_POST['password'] ?? '';
+
+            try {
+                $db = (new Database())->getConnection();
+                $teamModel = new Team($db);
+                $userModel = new User($db);
+
+                // 1. Check invite code
+                $team = $teamModel->getByInviteCode($inviteCode);
+                if (!$team) {
+                    $error = "Ongeldige invite code.";
+                } 
+                // 2. Check of username al bestaat
+                elseif ($userModel->getByUsername($username)) {
+                    $error = "Gebruikersnaam is al in gebruik.";
+                } 
+                else {
+                    // 3. Maak user aan
+                    $userId = $userModel->create($username, $password, $name);
+                    
+                    // 4. Voeg toe aan team
+                    $teamModel->addMember($team['id'], $userId, 'coach');
+
+                    // 5. Login en redirect
+                    $_SESSION['user_id'] = $userId;
+                    $_SESSION['user_name'] = $name;
+                    $_SESSION['current_team'] = [
+                        'id' => $team['id'],
+                        'name' => $team['name'],
+                        'role' => 'coach',
+                        'invite_code' => $team['invite_code']
+                    ];
+                    
+                    header('Location: /');
+                    exit;
+                }
+
+            } catch (Exception $e) {
+                $error = "Er is een fout opgetreden: " . $e->getMessage();
+            }
+        }
+        require __DIR__ . '/../src/views/register.php';
+        break;
+
     case '/logout':
         session_destroy();
         header('Location: /');

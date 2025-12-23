@@ -42,4 +42,11 @@ class Team {
         $stmt->execute([':team_id' => $teamId, ':user_id' => $userId]);
         return (bool)$stmt->fetch();
     }
+
+    public function getByInviteCode(string $code): ?array {
+        $stmt = $this->pdo->prepare("SELECT * FROM teams WHERE invite_code = :code");
+        $stmt->execute([':code' => $code]);
+        $team = $stmt->fetch();
+        return $team ?: null;
+    }
 }

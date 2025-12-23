@@ -8,5 +8,6 @@
 <body>
     <h1>Welkom bij de Voetbal Trainingsapp</h1>
     <p><a href="/login">Inloggen</a></p>
+    <p><a href="/register">Registreren met invite code</a></p>
 </body>
 </html>
