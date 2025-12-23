@@ -162,29 +162,15 @@
 	- Carefully handle and validate JSON responses, incorrect HTTP status codes, etc.
             
 ## Folder Structure
-	Follow this structured directory layout:
+	Start with a minimal structure and expand as needed. The following structure is a good starting point:
 
 		project-root/
-		├── api/                  # API handlers and routes
-		├── config/               # Configuration files and environment variables
 		├── data/                 # Databases, JSON files, and other storage
 		├── public/               # Publicly accessible files (served by web server)
-		│   ├── assets/
-		│   │   ├── css/
-		│   │   ├── js/
-		│   │   ├── images/
-		│   │   ├── fonts/
-		│   └── index.html
 		├── src/                  # Application source code
-		│   ├── controllers/
-		│   ├── models/
-		│   ├── views/
-		│   └── utilities/
-		├── tests/                # Unit and integration tests
-		├── docs/                 # Documentation (Markdown files)
-		├── logs/                 # Server and application logs
-		├── scripts/              # Scripts for deployment, setup, etc.
-		└── temp/                 # Temporary/cache files
+		│   └── views/            # HTML templates
+		
+	As the project grows, we can add more directories like `src/controllers`, `src/models`, `tests`, etc.
 
 
 ## Documentation Requirements
