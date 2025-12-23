@@ -1,10 +1,10 @@
 <?php
-$pageTitle = 'Home - Voetbaltraining';
+$pageTitle = 'Home - Trainer Bobby';
 require __DIR__ . '/layout/header.php';
 ?>
 
 <div class="text-center" style="padding: 4rem 0;">
-    <h1>Welkom bij de Voetbal Trainingsapp</h1>
+    <h1>Welkom bij Trainer Bobby</h1>
     <p class="mb-2">De tool voor trainers om oefenstof te beheren en trainingen voor te bereiden.</p>
     
     <div class="mt-2">

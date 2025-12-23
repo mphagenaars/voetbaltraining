@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?? 'Voetbaltraining' ?></title>
+    <title><?= $pageTitle ?? 'Trainer Bobby' ?></title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <header class="main-header">
     <div class="container">
-        <a href="/" class="brand">⚽ Voetbaltraining</a>
+        <a href="/" class="brand">⚽ Trainer Bobby</a>
         <nav>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <span style="margin-right: 1rem;"><?= htmlspecialchars($_SESSION['user_name']) ?></span>

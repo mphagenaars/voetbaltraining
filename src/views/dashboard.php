@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Dashboard - Voetbaltraining';
+$pageTitle = 'Dashboard - Trainer Bobby';
 require __DIR__ . '/layout/header.php';
 ?>
 
@@ -10,6 +10,13 @@ require __DIR__ . '/layout/header.php';
         <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
         <p>Rol: <?= htmlspecialchars($_SESSION['current_team']['role']) ?></p>
         <p>Invite code: <code><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></p>
+        
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="/exercises" class="btn btn-sm">Oefenstof</a>
+            <a href="/trainings" class="btn btn-sm">Trainingen</a>
+            <a href="/players" class="btn btn-sm">Spelers</a>
+            <a href="/lineups" class="btn btn-sm">Opstellingen</a>
+        </div>
     </div>
 <?php else: ?>
     <div class="alert" style="background-color: #fff3e0; color: #e65100; border-color: #ffe0b2;">

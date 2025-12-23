@@ -1,7 +1,7 @@
 </main>
 <footer class="main-footer">
     <div class="container">
-        &copy; <?= date('Y') ?> Voetbaltraining App
+        &copy; <?= date('Y') ?> Trainer Bobby
     </div>
 </footer>
 </body>

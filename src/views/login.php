@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Inloggen - Voetbaltraining';
+$pageTitle = 'Inloggen - Trainer Bobby';
 require __DIR__ . '/layout/header.php';
 ?>
 
