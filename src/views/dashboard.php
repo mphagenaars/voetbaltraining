@@ -1,55 +1,61 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Voetbaltraining</title>
-</head>
-<body>
-    <h1>Welkom <?= htmlspecialchars($_SESSION['user_name']) ?></h1>
-    <p><a href="/logout">Uitloggen</a></p>
+<?php
+$pageTitle = 'Dashboard - Voetbaltraining';
+require __DIR__ . '/layout/header.php';
+?>
 
-    <?php if (isset($_SESSION['current_team'])): ?>
-        <div style="background-color: #e0f7fa; padding: 10px; border-radius: 5px;">
-            <h2>Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
-            <p>Rol: <?= htmlspecialchars($_SESSION['current_team']['role']) ?></p>
-            <p>Invite code: <code><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></p>
-        </div>
-    <?php else: ?>
-        <div style="background-color: #fff3e0; padding: 10px; border-radius: 5px;">
-            <p>Selecteer een team om te beginnen.</p>
-        </div>
-    <?php endif; ?>
+<h1>Dashboard</h1>
 
+<?php if (isset($_SESSION['current_team'])): ?>
+    <div class="alert alert-info">
+        <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
+        <p>Rol: <?= htmlspecialchars($_SESSION['current_team']['role']) ?></p>
+        <p>Invite code: <code><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></p>
+    </div>
+<?php else: ?>
+    <div class="alert" style="background-color: #fff3e0; color: #e65100; border-color: #ffe0b2;">
+        <p>Selecteer een team om te beginnen.</p>
+    </div>
+<?php endif; ?>
+
+<div class="card">
     <h2>Mijn Teams</h2>
     <?php if (empty($teams)): ?>
         <p>Je bent nog geen lid van een team.</p>
     <?php else: ?>
-        <ul>
+        <ul style="list-style: none; padding: 0;">
             <?php foreach ($teams as $team): ?>
-                <li>
-                    <strong><?= htmlspecialchars($team['name']) ?></strong> (<?= htmlspecialchars($team['role']) ?>)
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span>
+                        <strong><?= htmlspecialchars($team['name']) ?></strong> 
+                        <span class="text-muted">(<?= htmlspecialchars($team['role']) ?>)</span>
+                    </span>
+                    
                     <?php if (!isset($_SESSION['current_team']) || $_SESSION['current_team']['id'] !== $team['id']): ?>
-                        <form method="POST" action="/team/select" style="display:inline;">
+                        <form method="POST" action="/team/select" style="margin: 0;">
                             <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
                             <input type="hidden" name="team_name" value="<?= htmlspecialchars($team['name']) ?>">
                             <input type="hidden" name="team_role" value="<?= htmlspecialchars($team['role']) ?>">
                             <input type="hidden" name="team_invite_code" value="<?= htmlspecialchars($team['invite_code']) ?>">
-                            <button type="submit">Selecteer</button>
+                            <button type="submit" class="btn btn-sm btn-outline">Selecteer</button>
                         </form>
                     <?php else: ?>
-                        <span>(Geselecteerd)</span>
+                        <span class="btn btn-sm" style="cursor: default; opacity: 0.7;">Geselecteerd</span>
                     <?php endif; ?>
                 </li>
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>
+</div>
 
+<div class="card">
     <h3>Nieuw team aanmaken</h3>
-    <form method="POST" action="/team/create">
-        <label for="name">Team naam:</label>
-        <input type="text" id="name" name="name" required>
-        <button type="submit">Aanmaken</button>
+    <form method="POST" action="/team/create" style="display: flex; gap: 1rem; align-items: flex-end;">
+        <div style="flex-grow: 1; margin-bottom: 0;">
+            <label for="name">Team naam</label>
+            <input type="text" id="name" name="name" required placeholder="Bijv. JO11-1">
+        </div>
+        <button type="submit" class="btn">Aanmaken</button>
     </form>
-</body>
-</html>
+</div>
+
+<?php require __DIR__ . '/layout/footer.php'; ?>

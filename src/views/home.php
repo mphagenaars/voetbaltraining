@@ -1,13 +1,16 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Voetbaltraining</title>
-</head>
-<body>
+<?php
+$pageTitle = 'Home - Voetbaltraining';
+require __DIR__ . '/layout/header.php';
+?>
+
+<div class="text-center" style="padding: 4rem 0;">
     <h1>Welkom bij de Voetbal Trainingsapp</h1>
-    <p><a href="/login">Inloggen</a></p>
-    <p><a href="/register">Registreren met invite code</a></p>
-</body>
-</html>
+    <p class="mb-2">De tool voor trainers om oefenstof te beheren en trainingen voor te bereiden.</p>
+    
+    <div class="mt-2">
+        <a href="/login" class="btn">Inloggen</a>
+        <a href="/register" class="btn btn-outline" style="margin-left: 0.5rem;">Registreren met code</a>
+    </div>
+</div>
+
+<?php require __DIR__ . '/layout/footer.php'; ?>

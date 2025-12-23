@@ -1,31 +1,30 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Voetbaltraining</title>
-</head>
-<body>
-    <h1>Inloggen</h1>
+<?php
+$pageTitle = 'Inloggen - Voetbaltraining';
+require __DIR__ . '/layout/header.php';
+?>
+
+<div class="card" style="max-width: 400px; margin: 0 auto;">
+    <h1 class="mb-2">Inloggen</h1>
     
     <?php if (isset($error)): ?>
-        <p style="color: red;"><?= htmlspecialchars($error) ?></p>
+        <div class="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="POST" action="/login">
         <div>
-            <label for="username">Gebruikersnaam:</label><br>
+            <label for="username">Gebruikersnaam</label>
             <input type="text" id="username" name="username" required autofocus>
         </div>
-        <br>
         <div>
-            <label for="password">Wachtwoord:</label><br>
+            <label for="password">Wachtwoord</label>
             <input type="password" id="password" name="password" required>
         </div>
-        <br>
-        <button type="submit">Inloggen</button>
+        <button type="submit" class="btn" style="width: 100%;">Inloggen</button>
     </form>
 
-    <p><a href="/">Terug naar home</a></p>
-</body>
-</html>
+    <div class="text-center mt-2">
+        <a href="/" style="font-size: 0.875rem;">Terug naar home</a>
+    </div>
+</div>
+
+<?php require __DIR__ . '/layout/footer.php'; ?>
