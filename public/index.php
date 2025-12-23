@@ -14,15 +14,64 @@ session_start();
 // Simpele router
 switch ($path) {
     case '/':
-        // Als ingelogd, toon dashboard (nog te maken), anders home
+        // Als ingelogd, toon dashboard
         if (isset($_SESSION['user_id'])) {
-            echo "Welkom " . htmlspecialchars($_SESSION['user_name']) . "! <a href='/logout'>Uitloggen</a>";
-            // require __DIR__ . '/../src/views/dashboard.php'; // Later toevoegen
+            require_once __DIR__ . '/../src/Database.php';
+            require_once __DIR__ . '/../src/models/Team.php';
+            
+            $db = (new Database())->getConnection();
+            $teamModel = new Team($db);
+            
+            $teams = $teamModel->getTeamsForUser($_SESSION['user_id']);
+            
+            require __DIR__ . '/../src/views/dashboard.php';
         } else {
             require __DIR__ . '/../src/views/home.php';
         }
         break;
         
+    case '/team/create':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/../src/Database.php';
+            require_once __DIR__ . '/../src/models/Team.php';
+            
+            $name = $_POST['name'] ?? '';
+            if (!empty($name)) {
+                $db = (new Database())->getConnection();
+                $teamModel = new Team($db);
+                $teamModel->create($name, $_SESSION['user_id']);
+            }
+            header('Location: /');
+            exit;
+        }
+        header('Location: /');
+        exit;
+        break;
+
+    case '/team/select':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+            $teamId = (int)($_POST['team_id'] ?? 0);
+            
+            require_once __DIR__ . '/../src/Database.php';
+            require_once __DIR__ . '/../src/models/Team.php';
+            
+            $db = (new Database())->getConnection();
+            $teamModel = new Team($db);
+            
+            // Verifieer dat de user lid is van dit team
+            if ($teamModel->isMember($teamId, $_SESSION['user_id'])) {
+                $_SESSION['current_team'] = [
+                    'id' => $teamId,
+                    'name' => $_POST['team_name'],
+                    'role' => $_POST['team_role'],
+                    'invite_code' => $_POST['team_invite_code']
+                ];
+            }
+        }
+        header('Location: /');
+        exit;
+        break;
+
     case '/login':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_once __DIR__ . '/../src/Database.php';
