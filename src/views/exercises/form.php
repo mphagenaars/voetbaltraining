@@ -21,18 +21,21 @@ require __DIR__ . '/../layout/header.php';
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
                 <label for="players">Aantal spelers</label>
-                <input type="number" id="players" name="players" value="<?= htmlspecialchars((string)($exercise['players'] ?? '')) ?>">
+                <div class="number-stepper">
+                    <button type="button" class="stepper-btn" onclick="updateNumber('players', -1)">-</button>
+                    <input type="number" id="players" name="players" value="<?= htmlspecialchars((string)($exercise['players'] ?? '')) ?>">
+                    <button type="button" class="stepper-btn" onclick="updateNumber('players', 1)">+</button>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="duration">Duur (minuten)</label>
-                <input type="number" id="duration" name="duration" value="<?= htmlspecialchars((string)($exercise['duration'] ?? '')) ?>">
+                <div class="number-stepper">
+                    <button type="button" class="stepper-btn" onclick="updateNumber('duration', -5)">-</button>
+                    <input type="number" id="duration" name="duration" value="<?= htmlspecialchars((string)($exercise['duration'] ?? '')) ?>">
+                    <button type="button" class="stepper-btn" onclick="updateNumber('duration', 5)">+</button>
+                </div>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label for="requirements">Benodigdheden</label>
-            <input type="text" id="requirements" name="requirements" value="<?= htmlspecialchars($exercise['requirements'] ?? '') ?>" placeholder="Bijv. 10 pionnen, 5 hesjes">
         </div>
 
         <div class="form-group">
@@ -47,15 +50,41 @@ require __DIR__ . '/../layout/header.php';
             <input type="text" id="tags" name="tags" value="<?= htmlspecialchars($tagString) ?>" placeholder="Bijv. Aanvallen, Omschakelen, Techniek">
         </div>
 
+        <!-- Tekentool -->
         <div class="form-group">
-            <label for="image">Afbeelding (optioneel)</label>
-            <?php if (!empty($exercise['image_path'])): ?>
-                <div style="margin-bottom: 0.5rem;">
-                    <img src="/uploads/<?= htmlspecialchars($exercise['image_path']) ?>" alt="Huidige afbeelding" style="max-width: 200px; border: 1px solid #ddd; border-radius: 4px;">
+            <label>Oefening tekenen</label>
+            <div class="editor-wrapper">
+                <div class="editor-toolbar" id="toolbar">
+                    <div class="draggable-item" draggable="true" data-type="pawn"><img src="/images/assets/pawn.svg" alt="Pion"></div>
+                    <div class="draggable-item" draggable="true" data-type="cone_white"><img src="/images/assets/cone_white.svg" alt="Hoedje Wit"></div>
+                    <div class="draggable-item" draggable="true" data-type="cone_yellow"><img src="/images/assets/cone_yellow.svg" alt="Hoedje Geel"></div>
+                    <div class="draggable-item" draggable="true" data-type="cone_orange"><img src="/images/assets/cone_orange.svg" alt="Hoedje Oranje"></div>
+                    <div class="draggable-item" draggable="true" data-type="ball"><img src="/images/assets/ball.svg" alt="Bal"></div>
+                    <div class="draggable-item" draggable="true" data-type="goal"><img src="/images/assets/goal.svg" alt="Doel"></div>
+                    <div class="draggable-item" draggable="true" data-type="shirt_blue"><img src="/images/assets/shirt_blue.svg" alt="Speler Blauw"></div>
+                    <div class="draggable-item" draggable="true" data-type="shirt_orange"><img src="/images/assets/shirt_orange.svg" alt="Speler Oranje"></div>
+                    <!-- Tools -->
+                    <div style="border-left: 1px solid #ccc; margin: 0 10px;"></div>
+                    
+                    <button type="button" id="tool-arrow" class="tool-btn" title="Pass">
+                        <img src="/images/assets/icon_arrow.svg" alt="Pass">
+                    </button>
+                    <button type="button" id="tool-dashed" class="tool-btn" title="Lopen zonder bal">
+                        <img src="/images/assets/icon_arrow_dashed.svg" alt="Lopen zonder bal">
+                    </button>
+                    <button type="button" id="tool-zigzag" class="tool-btn" title="Dribbel">
+                        <img src="/images/assets/icon_arrow_zigzag.svg" alt="Dribbel">
+                    </button>
+
+                    <div style="border-left: 1px solid #ccc; margin: 0 10px; margin-left: auto;"></div>
+
+                    <button type="button" id="tool-select" class="btn btn-sm">Selecteren</button>
+                    <button type="button" id="btn-clear" class="btn btn-sm btn-danger">Wissen</button>
                 </div>
-            <?php endif; ?>
-            <input type="file" id="image" name="image" accept="image/*">
-            <small style="color: #666;">Toegestane formaten: JPG, PNG, WEBP</small>
+                <div id="container" class="editor-canvas-container"></div>
+            </div>
+            <input type="hidden" name="drawing_data" id="drawing_data" value="<?= htmlspecialchars($exercise['drawing_data'] ?? '') ?>">
+            <input type="hidden" name="drawing_image" id="drawing_image">
         </div>
 
         <div style="margin-top: 1rem;">
@@ -66,3 +95,16 @@ require __DIR__ . '/../layout/header.php';
 </div>
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>
+
+<script>
+function updateNumber(id, change) {
+    const input = document.getElementById(id);
+    let val = parseInt(input.value) || 0;
+    val += change;
+    if (val < 0) val = 0;
+    input.value = val;
+}
+</script>
+
+<script src="/js/konva.min.js"></script>
+<script src="/js/editor.js"></script>

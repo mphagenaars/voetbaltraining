@@ -1,0 +1,10 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base Rim (White) -->
+  <ellipse cx="50" cy="75" rx="40" ry="12" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/>
+  <!-- Cone Body (Orange) -->
+  <path d="M14,72 Q50,88 86,72 L70,45 Q50,55 30,45 Z" fill="#e67e22" stroke="#d35400" stroke-width="2"/>
+  <!-- Top Surface (Orange) -->
+  <ellipse cx="50" cy="45" rx="20" ry="8" fill="#e67e22" stroke="#d35400" stroke-width="2"/>
+  <!-- Hole -->
+  <ellipse cx="50" cy="45" rx="10" ry="4" fill="#7f8c8d"/>
+</svg>

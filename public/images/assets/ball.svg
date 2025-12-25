@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ballGradient" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d0d0d0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="250" fill="url(#ballGradient)" stroke="#000000" stroke-width="10"/>
+  <path d="M256,146 L360,222 L321,343 L191,343 L152,222 Z" fill="#1a1a1a"/>
+  <path d="M256,146 L256,26" stroke="#1a1a1a" stroke-width="10" fill="none"/>
+  <path d="M360,222 L474,185" stroke="#1a1a1a" stroke-width="10" fill="none"/>
+  <path d="M321,343 L409,441" stroke="#1a1a1a" stroke-width="10" fill="none"/>
+  <path d="M191,343 L103,441" stroke="#1a1a1a" stroke-width="10" fill="none"/>
+  <path d="M152,222 L38,185" stroke="#1a1a1a" stroke-width="10" fill="none"/>
+  <path d="M186,26 L326,26 L256,146 Z" fill="#1a1a1a"/>
+  <path d="M474,185 L495,310 L360,222 Z" fill="#1a1a1a"/>
+  <path d="M409,441 L256,495 L321,343 Z" fill="#1a1a1a"/>
+  <path d="M103,441 L256,495 L191,343 Z" fill="#1a1a1a"/>
+  <path d="M38,185 L17,310 L152,222 Z" fill="#1a1a1a"/>
+</svg>

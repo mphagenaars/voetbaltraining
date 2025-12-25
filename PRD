@@ -60,7 +60,6 @@ Het bouwen van een zelf-gehoste webapp die voetbaltrainers helpt bij het **voorb
 
 * Live timers / wedstrijdcoaching
 * Geavanceerde rotatie- of wisselregels
-* Animaties / geavanceerde teken-editor voor oefeningen (MVP)
 * Clubstructuren met meerdere teams per gebruiker
 
 ---
@@ -278,3 +277,13 @@ De MVP kan gefaseerd worden gebouwd in **7 iteraties**. Elke iteratie levert een
 * PDF Export implementeren
 * UX Polish & Bugfixes
 * Testen met gebruikers
+
+---
+
+### Iteratie 8 — Interactieve Oefenvorm Editor (Konva.js)
+* [x] **Database**: Kolom `drawing_data` toevoegen aan `exercises` tabel
+* [x] **Assets**: Konva.js library en SVG-assets (pion, bal, doeltje, shirt) toevoegen
+* [x] **Editor UI**: Canvas container en toolbar toevoegen aan `exercises/form.php`
+* [x] **Editor Logic**: Drag & drop, tekenen en touch support implementeren in `editor.js`
+* [x] **Backend**: Opslaan van JSON-data en genereren van snapshot-afbeelding
+* [ ] **Weergave**: Interactieve weergave in detail-view en snapshot in overzicht

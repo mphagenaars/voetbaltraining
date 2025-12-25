@@ -8,10 +8,10 @@ class Exercise {
         $this->pdo = $pdo;
     }
 
-    public function create(int $teamId, string $title, string $description, ?int $players, ?int $duration, ?string $requirements, ?string $imagePath = null): int {
+    public function create(int $teamId, string $title, string $description, ?int $players, ?int $duration, ?string $imagePath = null, ?string $drawingData = null): int {
         $stmt = $this->pdo->prepare("
-            INSERT INTO exercises (team_id, title, description, players, duration, requirements, image_path) 
-            VALUES (:team_id, :title, :description, :players, :duration, :requirements, :image_path)
+            INSERT INTO exercises (team_id, title, description, players, duration, image_path, drawing_data) 
+            VALUES (:team_id, :title, :description, :players, :duration, :image_path, :drawing_data)
         ");
         $stmt->execute([
             ':team_id' => $teamId,
@@ -19,8 +19,8 @@ class Exercise {
             ':description' => $description,
             ':players' => $players,
             ':duration' => $duration,
-            ':requirements' => $requirements,
-            ':image_path' => $imagePath
+            ':image_path' => $imagePath,
+            ':drawing_data' => $drawingData
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -65,20 +65,24 @@ class Exercise {
         return $result ?: null;
     }
 
-    public function update(int $id, string $title, string $description, ?int $players, ?int $duration, ?string $requirements, ?string $imagePath = null): void {
-        $sql = "UPDATE exercises SET title = :title, description = :description, players = :players, duration = :duration, requirements = :requirements";
+    public function update(int $id, string $title, string $description, ?int $players, ?int $duration, ?string $imagePath = null, ?string $drawingData = null): void {
+        $sql = "UPDATE exercises SET title = :title, description = :description, players = :players, duration = :duration";
         $params = [
             ':id' => $id,
             ':title' => $title,
             ':description' => $description,
             ':players' => $players,
-            ':duration' => $duration,
-            ':requirements' => $requirements
+            ':duration' => $duration
         ];
 
         if ($imagePath !== null) {
             $sql .= ", image_path = :image_path";
             $params[':image_path'] = $imagePath;
+        }
+
+        if ($drawingData !== null) {
+            $sql .= ", drawing_data = :drawing_data";
+            $params[':drawing_data'] = $drawingData;
         }
 
         $sql .= " WHERE id = :id";

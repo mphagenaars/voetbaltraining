@@ -49,6 +49,7 @@ try {
         duration INTEGER,
         requirements TEXT,
         image_path TEXT,
+        drawing_data TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
@@ -59,6 +60,10 @@ try {
     if (!in_array('image_path', $columns)) {
         $db->exec("ALTER TABLE exercises ADD COLUMN image_path TEXT");
         echo "- Kolom 'image_path' toegevoegd aan 'exercises'.\n";
+    }
+    if (!in_array('drawing_data', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN drawing_data TEXT");
+        echo "- Kolom 'drawing_data' toegevoegd aan 'exercises'.\n";
     }
 
     // Tags tabel

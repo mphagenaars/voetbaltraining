@@ -115,18 +115,26 @@ switch ($path) {
             $description = $_POST['description'] ?? '';
             $players = !empty($_POST['players']) ? (int)$_POST['players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
-            $requirements = $_POST['requirements'] ?? '';
             $tagsInput = $_POST['tags'] ?? '';
             
             $imagePath = null;
-            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-                if (in_array($_FILES['image']['type'], $allowedTypes)) {
-                    $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-                    $filename = uniqid('exercise_') . '.' . $ext;
-                    $uploadDir = __DIR__ . '/uploads/';
-                    if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename)) {
-                        $imagePath = $filename;
+
+            $drawingData = $_POST['drawing_data'] ?? null;
+            $drawingImage = $_POST['drawing_image'] ?? null;
+
+            if ($imagePath === null && !empty($drawingImage)) {
+                if (preg_match('/^data:image\/(\w+);base64,/', $drawingImage, $type)) {
+                    $data = substr($drawingImage, strpos($drawingImage, ',') + 1);
+                    $type = strtolower($type[1]); 
+                    if (in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        $data = base64_decode($data);
+                        if ($data !== false) {
+                            $filename = uniqid('drawing_') . '.' . $type;
+                            $uploadDir = __DIR__ . '/uploads/';
+                            if (file_put_contents($uploadDir . $filename, $data)) {
+                                $imagePath = $filename;
+                            }
+                        }
                     }
                 }
             }
@@ -136,7 +144,7 @@ switch ($path) {
                 $exerciseModel = new Exercise($db);
                 $tagModel = new Tag($db);
                 
-                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $players, $duration, $requirements, $imagePath);
+                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $players, $duration, $imagePath, $drawingData);
                 
                 // Process tags
                 if (!empty($tagsInput)) {
@@ -189,24 +197,32 @@ switch ($path) {
             $description = $_POST['description'] ?? '';
             $players = !empty($_POST['players']) ? (int)$_POST['players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
-            $requirements = $_POST['requirements'] ?? '';
             $tagsInput = $_POST['tags'] ?? '';
             
             $imagePath = null;
-            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-                if (in_array($_FILES['image']['type'], $allowedTypes)) {
-                    $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-                    $filename = uniqid('exercise_') . '.' . $ext;
-                    $uploadDir = __DIR__ . '/uploads/';
-                    if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename)) {
-                        $imagePath = $filename;
+
+            $drawingData = $_POST['drawing_data'] ?? null;
+            $drawingImage = $_POST['drawing_image'] ?? null;
+
+            if ($imagePath === null && !empty($drawingImage)) {
+                if (preg_match('/^data:image\/(\w+);base64,/', $drawingImage, $type)) {
+                    $data = substr($drawingImage, strpos($drawingImage, ',') + 1);
+                    $type = strtolower($type[1]); 
+                    if (in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        $data = base64_decode($data);
+                        if ($data !== false) {
+                            $filename = uniqid('drawing_') . '.' . $type;
+                            $uploadDir = __DIR__ . '/uploads/';
+                            if (file_put_contents($uploadDir . $filename, $data)) {
+                                $imagePath = $filename;
+                            }
+                        }
                     }
                 }
             }
             
             if (!empty($title)) {
-                $exerciseModel->update($id, $title, $description, $players, $duration, $requirements, $imagePath);
+                $exerciseModel->update($id, $title, $description, $players, $duration, $imagePath, $drawingData);
                 
                 // Update tags: remove all and re-add
                 $tagModel->removeAllTagsFromExercise($id);
