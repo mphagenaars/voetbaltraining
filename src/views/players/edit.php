@@ -1,5 +1,3 @@
-<?php require __DIR__ . '/../layout/header.php'; ?>
-
 <div class="container">
     <h1>Speler bewerken</h1>
     
@@ -20,4 +18,4 @@
     </div>
 </div>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

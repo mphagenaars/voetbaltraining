@@ -1,7 +1,4 @@
 <?php
-$pageTitle = htmlspecialchars($training['title']) . ' - Trainer Bobby';
-require __DIR__ . '/../layout/header.php';
-
 $totalDuration = 0;
 foreach ($training['exercises'] as $ex) {
     $totalDuration += $ex['training_duration'] ?: $ex['duration'] ?: 0;
@@ -61,4 +58,4 @@ foreach ($training['exercises'] as $ex) {
 }
 </style>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

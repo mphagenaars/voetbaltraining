@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Dashboard - Trainer Bobby';
-require __DIR__ . '/layout/header.php';
-?>
-
 <h1>Dashboard</h1>
 
 <?php if (isset($_SESSION['current_team'])): ?>
@@ -64,5 +59,3 @@ require __DIR__ . '/layout/header.php';
         <button type="submit" class="btn">Aanmaken</button>
     </form>
 </div>
-
-<?php require __DIR__ . '/layout/footer.php'; ?>

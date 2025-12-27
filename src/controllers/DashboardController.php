@@ -8,9 +8,9 @@ class DashboardController {
         if (isset($_SESSION['user_id'])) {
             $teamModel = new Team($this->pdo);
             $teams = $teamModel->getTeamsForUser($_SESSION['user_id']);
-            require __DIR__ . '/../views/dashboard.php';
+            View::render('dashboard', ['teams' => $teams, 'pageTitle' => 'Dashboard - Trainer Bobby']);
         } else {
-            require __DIR__ . '/../views/home.php';
+            View::render('home', ['pageTitle' => 'Home - Trainer Bobby']);
         }
     }
 }

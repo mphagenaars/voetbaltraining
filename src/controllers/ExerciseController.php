@@ -12,7 +12,7 @@ class ExerciseController {
         $exerciseModel = new Exercise($this->pdo);
         $query = $_GET['q'] ?? null;
         $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query);
-        require __DIR__ . '/../views/exercises/index.php';
+        View::render('exercises/index', ['exercises' => $exercises, 'query' => $query, 'pageTitle' => 'Oefenstof - Trainer Bobby']);
     }
 
     public function create(): void {
@@ -61,7 +61,7 @@ class ExerciseController {
                 exit;
             }
         }
-        require __DIR__ . '/../views/exercises/form.php';
+        View::render('exercises/form', ['pageTitle' => 'Nieuwe Oefening - Trainer Bobby']);
     }
 
     public function edit(): void {
@@ -119,7 +119,7 @@ class ExerciseController {
                 exit;
             }
         }
-        require __DIR__ . '/../views/exercises/form.php';
+        View::render('exercises/form', ['exercise' => $exercise, 'pageTitle' => 'Oefening Bewerken - Trainer Bobby']);
     }
 
     public function view(): void {
@@ -138,7 +138,7 @@ class ExerciseController {
             exit;
         }
         
-        require __DIR__ . '/../views/exercises/view.php';
+        View::render('exercises/view', ['exercise' => $exercise, 'pageTitle' => $exercise['title'] . ' - Trainer Bobby']);
     }
 
     public function delete(): void {

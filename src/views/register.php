@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Registreren - Trainer Bobby';
-require __DIR__ . '/layout/header.php';
-?>
-
 <div class="card" style="max-width: 400px; margin: 0 auto;">
     <h1 class="mb-2">Registreren</h1>
     <p class="text-muted mb-2">Gebruik de invite code van je team.</p>
@@ -35,5 +30,3 @@ require __DIR__ . '/layout/header.php';
         <p>Heb je al een account? <a href="/login">Log in</a></p>
     </div>
 </div>
-
-<?php require __DIR__ . '/layout/footer.php'; ?>

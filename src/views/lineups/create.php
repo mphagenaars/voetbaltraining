@@ -1,5 +1,3 @@
-<?php require __DIR__ . '/../layout/header.php'; ?>
-
 <div class="container">
     <h1>Nieuwe Opstelling</h1>
     
@@ -25,4 +23,4 @@
     </form>
 </div>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

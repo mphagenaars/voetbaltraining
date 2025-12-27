@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Oefenstof - Trainer Bobby';
-require __DIR__ . '/../layout/header.php';
-?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <h1>Oefenstof</h1>
     <a href="/exercises/create" class="btn">Nieuwe Oefening</a>
@@ -83,4 +78,4 @@ require __DIR__ . '/../layout/header.php';
     </div>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

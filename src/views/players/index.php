@@ -1,5 +1,3 @@
-<?php require __DIR__ . '/../layout/header.php'; ?>
-
 <div class="container">
     <div class="header-actions">
         <h1>Spelers</h1>
@@ -98,4 +96,4 @@
 }
 </style>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

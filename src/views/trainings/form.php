@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Nieuwe Training - Trainer Bobby';
-require __DIR__ . '/../layout/header.php';
-?>
-
 <h1>Nieuwe Training</h1>
 
 <form method="POST" id="training-form">
@@ -116,4 +111,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

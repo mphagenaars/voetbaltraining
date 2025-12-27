@@ -1,8 +1,3 @@
-<?php
-$pageTitle = htmlspecialchars($exercise['title']) . ' - Trainer Bobby';
-require __DIR__ . '/../layout/header.php';
-?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <h1><?= htmlspecialchars($exercise['title']) ?></h1>
     <div>
@@ -81,7 +76,7 @@ require __DIR__ . '/../layout/header.php';
     </div>
 </div>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+
 
 <?php if (!empty($exercise['drawing_data'])): ?>
 <script src="/js/konva.min.js"></script>

@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Inloggen - Trainer Bobby';
-require __DIR__ . '/layout/header.php';
-?>
-
 <div class="card" style="max-width: 400px; margin: 0 auto;">
     <h1 class="mb-2">Inloggen</h1>
     
@@ -26,5 +21,3 @@ require __DIR__ . '/layout/header.php';
         <a href="/" style="font-size: 0.875rem;">Terug naar home</a>
     </div>
 </div>
-
-<?php require __DIR__ . '/layout/footer.php'; ?>

@@ -15,7 +15,7 @@ class PlayerController {
             exit;
         }
         $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id']);
-        require __DIR__ . '/../../src/views/players/index.php';
+        View::render('players/index', ['players' => $players, 'pageTitle' => 'Spelers - Trainer Bobby']);
     }
 
     public function create(): void {
@@ -43,7 +43,7 @@ class PlayerController {
             exit;
         }
 
-        require __DIR__ . '/../../src/views/players/edit.php';
+        View::render('players/edit', ['player' => $player, 'pageTitle' => 'Speler Bewerken - Trainer Bobby']);
     }
 
     public function update(): void {

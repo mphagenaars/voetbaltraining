@@ -1,5 +1,3 @@
-<?php require __DIR__ . '/../layout/header.php'; ?>
-
 <div class="container">
     <svg width="0" height="0" style="position: absolute;">
       <defs>
@@ -385,4 +383,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+

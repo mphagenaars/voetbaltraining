@@ -17,7 +17,7 @@ class LineupController {
             exit;
         }
         $lineups = $this->lineupModel->getAllForTeam($_SESSION['current_team']['id']);
-        require __DIR__ . '/../../src/views/lineups/index.php';
+        View::render('lineups/index', ['lineups' => $lineups, 'pageTitle' => 'Opstellingen - Trainer Bobby']);
     }
 
     public function create(): void {
@@ -37,7 +37,7 @@ class LineupController {
             }
         }
 
-        require __DIR__ . '/../../src/views/lineups/create.php';
+        View::render('lineups/create', ['pageTitle' => 'Nieuwe Opstelling - Trainer Bobby']);
     }
 
     public function view(): void {
@@ -61,7 +61,7 @@ class LineupController {
         $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id']);
         $positions = $this->lineupModel->getPositions($id);
 
-        require __DIR__ . '/../../src/views/lineups/view.php';
+        View::render('lineups/view', ['lineup' => $lineup, 'players' => $players, 'positions' => $positions, 'pageTitle' => $lineup['name'] . ' - Trainer Bobby']);
     }
 
     public function save(): void {

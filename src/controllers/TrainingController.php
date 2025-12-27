@@ -18,7 +18,7 @@ class TrainingController {
         }
 
         $trainings = $this->trainingModel->getAllForTeam($_SESSION['current_team']['id']);
-        require __DIR__ . '/../../src/views/trainings/index.php';
+        View::render('trainings/index', ['trainings' => $trainings, 'pageTitle' => 'Trainingen - Trainer Bobby']);
     }
 
     public function create(): void {
@@ -52,7 +52,7 @@ class TrainingController {
         // Get all exercises to select from
         $allExercises = $this->exerciseModel->getAllForTeam($_SESSION['current_team']['id']);
 
-        require __DIR__ . '/../../src/views/trainings/form.php';
+        View::render('trainings/form', ['allExercises' => $allExercises, 'pageTitle' => 'Nieuwe Training - Trainer Bobby']);
     }
 
     public function view(): void {
@@ -69,7 +69,7 @@ class TrainingController {
             exit;
         }
 
-        require __DIR__ . '/../../src/views/trainings/view.php';
+        View::render('trainings/view', ['training' => $training, 'pageTitle' => $training['title'] . ' - Trainer Bobby']);
     }
 
     public function delete(): void {

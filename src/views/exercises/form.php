@@ -1,7 +1,5 @@
 <?php
 $isEdit = isset($exercise);
-$pageTitle = ($isEdit ? 'Oefening bewerken' : 'Nieuwe oefening') . ' - Trainer Bobby';
-require __DIR__ . '/../layout/header.php';
 ?>
 
 <h1><?= $isEdit ? 'Oefening bewerken' : 'Nieuwe oefening' ?></h1>
@@ -208,7 +206,7 @@ require __DIR__ . '/../layout/header.php';
     </form>
 </div>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+
 
 <script>
 function updateNumber(id, change) {

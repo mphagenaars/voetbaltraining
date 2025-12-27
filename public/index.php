@@ -148,6 +148,6 @@ switch ($path) {
 
     default:
         http_response_code(404);
-        require __DIR__ . '/../src/views/404.php';
+        View::render('404', ['pageTitle' => '404 - Niet gevonden']);
         break;
 }

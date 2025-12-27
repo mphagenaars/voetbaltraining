@@ -26,7 +26,7 @@ class AuthController {
                 $error = "Er is een fout opgetreden.";
             }
         }
-        require __DIR__ . '/../views/login.php';
+        View::render('login', ['error' => $error ?? null, 'pageTitle' => 'Inloggen - Trainer Bobby']);
     }
 
     public function register(): void {
@@ -74,7 +74,7 @@ class AuthController {
                 $error = "Er is een fout opgetreden: " . $e->getMessage();
             }
         }
-        require __DIR__ . '/../views/register.php';
+        View::render('register', ['error' => $error ?? null, 'pageTitle' => 'Registreren - Trainer Bobby']);
     }
 
     public function logout(): void {

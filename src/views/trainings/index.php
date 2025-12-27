@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Trainingen - Trainer Bobby';
-require __DIR__ . '/../layout/header.php';
-?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <h1>Trainingen</h1>
     <a href="/trainings/create" class="btn">Nieuwe Training</a>
@@ -38,4 +33,4 @@ require __DIR__ . '/../layout/header.php';
     </div>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../layout/footer.php'; ?>
+
