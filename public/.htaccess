@@ -1,0 +1,15 @@
+RewriteEngine On
+RewriteBase /
+
+# Bestaande bestanden en mappen niet doorsturen naar index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Alles doorsturen naar index.php
+RewriteRule ^ index.php [QSA,L]
+
+# Beveiliging: verbied toegang tot gevoelige bestanden als ze per ongeluk in public staan (zou niet moeten, maar toch)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
