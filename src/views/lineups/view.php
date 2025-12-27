@@ -1,6 +1,14 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
 <div class="container">
+    <svg width="0" height="0" style="position: absolute;">
+      <defs>
+        <pattern id="striped-jersey" patternUnits="userSpaceOnUse" width="100" height="20">
+          <rect width="100" height="10" fill="black"/>
+          <rect y="10" width="100" height="10" fill="#d32f2f"/>
+        </pattern>
+      </defs>
+    </svg>
     <div class="header-actions">
         <h1><?= htmlspecialchars($lineup['name']) ?> (<?= htmlspecialchars($lineup['formation']) ?>)</h1>
         <div class="actions">
@@ -31,7 +39,7 @@
                     <div class="player-token on-field" draggable="true" data-id="<?= $pos['player_id'] ?>" style="left: <?= $pos['position_x'] ?>%; top: <?= $pos['position_y'] ?>%;">
                         <div class="player-jersey">
                             <svg viewBox="0 0 100 100" width="50" height="50">
-                                <path d="M20,30 L35,10 L65,10 L80,30 L70,40 L65,35 L65,90 L35,90 L35,35 L30,40 Z" fill="#d32f2f" stroke="white" stroke-width="3"/>
+                                <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="url(#striped-jersey)" stroke="white" stroke-width="2"/>
                                 <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($pos['player_name'], 0, 1)) ?></text>
                             </svg>
                         </div>
@@ -52,7 +60,7 @@
                         <div class="player-token" draggable="true" data-id="<?= $player['id'] ?>">
                             <div class="player-jersey">
                                 <svg viewBox="0 0 100 100" width="50" height="50">
-                                    <path d="M20,30 L35,10 L65,10 L80,30 L70,40 L65,35 L65,90 L35,90 L35,35 L30,40 Z" fill="#d32f2f" stroke="white" stroke-width="3"/>
+                                    <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="url(#striped-jersey)" stroke="white" stroke-width="2"/>
                                     <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($player['name'], 0, 1)) ?></text>
                                 </svg>
                             </div>
@@ -302,8 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const y = e.clientY - rect.top;
         
         // Calculate percentage positions
-        const xPercent = (x / rect.width) * 100;
-        const yPercent = (y / rect.height) * 100;
+        let xPercent = (x / rect.width) * 100;
+        let yPercent = (y / rect.height) * 100;
+
+        // Snap to grid (nearest 5%) to help alignment
+        xPercent = Math.round(xPercent / 5) * 5;
+        yPercent = Math.round(yPercent / 5) * 5;
 
         // If item comes from sidebar, move it to field
         if (draggedItem.parentElement === playersList) {

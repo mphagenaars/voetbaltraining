@@ -12,10 +12,9 @@
         <div class="form-group">
             <label for="formation">Formatie:</label>
             <select id="formation" name="formation" class="form-control">
-                <option value="4-3-3">4-3-3</option>
-                <option value="4-4-2">4-4-2</option>
-                <option value="3-4-3">3-4-3</option>
-                <option value="5-3-2">5-3-2</option>
+                <option value="6-vs-6">6 tegen 6 op een kwart veld</option>
+                <option value="8-vs-8">8 tegen 8 op een half veld</option>
+                <option value="11-vs-11">11 tegen 11 op een heel veld</option>
             </select>
         </div>
         

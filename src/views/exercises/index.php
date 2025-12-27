@@ -14,19 +14,8 @@ require __DIR__ . '/../layout/header.php';
             <label for="q">Zoeken</label>
             <input type="text" id="q" name="q" value="<?= htmlspecialchars($query ?? '') ?>" placeholder="Titel of beschrijving...">
         </div>
-        <div style="min-width: 200px; margin-bottom: 0;">
-            <label for="tag">Filter op label</label>
-            <select id="tag" name="tag" style="width: 100%;">
-                <option value="">Alle labels</option>
-                <?php foreach ($allTags as $t): ?>
-                    <option value="<?= $t['id'] ?>" <?= ($tagFilter ?? null) === $t['id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($t['name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
         <button type="submit" class="btn btn-outline">Zoeken</button>
-        <?php if (!empty($query) || !empty($tagFilter)): ?>
+        <?php if (!empty($query)): ?>
             <a href="/exercises" class="btn btn-outline" style="border: none;">Reset</a>
         <?php endif; ?>
     </form>
@@ -49,25 +38,40 @@ require __DIR__ . '/../layout/header.php';
                 <p><?= nl2br(htmlspecialchars(substr($exercise['description'] ?? '', 0, 100))) ?>...</p>
                 
                 <div style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
-                    <?php if ($exercise['players']): ?>
-                        <span>👥 <?= $exercise['players'] ?> spelers</span>
+                    <?php if (!empty($exercise['min_players']) || !empty($exercise['max_players'])): ?>
+                        <span>👥 
+                            <?php 
+                            if (!empty($exercise['min_players']) && !empty($exercise['max_players'])) {
+                                echo $exercise['min_players'] . ' - ' . $exercise['max_players'];
+                            } elseif (!empty($exercise['min_players'])) {
+                                echo $exercise['min_players'] . '+';
+                            } elseif (!empty($exercise['max_players'])) {
+                                echo 'max ' . $exercise['max_players'];
+                            }
+                            ?> spelers
+                        </span>
+                    <?php elseif (!empty($exercise['players'])): ?>
+                         <span>👥 <?= $exercise['players'] ?> spelers</span>
                     <?php endif; ?>
                     <?php if ($exercise['duration']): ?>
                         <span style="margin-left: 0.5rem;">⏱️ <?= $exercise['duration'] ?> min</span>
                     <?php endif; ?>
                 </div>
 
-                <?php if (!empty($exercise['tags'])): ?>
-                    <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
-                        <?php foreach ($exercise['tags'] as $tag): ?>
-                            <span style="background: #eee; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.8rem; color: #555;">
-                                <?= htmlspecialchars($tag['name']) ?>
-                            </span>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #555;">
+                    <?php if (!empty($exercise['team_task'])): ?>
+                        <div><strong>Teamtaak:</strong> <?= htmlspecialchars($exercise['team_task']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($exercise['training_objective'])): ?>
+                        <div><strong>Doelstelling:</strong> <?= htmlspecialchars($exercise['training_objective']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($exercise['football_action'])): ?>
+                        <div><strong>Voetbalhandeling:</strong> <?= htmlspecialchars($exercise['football_action']) ?></div>
+                    <?php endif; ?>
+                </div>
 
                 <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn btn-sm btn-outline">Bekijken</a>
                     <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn btn-sm btn-outline">Bewerken</a>
                     <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0;">
                         <input type="hidden" name="id" value="<?= $exercise['id'] ?>">

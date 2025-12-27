@@ -79,23 +79,13 @@ switch ($path) {
         }
         require_once __DIR__ . '/../src/Database.php';
         require_once __DIR__ . '/../src/models/Exercise.php';
-        require_once __DIR__ . '/../src/models/Tag.php';
         
         $db = (new Database())->getConnection();
         $exerciseModel = new Exercise($db);
-        $tagModel = new Tag($db);
         
         $query = $_GET['q'] ?? null;
-        $tagFilter = !empty($_GET['tag']) ? (int)$_GET['tag'] : null;
         
-        $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query, $tagFilter);
-        $allTags = $tagModel->getAllForTeam($_SESSION['current_team']['id']);
-        
-        // Attach tags to exercises
-        foreach ($exercises as &$exercise) {
-            $exercise['tags'] = $tagModel->getTagsForExercise($exercise['id']);
-        }
-        unset($exercise); // Break reference
+        $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query);
         
         require __DIR__ . '/../src/views/exercises/index.php';
         break;
@@ -109,13 +99,16 @@ switch ($path) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_once __DIR__ . '/../src/Database.php';
             require_once __DIR__ . '/../src/models/Exercise.php';
-            require_once __DIR__ . '/../src/models/Tag.php';
             
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
-            $players = !empty($_POST['players']) ? (int)$_POST['players'] : null;
+            $variation = $_POST['variation'] ?? null;
+            $teamTask = $_POST['team_task'] ?? null;
+            $trainingObjective = $_POST['training_objective'] ?? null;
+            $footballAction = $_POST['football_action'] ?? null;
+            $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
+            $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
-            $tagsInput = $_POST['tags'] ?? '';
             
             $imagePath = null;
 
@@ -142,21 +135,8 @@ switch ($path) {
             if (!empty($title)) {
                 $db = (new Database())->getConnection();
                 $exerciseModel = new Exercise($db);
-                $tagModel = new Tag($db);
                 
-                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $players, $duration, $imagePath, $drawingData);
-                
-                // Process tags
-                if (!empty($tagsInput)) {
-                    $tags = explode(',', $tagsInput);
-                    foreach ($tags as $tagName) {
-                        $tagName = trim($tagName);
-                        if (!empty($tagName)) {
-                            $tagId = $tagModel->create($_SESSION['current_team']['id'], $tagName);
-                            $tagModel->addTagToExercise($exerciseId, $tagId);
-                        }
-                    }
-                }
+                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation);
                 
                 header('Location: /exercises');
                 exit;
@@ -173,11 +153,9 @@ switch ($path) {
         
         require_once __DIR__ . '/../src/Database.php';
         require_once __DIR__ . '/../src/models/Exercise.php';
-        require_once __DIR__ . '/../src/models/Tag.php';
         
         $db = (new Database())->getConnection();
         $exerciseModel = new Exercise($db);
-        $tagModel = new Tag($db);
         
         $id = (int)($_GET['id'] ?? 0);
         $exercise = $exerciseModel->getById($id);
@@ -188,16 +166,16 @@ switch ($path) {
             exit;
         }
         
-        // Get current tags
-        $currentTags = $tagModel->getTagsForExercise($id);
-        $exercise['tags'] = $currentTags;
-        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
-            $players = !empty($_POST['players']) ? (int)$_POST['players'] : null;
+            $variation = $_POST['variation'] ?? null;
+            $teamTask = $_POST['team_task'] ?? null;
+            $trainingObjective = $_POST['training_objective'] ?? null;
+            $footballAction = $_POST['football_action'] ?? null;
+            $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
+            $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
-            $tagsInput = $_POST['tags'] ?? '';
             
             $imagePath = null;
 
@@ -222,27 +200,41 @@ switch ($path) {
             }
             
             if (!empty($title)) {
-                $exerciseModel->update($id, $title, $description, $players, $duration, $imagePath, $drawingData);
-                
-                // Update tags: remove all and re-add
-                $tagModel->removeAllTagsFromExercise($id);
-                
-                if (!empty($tagsInput)) {
-                    $tags = explode(',', $tagsInput);
-                    foreach ($tags as $tagName) {
-                        $tagName = trim($tagName);
-                        if (!empty($tagName)) {
-                            $tagId = $tagModel->create($_SESSION['current_team']['id'], $tagName);
-                            $tagModel->addTagToExercise($id, $tagId);
-                        }
-                    }
-                }
+                $exerciseModel->update($id, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation);
                 
                 header('Location: /exercises');
                 exit;
             }
         }
         require __DIR__ . '/../src/views/exercises/form.php';
+        break;
+
+    case '/exercises/view':
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
+            header('Location: /');
+            exit;
+        }
+        
+        require_once __DIR__ . '/../src/Database.php';
+        require_once __DIR__ . '/../src/models/Exercise.php';
+        
+        $db = (new Database())->getConnection();
+        $exerciseModel = new Exercise($db);
+        
+        $id = (int)($_GET['id'] ?? 0);
+        $exercise = $exerciseModel->getById($id);
+        
+        // Check if exercise exists and belongs to current team
+        if (!$exercise || $exercise['team_id'] !== $_SESSION['current_team']['id']) {
+            header('Location: /exercises');
+            exit;
+        }
+        
+        // Get current tags
+        // $currentTags = $tagModel->getTagsForExercise($id);
+        // $exercise['tags'] = $currentTags;
+        
+        require __DIR__ . '/../src/views/exercises/view.php';
         break;
 
     case '/exercises/delete':

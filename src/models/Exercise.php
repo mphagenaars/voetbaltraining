@@ -8,19 +8,24 @@ class Exercise {
         $this->pdo = $pdo;
     }
 
-    public function create(int $teamId, string $title, string $description, ?int $players, ?int $duration, ?string $imagePath = null, ?string $drawingData = null): int {
+    public function create(int $teamId, string $title, string $description, ?string $teamTask, ?string $trainingObjective, ?string $footballAction, ?int $minPlayers, ?int $maxPlayers, ?int $duration, ?string $imagePath = null, ?string $drawingData = null, ?string $variation = null): int {
         $stmt = $this->pdo->prepare("
-            INSERT INTO exercises (team_id, title, description, players, duration, image_path, drawing_data) 
-            VALUES (:team_id, :title, :description, :players, :duration, :image_path, :drawing_data)
+            INSERT INTO exercises (team_id, title, description, team_task, training_objective, football_action, min_players, max_players, duration, image_path, drawing_data, variation) 
+            VALUES (:team_id, :title, :description, :team_task, :training_objective, :football_action, :min_players, :max_players, :duration, :image_path, :drawing_data, :variation)
         ");
         $stmt->execute([
             ':team_id' => $teamId,
             ':title' => $title,
             ':description' => $description,
-            ':players' => $players,
+            ':team_task' => $teamTask,
+            ':training_objective' => $trainingObjective,
+            ':football_action' => $footballAction,
+            ':min_players' => $minPlayers,
+            ':max_players' => $maxPlayers,
             ':duration' => $duration,
             ':image_path' => $imagePath,
-            ':drawing_data' => $drawingData
+            ':drawing_data' => $drawingData,
+            ':variation' => $variation
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -31,24 +36,13 @@ class Exercise {
         return $stmt->fetchAll();
     }
 
-    public function search(int $teamId, ?string $query = null, ?int $tagId = null): array {
-        $sql = "SELECT DISTINCT e.* FROM exercises e";
+    public function search(int $teamId, ?string $query = null): array {
+        $sql = "SELECT DISTINCT e.* FROM exercises e WHERE e.team_id = :team_id";
         $params = [':team_id' => $teamId];
-        
-        if ($tagId) {
-            $sql .= " JOIN exercise_tags et ON e.id = et.exercise_id";
-        }
-        
-        $sql .= " WHERE e.team_id = :team_id";
         
         if ($query) {
             $sql .= " AND (e.title LIKE :query OR e.description LIKE :query)";
             $params[':query'] = '%' . $query . '%';
-        }
-        
-        if ($tagId) {
-            $sql .= " AND et.tag_id = :tag_id";
-            $params[':tag_id'] = $tagId;
         }
         
         $sql .= " ORDER BY e.created_at DESC";
@@ -65,14 +59,19 @@ class Exercise {
         return $result ?: null;
     }
 
-    public function update(int $id, string $title, string $description, ?int $players, ?int $duration, ?string $imagePath = null, ?string $drawingData = null): void {
-        $sql = "UPDATE exercises SET title = :title, description = :description, players = :players, duration = :duration";
+    public function update(int $id, string $title, string $description, ?string $teamTask, ?string $trainingObjective, ?string $footballAction, ?int $minPlayers, ?int $maxPlayers, ?int $duration, ?string $imagePath = null, ?string $drawingData = null, ?string $variation = null): void {
+        $sql = "UPDATE exercises SET title = :title, description = :description, team_task = :team_task, training_objective = :training_objective, football_action = :football_action, min_players = :min_players, max_players = :max_players, duration = :duration, variation = :variation";
         $params = [
             ':id' => $id,
             ':title' => $title,
             ':description' => $description,
-            ':players' => $players,
-            ':duration' => $duration
+            ':team_task' => $teamTask,
+            ':training_objective' => $trainingObjective,
+            ':football_action' => $footballAction,
+            ':min_players' => $minPlayers,
+            ':max_players' => $maxPlayers,
+            ':duration' => $duration,
+            ':variation' => $variation
         ];
 
         if ($imagePath !== null) {

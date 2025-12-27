@@ -45,9 +45,14 @@ try {
         team_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         description TEXT,
-        players INTEGER,
+        team_task TEXT,
+        training_objective TEXT,
+        football_action TEXT,
+        min_players INTEGER,
+        max_players INTEGER,
         duration INTEGER,
         requirements TEXT,
+        variation TEXT,
         image_path TEXT,
         drawing_data TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -55,37 +60,20 @@ try {
     )");
     echo "- Tabel 'exercises' aangemaakt (of bestond al).\n";
 
-    // Check of image_path kolom bestaat (voor migratie)
+    // Check of min_players/max_players kolom bestaat (voor migratie)
     $columns = $db->query("PRAGMA table_info(exercises)")->fetchAll(PDO::FETCH_COLUMN, 1);
-    if (!in_array('image_path', $columns)) {
-        $db->exec("ALTER TABLE exercises ADD COLUMN image_path TEXT");
-        echo "- Kolom 'image_path' toegevoegd aan 'exercises'.\n";
+    if (!in_array('min_players', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN min_players INTEGER");
+        echo "- Kolom 'min_players' toegevoegd aan 'exercises'.\n";
     }
-    if (!in_array('drawing_data', $columns)) {
-        $db->exec("ALTER TABLE exercises ADD COLUMN drawing_data TEXT");
-        echo "- Kolom 'drawing_data' toegevoegd aan 'exercises'.\n";
+    if (!in_array('max_players', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN max_players INTEGER");
+        echo "- Kolom 'max_players' toegevoegd aan 'exercises'.\n";
     }
-
-    // Tags tabel
-    $db->exec("CREATE TABLE IF NOT EXISTS tags (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        team_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
-        UNIQUE(team_id, name)
-    )");
-    echo "- Tabel 'tags' aangemaakt (of bestond al).\n";
-
-    // Exercise Tags tabel (Many-to-Many)
-    $db->exec("CREATE TABLE IF NOT EXISTS exercise_tags (
-        exercise_id INTEGER NOT NULL,
-        tag_id INTEGER NOT NULL,
-        PRIMARY KEY (exercise_id, tag_id),
-        FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE,
-        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
-    )");
-    echo "- Tabel 'exercise_tags' aangemaakt (of bestond al).\n";
+    if (!in_array('variation', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN variation TEXT");
+        echo "- Kolom 'variation' toegevoegd aan 'exercises'.\n";
+    }
 
     // Trainings tabel
     $db->exec("CREATE TABLE IF NOT EXISTS trainings (
@@ -130,17 +118,6 @@ try {
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
     echo "- Tabel 'lineups' aangemaakt (of bestond al).\n";
-
-    // Check of name kolom bestaat (voor migratie)
-    $columns = $db->query("PRAGMA table_info(lineups)")->fetchAll(PDO::FETCH_COLUMN, 1);
-    if (!in_array('name', $columns)) {
-        $db->exec("ALTER TABLE lineups ADD COLUMN name TEXT DEFAULT 'Nieuwe opstelling'");
-        echo "- Kolom 'name' toegevoegd aan 'lineups'.\n";
-    }
-    if (!in_array('formation', $columns)) {
-        $db->exec("ALTER TABLE lineups ADD COLUMN formation TEXT DEFAULT '4-3-3'");
-        echo "- Kolom 'formation' toegevoegd aan 'lineups'.\n";
-    }
 
     // Lineup Positions tabel
     $db->exec("CREATE TABLE IF NOT EXISTS lineup_positions (
