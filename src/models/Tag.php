@@ -1,12 +1,8 @@
 <?php
 declare(strict_types=1);
 
-class Tag {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
+class Tag extends Model {
+    protected string $table = 'tags';
 
     public function create(int $teamId, string $name): int {
         // Check if tag already exists for this team
@@ -27,8 +23,8 @@ class Tag {
         return $tag ?: null;
     }
 
-    public function getAllForTeam(int $teamId): array {
-        $stmt = $this->pdo->prepare("SELECT * FROM tags WHERE team_id = :team_id ORDER BY name ASC");
+    public function getAllForTeam(int $teamId, string $orderBy = 'name ASC'): array {
+        $stmt = $this->pdo->prepare("SELECT * FROM tags WHERE team_id = :team_id ORDER BY $orderBy");
         $stmt->execute([':team_id' => $teamId]);
         return $stmt->fetchAll();
     }

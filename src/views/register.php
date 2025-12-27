@@ -7,6 +7,7 @@
     <?php endif; ?>
 
     <form method="POST" action="/register">
+        <?= Csrf::renderInput() ?>
         <div>
             <label for="invite_code">Invite Code</label>
             <input type="text" id="invite_code" name="invite_code" required value="<?= htmlspecialchars($_POST['invite_code'] ?? '') ?>">

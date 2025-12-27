@@ -2,6 +2,7 @@
     <h1>Nieuwe Opstelling</h1>
     
     <form action="/lineups/create" method="POST" class="form-vertical">
+        <?= Csrf::renderInput() ?>
         <div class="form-group">
             <label for="name">Naam Opstelling:</label>
             <input type="text" id="name" name="name" required class="form-control">

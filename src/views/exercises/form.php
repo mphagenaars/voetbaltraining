@@ -6,6 +6,7 @@ $isEdit = isset($exercise);
 
 <div class="card">
     <form method="POST" enctype="multipart/form-data">
+        <?= Csrf::renderInput() ?>
         <div class="form-group">
             <label for="title">Titel *</label>
             <input type="text" id="title" name="title" value="<?= htmlspecialchars($exercise['title'] ?? '') ?>" required>

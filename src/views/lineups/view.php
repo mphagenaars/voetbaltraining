@@ -10,6 +10,7 @@
     <div class="header-actions">
         <h1><?= htmlspecialchars($lineup['name']) ?> (<?= htmlspecialchars($lineup['formation']) ?>)</h1>
         <div class="actions">
+            <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
             <button id="save-lineup" class="btn btn-primary">Opslaan</button>
             <a href="/lineups" class="btn btn-secondary">Terug</a>
         </div>
@@ -361,10 +362,12 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRF-Token': document.getElementById('csrf_token').value
             },
             body: JSON.stringify({
-                lineup_id: <?= $lineup['id'] ?>,
-                positions: positions
+                id: <?= $lineup['id'] ?>,
+                positions: positions,
+                csrf_token: document.getElementById('csrf_token').value
             })
         })
         .then(response => response.json())

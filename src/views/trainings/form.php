@@ -1,6 +1,7 @@
 <h1>Nieuwe Training</h1>
 
 <form method="POST" id="training-form">
+    <?= Csrf::renderInput() ?>
     <div class="card">
         <div class="form-group">
             <label for="title">Titel *</label>

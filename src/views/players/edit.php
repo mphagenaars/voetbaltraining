@@ -3,6 +3,7 @@
     
     <div class="card">
         <form action="/players/update" method="POST">
+            <?= Csrf::renderInput() ?>
             <input type="hidden" name="id" value="<?= $player['id'] ?>">
             
             <div class="form-group">

@@ -1,12 +1,8 @@
 <?php
 declare(strict_types=1);
 
-class Team {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
+class Team extends Model {
+    protected string $table = 'teams';
 
     public function create(string $name, int $creatorId): int {
         $stmt = $this->pdo->prepare("INSERT INTO teams (name, invite_code) VALUES (:name, :invite_code)");

@@ -16,6 +16,7 @@
                     <div class="actions">
                         <a href="/lineups/view?id=<?= $lineup['id'] ?>" class="btn btn-secondary">Bekijken/Bewerken</a>
                         <form action="/lineups/delete" method="POST" style="display:inline;" onsubmit="return confirm('Weet je zeker dat je deze opstelling wilt verwijderen?');">
+                            <?= Csrf::renderInput() ?>
                             <input type="hidden" name="id" value="<?= $lineup['id'] ?>">
                             <button type="submit" class="btn btn-danger">Verwijderen</button>
                         </form>

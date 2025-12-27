@@ -28,6 +28,10 @@ class TrainingController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /trainings');
+                exit;
+            }
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
             $selectedExercises = $_POST['exercises'] ?? []; // Array of exercise IDs
@@ -74,6 +78,10 @@ class TrainingController {
 
     public function delete(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /trainings');
+                exit;
+            }
             $id = (int)($_POST['id'] ?? 0);
             $training = $this->trainingModel->getById($id);
 

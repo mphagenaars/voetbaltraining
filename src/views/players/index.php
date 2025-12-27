@@ -6,6 +6,7 @@
     <div class="card">
         <h2>Nieuwe speler toevoegen</h2>
         <form action="/players/create" method="POST" class="form-inline">
+            <?= Csrf::renderInput() ?>
             <div class="form-group">
                 <input type="text" name="name" placeholder="Naam speler" required class="form-control">
             </div>
@@ -30,6 +31,7 @@
                                 </svg>
                             </a>
                             <form action="/players/delete" method="POST" onsubmit="return confirm('Weet je zeker dat je deze speler wilt verwijderen?');" style="display:inline;">
+                                <?= Csrf::renderInput() ?>
                                 <input type="hidden" name="id" value="<?= $player['id'] ?>">
                                 <button type="submit" class="btn-icon btn-icon-danger" title="Verwijderen">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

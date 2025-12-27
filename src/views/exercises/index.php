@@ -69,6 +69,7 @@
                     <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn btn-sm btn-outline">Bekijken</a>
                     <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn btn-sm btn-outline">Bewerken</a>
                     <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0;">
+                        <?= Csrf::renderInput() ?>
                         <input type="hidden" name="id" value="<?= $exercise['id'] ?>">
                         <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger-color); border-color: var(--danger-color);">Verwijderen</button>
                     </form>

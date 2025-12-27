@@ -1,12 +1,8 @@
 <?php
 declare(strict_types=1);
 
-class Training {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
+class Training extends Model {
+    protected string $table = 'trainings';
 
     public function create(int $teamId, string $title, string $description): int {
         $stmt = $this->pdo->prepare("INSERT INTO trainings (team_id, title, description) VALUES (:team_id, :title, :description)");
@@ -24,7 +20,7 @@ class Training {
         ]);
     }
 
-    public function getAllForTeam(int $teamId): array {
+    public function getAllForTeam(int $teamId, string $orderBy = 'created_at DESC'): array {
         $stmt = $this->pdo->prepare("
             SELECT t.*, 
             (SELECT COUNT(*) FROM training_exercises te WHERE te.training_id = t.id) as exercise_count,
@@ -34,7 +30,7 @@ class Training {
              WHERE te.training_id = t.id) as total_duration
             FROM trainings t 
             WHERE t.team_id = :team_id 
-            ORDER BY t.created_at DESC
+            ORDER BY $orderBy
         ");
         $stmt->execute([':team_id' => $teamId]);
         return $stmt->fetchAll();
@@ -94,10 +90,5 @@ class Training {
             $this->pdo->rollBack();
             throw $e;
         }
-    }
-
-    public function delete(int $id): void {
-        $stmt = $this->pdo->prepare("DELETE FROM trainings WHERE id = :id");
-        $stmt->execute([':id' => $id]);
     }
 }

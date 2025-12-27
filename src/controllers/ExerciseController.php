@@ -22,6 +22,10 @@ class ExerciseController {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /exercises');
+                exit;
+            }
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
             $variation = $_POST['variation'] ?? null;
@@ -81,6 +85,10 @@ class ExerciseController {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /exercises');
+                exit;
+            }
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
             $variation = $_POST['variation'] ?? null;
@@ -143,6 +151,10 @@ class ExerciseController {
 
     public function delete(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /exercises');
+                exit;
+            }
             $exerciseModel = new Exercise($this->pdo);
             $id = (int)($_POST['id'] ?? 0);
             $exercise = $exerciseModel->getById($id);

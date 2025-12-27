@@ -20,6 +20,10 @@ class PlayerController {
 
     public function create(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /players');
+                exit;
+            }
             $name = trim($_POST['name'] ?? '');
             if (!empty($name)) {
                 $this->playerModel->create($_SESSION['current_team']['id'], $name);
@@ -48,6 +52,10 @@ class PlayerController {
 
     public function update(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /players');
+                exit;
+            }
             $id = (int)($_POST['id'] ?? 0);
             $name = trim($_POST['name'] ?? '');
 
@@ -65,6 +73,10 @@ class PlayerController {
 
     public function delete(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /players');
+                exit;
+            }
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
                 // TODO: Check if player belongs to current team (Model should probably handle this or we check here)

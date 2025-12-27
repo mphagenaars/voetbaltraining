@@ -24,6 +24,7 @@
                 <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
                     <a href="/trainings/view?id=<?= $training['id'] ?>" class="btn btn-sm">Bekijken</a>
                     <form method="POST" action="/trainings/delete" onsubmit="return confirm('Weet je zeker dat je deze training wilt verwijderen?');" style="margin: 0;">
+                        <?= Csrf::renderInput() ?>
                         <input type="hidden" name="id" value="<?= $training['id'] ?>">
                         <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger-color); border-color: var(--danger-color);">Verwijderen</button>
                     </form>

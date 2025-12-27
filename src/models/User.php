@@ -1,12 +1,8 @@
 <?php
 declare(strict_types=1);
 
-class User {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
+class User extends Model {
+    protected string $table = 'users';
 
     public function create(string $username, string $password, string $name): int {
         $hash = password_hash($password, PASSWORD_DEFAULT);

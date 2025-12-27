@@ -6,6 +6,10 @@ class TeamController {
 
     public function create(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /');
+                exit;
+            }
             $name = $_POST['name'] ?? '';
             if (!empty($name)) {
                 $teamModel = new Team($this->pdo);
@@ -20,6 +24,10 @@ class TeamController {
 
     public function select(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /');
+                exit;
+            }
             $teamId = (int)($_POST['team_id'] ?? 0);
             $teamModel = new Team($this->pdo);
             

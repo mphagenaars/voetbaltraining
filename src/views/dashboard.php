@@ -34,6 +34,7 @@
                     
                     <?php if (!isset($_SESSION['current_team']) || $_SESSION['current_team']['id'] !== $team['id']): ?>
                         <form method="POST" action="/team/select" style="margin: 0;">
+                            <?= Csrf::renderInput() ?>
                             <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
                             <input type="hidden" name="team_name" value="<?= htmlspecialchars($team['name']) ?>">
                             <input type="hidden" name="team_role" value="<?= htmlspecialchars($team['role']) ?>">
@@ -52,6 +53,7 @@
 <div class="card">
     <h3>Nieuw team aanmaken</h3>
     <form method="POST" action="/team/create" style="display: flex; gap: 1rem; align-items: flex-end;">
+        <?= Csrf::renderInput() ?>
         <div style="flex-grow: 1; margin-bottom: 0;">
             <label for="name">Team naam</label>
             <input type="text" id="name" name="name" required placeholder="Bijv. JO11-1">

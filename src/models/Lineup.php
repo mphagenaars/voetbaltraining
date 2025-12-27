@@ -1,12 +1,8 @@
 <?php
 declare(strict_types=1);
 
-class Lineup {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
+class Lineup extends Model {
+    protected string $table = 'lineups';
 
     public function create(int $teamId, string $name, string $formation): int {
         $stmt = $this->pdo->prepare("INSERT INTO lineups (team_id, name, formation) VALUES (:team_id, :name, :formation)");
@@ -18,18 +14,9 @@ class Lineup {
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function getAllForTeam(int $teamId): array {
-        $stmt = $this->pdo->prepare("SELECT * FROM lineups WHERE team_id = :team_id ORDER BY created_at DESC");
-        $stmt->execute([':team_id' => $teamId]);
-        return $stmt->fetchAll();
-    }
 
-    public function getById(int $id): ?array {
-        $stmt = $this->pdo->prepare("SELECT * FROM lineups WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $lineup = $stmt->fetch();
-        return $lineup ?: null;
-    }
+
+
 
     public function savePositions(int $lineupId, array $positions): void {
         $this->pdo->beginTransaction();
@@ -66,8 +53,5 @@ class Lineup {
         return $stmt->fetchAll();
     }
 
-    public function delete(int $id): void {
-        $stmt = $this->pdo->prepare("DELETE FROM lineups WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-    }
+
 }

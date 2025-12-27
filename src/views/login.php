@@ -6,6 +6,7 @@
     <?php endif; ?>
 
     <form method="POST" action="/login">
+        <?= Csrf::renderInput() ?>
         <div>
             <label for="username">Gebruikersnaam</label>
             <input type="text" id="username" name="username" required autofocus>

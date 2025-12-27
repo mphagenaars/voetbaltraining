@@ -27,6 +27,10 @@ class LineupController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /lineups');
+                exit;
+            }
             $name = trim($_POST['name'] ?? '');
             $formation = trim($_POST['formation'] ?? '4-3-3');
 
@@ -67,12 +71,19 @@ class LineupController {
     public function save(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
             $input = json_decode(file_get_contents('php://input'), true);
+            $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
 
-            if ($input && isset($input['lineup_id']) && isset($input['positions'])) {
+            if (!Csrf::verifyToken($token)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Invalid CSRF Token']);
+                exit;
+            }
+
+            if ($input && isset($input['id']) && isset($input['positions'])) {
                 // Verify ownership
-                $lineup = $this->lineupModel->getById((int)$input['lineup_id']);
+                $lineup = $this->lineupModel->getById((int)$input['id']);
                 if ($lineup && $lineup['team_id'] === $_SESSION['current_team']['id']) {
-                    $this->lineupModel->savePositions((int)$input['lineup_id'], $input['positions']);
+                    $this->lineupModel->savePositions((int)$input['id'], $input['positions']);
                     echo json_encode(['success' => true]);
                     exit;
                 }
