@@ -74,6 +74,18 @@ try {
         $db->exec("ALTER TABLE exercises ADD COLUMN variation TEXT");
         echo "- Kolom 'variation' toegevoegd aan 'exercises'.\n";
     }
+    if (!in_array('team_task', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN team_task TEXT");
+        echo "- Kolom 'team_task' toegevoegd aan 'exercises'.\n";
+    }
+    if (!in_array('training_objective', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN training_objective TEXT");
+        echo "- Kolom 'training_objective' toegevoegd aan 'exercises'.\n";
+    }
+    if (!in_array('football_action', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN football_action TEXT");
+        echo "- Kolom 'football_action' toegevoegd aan 'exercises'.\n";
+    }
 
     // Trainings tabel
     $db->exec("CREATE TABLE IF NOT EXISTS trainings (

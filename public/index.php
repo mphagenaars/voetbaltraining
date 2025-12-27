@@ -11,19 +11,38 @@ $path = parse_url($request_uri, PHP_URL_PATH);
 
 session_start();
 
+// Autoloader
+spl_autoload_register(function ($class) {
+    // Convert namespace separators to directory separators if needed
+    $class = str_replace('\\', '/', $class);
+    
+    // Check src/ directory (e.g. Database)
+    if (file_exists(__DIR__ . '/../src/' . $class . '.php')) {
+        require_once __DIR__ . '/../src/' . $class . '.php';
+        return;
+    }
+    
+    // Check src/models/ directory
+    if (file_exists(__DIR__ . '/../src/models/' . $class . '.php')) {
+        require_once __DIR__ . '/../src/models/' . $class . '.php';
+        return;
+    }
+});
+
+// Initialize Database Connection
+try {
+    $db = (new Database())->getConnection();
+} catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
 // Simpele router
 switch ($path) {
     case '/':
         // Als ingelogd, toon dashboard
         if (isset($_SESSION['user_id'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Team.php';
-            
-            $db = (new Database())->getConnection();
             $teamModel = new Team($db);
-            
             $teams = $teamModel->getTeamsForUser($_SESSION['user_id']);
-            
             require __DIR__ . '/../src/views/dashboard.php';
         } else {
             require __DIR__ . '/../src/views/home.php';
@@ -32,12 +51,8 @@ switch ($path) {
         
     case '/team/create':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Team.php';
-            
             $name = $_POST['name'] ?? '';
             if (!empty($name)) {
-                $db = (new Database())->getConnection();
                 $teamModel = new Team($db);
                 $teamModel->create($name, $_SESSION['user_id']);
             }
@@ -51,11 +66,6 @@ switch ($path) {
     case '/team/select':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
             $teamId = (int)($_POST['team_id'] ?? 0);
-            
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Team.php';
-            
-            $db = (new Database())->getConnection();
             $teamModel = new Team($db);
             
             // Verifieer dat de user lid is van dit team
@@ -77,16 +87,9 @@ switch ($path) {
             header('Location: /');
             exit;
         }
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Exercise.php';
-        
-        $db = (new Database())->getConnection();
         $exerciseModel = new Exercise($db);
-        
         $query = $_GET['q'] ?? null;
-        
         $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query);
-        
         require __DIR__ . '/../src/views/exercises/index.php';
         break;
 
@@ -97,9 +100,6 @@ switch ($path) {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Exercise.php';
-            
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
             $variation = $_POST['variation'] ?? null;
@@ -133,11 +133,8 @@ switch ($path) {
             }
             
             if (!empty($title)) {
-                $db = (new Database())->getConnection();
                 $exerciseModel = new Exercise($db);
-                
                 $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation);
-                
                 header('Location: /exercises');
                 exit;
             }
@@ -151,12 +148,7 @@ switch ($path) {
             exit;
         }
         
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Exercise.php';
-        
-        $db = (new Database())->getConnection();
         $exerciseModel = new Exercise($db);
-        
         $id = (int)($_GET['id'] ?? 0);
         $exercise = $exerciseModel->getById($id);
         
@@ -201,7 +193,6 @@ switch ($path) {
             
             if (!empty($title)) {
                 $exerciseModel->update($id, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation);
-                
                 header('Location: /exercises');
                 exit;
             }
@@ -215,12 +206,7 @@ switch ($path) {
             exit;
         }
         
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Exercise.php';
-        
-        $db = (new Database())->getConnection();
         $exerciseModel = new Exercise($db);
-        
         $id = (int)($_GET['id'] ?? 0);
         $exercise = $exerciseModel->getById($id);
         
@@ -230,21 +216,12 @@ switch ($path) {
             exit;
         }
         
-        // Get current tags
-        // $currentTags = $tagModel->getTagsForExercise($id);
-        // $exercise['tags'] = $currentTags;
-        
         require __DIR__ . '/../src/views/exercises/view.php';
         break;
 
     case '/exercises/delete':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Exercise.php';
-            
-            $db = (new Database())->getConnection();
             $exerciseModel = new Exercise($db);
-            
             $id = (int)($_POST['id'] ?? 0);
             $exercise = $exerciseModel->getById($id);
             
@@ -261,14 +238,8 @@ switch ($path) {
             header('Location: /');
             exit;
         }
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Training.php';
-        
-        $db = (new Database())->getConnection();
         $trainingModel = new Training($db);
-        
         $trainings = $trainingModel->getAllForTeam($_SESSION['current_team']['id']);
-        
         require __DIR__ . '/../src/views/trainings/index.php';
         break;
 
@@ -278,11 +249,6 @@ switch ($path) {
             exit;
         }
         
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Exercise.php';
-        require_once __DIR__ . '/../src/models/Training.php';
-        
-        $db = (new Database())->getConnection();
         $exerciseModel = new Exercise($db);
         $trainingModel = new Training($db);
         
@@ -320,12 +286,7 @@ switch ($path) {
             exit;
         }
         
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Training.php';
-        
-        $db = (new Database())->getConnection();
         $trainingModel = new Training($db);
-        
         $id = (int)($_GET['id'] ?? 0);
         $training = $trainingModel->getById($id);
         
@@ -339,12 +300,7 @@ switch ($path) {
 
     case '/trainings/delete':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Training.php';
-            
-            $db = (new Database())->getConnection();
             $trainingModel = new Training($db);
-            
             $id = (int)($_POST['id'] ?? 0);
             $training = $trainingModel->getById($id);
             
@@ -358,13 +314,10 @@ switch ($path) {
 
     case '/login':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            require_once __DIR__ . '/../src/Database.php';
-            
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
             
             try {
-                $db = (new Database())->getConnection();
                 $stmt = $db->prepare("SELECT id, name, password_hash FROM users WHERE username = :username");
                 $stmt->execute([':username' => $username]);
                 $user = $stmt->fetch();
@@ -386,17 +339,12 @@ switch ($path) {
 
     case '/register':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Team.php';
-            require_once __DIR__ . '/../src/models/User.php';
-
             $inviteCode = $_POST['invite_code'] ?? '';
             $name = $_POST['name'] ?? '';
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
 
             try {
-                $db = (new Database())->getConnection();
                 $teamModel = new Team($db);
                 $userModel = new User($db);
 
@@ -443,25 +391,15 @@ switch ($path) {
             header('Location: /');
             exit;
         }
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Player.php';
-        
-        $db = (new Database())->getConnection();
         $playerModel = new Player($db);
-        
         $players = $playerModel->getAllForTeam($_SESSION['current_team']['id']);
-        
         require __DIR__ . '/../src/views/players/index.php';
         break;
 
     case '/players/create':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Player.php';
-            
             $name = trim($_POST['name'] ?? '');
             if (!empty($name)) {
-                $db = (new Database())->getConnection();
                 $playerModel = new Player($db);
                 $playerModel->create($_SESSION['current_team']['id'], $name);
             }
@@ -472,12 +410,8 @@ switch ($path) {
 
     case '/players/delete':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Player.php';
-            
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
-                $db = (new Database())->getConnection();
                 $playerModel = new Player($db);
                 // TODO: Check if player belongs to current team
                 $playerModel->delete($id);
@@ -498,10 +432,6 @@ switch ($path) {
             exit;
         }
         
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Player.php';
-        
-        $db = (new Database())->getConnection();
         $playerModel = new Player($db);
         $player = $playerModel->getById($id);
         
@@ -516,14 +446,10 @@ switch ($path) {
 
     case '/players/update':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Player.php';
-            
             $id = (int)($_POST['id'] ?? 0);
             $name = trim($_POST['name'] ?? '');
             
             if ($id > 0 && !empty($name)) {
-                $db = (new Database())->getConnection();
                 $playerModel = new Player($db);
                 
                 // Verify ownership
@@ -543,14 +469,8 @@ switch ($path) {
             header('Location: /');
             exit;
         }
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Lineup.php';
-        
-        $db = (new Database())->getConnection();
         $lineupModel = new Lineup($db);
-        
         $lineups = $lineupModel->getAllForTeam($_SESSION['current_team']['id']);
-        
         require __DIR__ . '/../src/views/lineups/index.php';
         break;
 
@@ -561,14 +481,10 @@ switch ($path) {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Lineup.php';
-            
             $name = trim($_POST['name'] ?? '');
             $formation = trim($_POST['formation'] ?? '4-3-3');
             
             if (!empty($name)) {
-                $db = (new Database())->getConnection();
                 $lineupModel = new Lineup($db);
                 $lineupId = $lineupModel->create($_SESSION['current_team']['id'], $name, $formation);
                 header('Location: /lineups/view?id=' . $lineupId);
@@ -591,11 +507,6 @@ switch ($path) {
             exit;
         }
         
-        require_once __DIR__ . '/../src/Database.php';
-        require_once __DIR__ . '/../src/models/Lineup.php';
-        require_once __DIR__ . '/../src/models/Player.php';
-        
-        $db = (new Database())->getConnection();
         $lineupModel = new Lineup($db);
         $playerModel = new Player($db);
         
@@ -616,10 +527,6 @@ switch ($path) {
             $input = json_decode(file_get_contents('php://input'), true);
             
             if ($input && isset($input['lineup_id']) && isset($input['positions'])) {
-                require_once __DIR__ . '/../src/Database.php';
-                require_once __DIR__ . '/../src/models/Lineup.php';
-                
-                $db = (new Database())->getConnection();
                 $lineupModel = new Lineup($db);
                 
                 // Verify ownership
@@ -638,12 +545,8 @@ switch ($path) {
 
     case '/lineups/delete':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            require_once __DIR__ . '/../src/Database.php';
-            require_once __DIR__ . '/../src/models/Lineup.php';
-            
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
-                $db = (new Database())->getConnection();
                 $lineupModel = new Lineup($db);
                 // Verify ownership
                 $lineup = $lineupModel->getById($id);
