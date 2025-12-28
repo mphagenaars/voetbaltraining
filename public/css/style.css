@@ -59,10 +59,14 @@ a:hover {
 }
 
 .brand {
-    font-weight: bold;
-    font-size: 1.25rem;
-    color: var(--text-main);
+    display: flex;
+    align-items: center;
     text-decoration: none;
+}
+
+.brand-logo {
+    height: 50px;
+    width: auto;
 }
 
 .main-footer {

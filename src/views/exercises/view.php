@@ -8,7 +8,7 @@
 
 <div class="card">
     <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
-        <div style="flex: 1; min-width: 300px;">
+        <div style="flex: 1; min-width: 240px;">
             <?php if (!empty($exercise['drawing_data'])): ?>
                 <div class="editor-wrapper" style="border: none;">
                     <div id="container" class="editor-canvas-container"></div>
@@ -26,7 +26,7 @@
             <?php endif; ?>
         </div>
 
-        <div style="flex: 1; min-width: 300px;">
+        <div style="flex: 1; min-width: 240px;">
             <div style="margin-bottom: 1.5rem;">
                 <h3>Beschrijving</h3>
                 <p><?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?></p>

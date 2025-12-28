@@ -19,6 +19,7 @@ $isEdit = isset($exercise);
                 <option value="Aanvallen" <?= ($exercise['team_task'] ?? '') === 'Aanvallen' ? 'selected' : '' ?>>Aanvallen</option>
                 <option value="Omschakelen" <?= ($exercise['team_task'] ?? '') === 'Omschakelen' ? 'selected' : '' ?>>Omschakelen</option>
                 <option value="Verdedigen" <?= ($exercise['team_task'] ?? '') === 'Verdedigen' ? 'selected' : '' ?>>Verdedigen</option>
+                <option value="Neutraal" <?= ($exercise['team_task'] ?? '') === 'Neutraal' ? 'selected' : '' ?>>Neutraal</option>
             </select>
         </div>
 

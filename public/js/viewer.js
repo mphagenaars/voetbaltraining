@@ -17,25 +17,34 @@ document.addEventListener('DOMContentLoaded', function() {
         V_HEIGHT = 400;
     }
     
-    const containerWidth = containerEl.offsetWidth;
-    const scale = containerWidth / V_WIDTH;
-    
-    // Adjust container height
-    const containerHeight = V_HEIGHT * scale;
-    containerEl.style.height = containerHeight + 'px';
-
     // Initialize Konva Stage
     const stage = new Konva.Stage({
         container: 'container',
-        width: V_WIDTH * scale,
-        height: V_HEIGHT * scale,
-        scale: { x: scale, y: scale }
+        width: V_WIDTH,
+        height: V_HEIGHT,
     });
 
     const fieldLayer = new Konva.Layer();
     const mainLayer = new Konva.Layer();
     stage.add(fieldLayer);
     stage.add(mainLayer);
+
+    function fitStage() {
+        const containerWidth = containerEl.offsetWidth;
+        if (!containerWidth) return;
+        
+        const scale = containerWidth / V_WIDTH;
+        
+        stage.width(V_WIDTH * scale);
+        stage.height(V_HEIGHT * scale);
+        stage.scale({ x: scale, y: scale });
+        
+        containerEl.style.height = (V_HEIGHT * scale) + 'px';
+    }
+
+    window.addEventListener('resize', fitStage);
+    // Initial fit
+    fitStage();
 
     // Draw Football Field
     function drawField() {
