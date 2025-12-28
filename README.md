@@ -33,6 +33,9 @@ Gebruik het meegeleverde script om alle benodigdheden (Apache, PHP, SQLite) te i
    sudo ./install.sh
    ```
 
+3. **Open de applicatie**
+   De applicatie draait nu op poort 80 (Apache). Ga in je browser naar `http://localhost` (of het IP-adres van de server).
+
 ### Handmatige Installatie (Development)
 
 1. **Clone de repository**

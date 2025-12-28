@@ -81,22 +81,43 @@ fi
 echo ""
 echo "🔐  [5/7] Rechten instellen..."
 
-# Eigenaarschap naar www-data (Apache user)
-chown -R $WEB_USER:$WEB_USER "$PROJECT_DIR/data"
-chown -R $WEB_USER:$WEB_USER "$PROJECT_DIR/public/uploads"
+# Huidige eigenaar van de bestanden
+OWNER=$(stat -c '%U' "$PROJECT_DIR")
 
-# Schrijfrechten voor groep
-chmod -R 775 "$PROJECT_DIR/data"
-chmod -R 775 "$PROJECT_DIR/public/uploads"
+# 1. Zorg dat www-data door de mappenstructuur heen kan (nodig als project in /home/user staat)
+# We geven 'others' execute rechten (+x) op alle bovenliggende mappen
+CURRENT_PATH="$PROJECT_DIR"
+while [ "$CURRENT_PATH" != "/" ]; do
+    chmod o+x "$CURRENT_PATH" 2>/dev/null || true
+    CURRENT_PATH=$(dirname "$CURRENT_PATH")
+done
+echo "    - Toegang tot bovenliggende mappen gecontroleerd."
 
-# Specifiek voor de database file als die al bestaat
+# 2. Zet eigenaarschap en permissies voor het project
+# We maken www-data eigenaar van de groep, en geven de groep lees/schrijf rechten waar nodig.
+# Bestanden: Owner=$OWNER, Group=$WEB_USER
+chown -R "$OWNER:$WEB_USER" "$PROJECT_DIR"
+
+# Standaard permissies: Owner=RWX, Group=R-X (lezen/execute), Others=---
+# Mappen
+find "$PROJECT_DIR" -type d -exec chmod 750 {} +
+# Bestanden
+find "$PROJECT_DIR" -type f -exec chmod 640 {} +
+
+# 3. Specifieke schrijfmappen (data en uploads)
+# Deze moeten schrijfbaar zijn voor de groep (www-data)
+chmod -R 770 "$PROJECT_DIR/data"
+chmod -R 770 "$PROJECT_DIR/public/uploads"
+
+# Database file specifiek (indien aanwezig)
 if [ -f "$PROJECT_DIR/data/database.sqlite" ]; then
-    chown $WEB_USER:$WEB_USER "$PROJECT_DIR/data/database.sqlite"
-    chmod 664 "$PROJECT_DIR/data/database.sqlite"
+    chmod 660 "$PROJECT_DIR/data/database.sqlite"
 fi
 
 # Zorg dat de map zelf ook schrijfbaar is voor SQLite (voor lock files etc)
-chown $WEB_USER:$WEB_USER "$PROJECT_DIR/data"
+chmod 770 "$PROJECT_DIR/data"
+
+echo "    - Bestandsrechten ingesteld (Owner: $OWNER, Group: $WEB_USER)."
 
 # 7. Security Hardening
 echo ""
@@ -121,6 +142,16 @@ echo ""
 echo "🔄  [7/7] Apache herstarten..."
 systemctl restart apache2
 
+# 9. Admin Gebruiker Aanmaken (Optioneel)
+echo ""
+echo "👤  [Optioneel] Admin gebruiker aanmaken"
+read -p "    Wil je nu een admin account aanmaken? (j/n) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Jj]$ ]]; then
+    echo "    Starten van create_admin.php als www-data..."
+    sudo -u www-data php scripts/create_admin.php
+fi
+
 echo ""
 echo "=========================================="
 echo "✅  Installatie Voltooid!"
@@ -129,7 +160,4 @@ echo "Je applicatie is nu bereikbaar."
 echo ""
 echo "⚠️  BELANGRIJK: Je verbinding is nog HTTP (onveilig)."
 echo "    Zorg z.s.m. voor een SSL certificaat (bijv. met Certbot)."
-echo ""
-echo "👉  Maak direct een admin gebruiker aan (als web user):"
-echo "    sudo -u www-data php scripts/create_admin.php"
 echo "=========================================="
