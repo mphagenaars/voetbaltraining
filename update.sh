@@ -55,6 +55,10 @@ chown -R "$OWNER:$WEB_USER" "$PROJECT_DIR"
 find "$PROJECT_DIR" -type d -exec chmod 750 {} +
 find "$PROJECT_DIR" -type f -exec chmod 640 {} +
 
+# Scripts uitvoerbaar maken
+chmod +x "$PROJECT_DIR/update.sh"
+chmod +x "$PROJECT_DIR/install.sh"
+
 # Specifieke schrijfmappen
 chmod -R 770 "$PROJECT_DIR/data"
 chmod -R 770 "$PROJECT_DIR/public/uploads"
