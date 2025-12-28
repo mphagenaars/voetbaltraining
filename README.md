@@ -36,6 +36,15 @@ Gebruik het meegeleverde script om alle benodigdheden (Apache, PHP, SQLite) te i
 3. **Open de applicatie**
    De applicatie draait nu op poort 80 (Apache). Ga in je browser naar `http://localhost` (of het IP-adres van de server).
 
+### Updates Installeren
+
+Wanneer er nieuwe features beschikbaar zijn, kun je de applicatie eenvoudig bijwerken zonder dataverlies:
+
+```bash
+sudo ./update.sh
+```
+Dit script haalt de laatste code op, werkt de database bij (indien nodig) en herstelt de bestandsrechten.
+
 ### Handmatige Installatie (Development)
 
 1. **Clone de repository**
