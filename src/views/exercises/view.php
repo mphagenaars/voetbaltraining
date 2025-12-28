@@ -81,5 +81,5 @@
 
 <?php if (!empty($exercise['drawing_data'])): ?>
 <script src="/js/konva.min.js"></script>
-<script src="/js/viewer.js"></script>
+<script src="/js/viewer.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/viewer.js') ?>"></script>
 <?php endif; ?>

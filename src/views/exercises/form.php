@@ -215,4 +215,4 @@ function updateNumber(id, change) {
 </script>
 
 <script src="/js/konva.min.js"></script>
-<script src="/js/editor.js"></script>
+<script src="/js/editor.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/editor.js') ?>"></script>
