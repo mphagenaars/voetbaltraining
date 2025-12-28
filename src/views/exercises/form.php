@@ -191,7 +191,8 @@ $isEdit = isset($exercise);
                                 <div class="draggable-item" draggable="true" data-type="cone_orange"><img src="/images/assets/cone_orange.svg" alt="Hoedje Oranje"></div>
                                 <div class="draggable-item" draggable="true" data-type="ball"><img src="/images/assets/ball.svg" alt="Bal"></div>
                                 <div class="draggable-item" draggable="true" data-type="goal"><img src="/images/assets/goal.svg" alt="Doel"></div>
-                                <div class="draggable-item" draggable="true" data-type="shirt_blue"><img src="/images/assets/shirt_blue.svg" alt="Speler Blauw"></div>
+                                <div class="draggable-item" draggable="true" data-type="shirt_red_black"><img src="/images/assets/shirt_red_black.svg" alt="Speler Rood/Zwart"></div>
+                                <div class="draggable-item" draggable="true" data-type="shirt_red_white"><img src="/images/assets/shirt_red_white.svg" alt="Speler Rood/Wit"></div>
                                 <div class="draggable-item" draggable="true" data-type="shirt_orange"><img src="/images/assets/shirt_orange.svg" alt="Speler Oranje"></div>
                                 <button type="button" id="tool-zone" class="tool-btn" title="Vak / Zone">
                                     <div style="width: 24px; height: 24px; border: 2px dashed #333; background: rgba(0,0,0,0.2);"></div>

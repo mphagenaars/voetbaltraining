@@ -1,0 +1,22 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="shirtClip">
+      <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" />
+    </clipPath>
+  </defs>
+  
+  <!-- Base White -->
+  <rect x="0" y="0" width="100" height="100" fill="white" clip-path="url(#shirtClip)"/>
+  
+  <!-- Right Half Red -->
+  <rect x="50" y="0" width="50" height="100" fill="#d32f2f" clip-path="url(#shirtClip)"/>
+  
+  <!-- Left Sleeve Red (Viewer's Left) -->
+  <polygon points="15,30 30,10 30,35 25,40" fill="#d32f2f" />
+  
+  <!-- Right Sleeve White (Viewer's Right) -->
+  <polygon points="70,10 85,30 75,40 70,35" fill="white" />
+
+  <!-- Outline -->
+  <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="none" stroke="#333333" stroke-width="2"/>
+</svg>

@@ -1,0 +1,9 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="striped-jersey" patternUnits="userSpaceOnUse" width="100" height="20">
+      <rect width="100" height="10" fill="black"/>
+      <rect y="10" width="100" height="10" fill="#d32f2f"/>
+    </pattern>
+  </defs>
+  <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="url(#striped-jersey)" stroke="white" stroke-width="2"/>
+</svg>
