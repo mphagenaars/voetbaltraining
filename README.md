@@ -41,6 +41,7 @@ Gebruik het meegeleverde script om alle benodigdheden (Apache, PHP, SQLite) te i
 Wanneer er nieuwe features beschikbaar zijn, kun je de applicatie eenvoudig bijwerken zonder dataverlies:
 
 ```bash
+chmod +x update.sh
 sudo ./update.sh
 ```
 Dit script haalt de laatste code op, werkt de database bij (indien nodig) en herstelt de bestandsrechten.
