@@ -58,10 +58,29 @@
                         <div><strong>Teamtaak:</strong> <?= htmlspecialchars($exercise['team_task']) ?></div>
                     <?php endif; ?>
                     <?php if (!empty($exercise['training_objective'])): ?>
-                        <div><strong>Doelstelling:</strong> <?= htmlspecialchars($exercise['training_objective']) ?></div>
+                        <div><strong>Doelstelling:</strong> 
+                        <?php
+                        $decoded = json_decode($exercise['training_objective'], true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            echo htmlspecialchars(implode(', ', $decoded));
+                        } else {
+                            echo htmlspecialchars($exercise['training_objective']);
+                        }
+                        ?>
+                        </div>
                     <?php endif; ?>
                     <?php if (!empty($exercise['football_action'])): ?>
-                        <div><strong>Voetbalhandeling:</strong> <?= htmlspecialchars($exercise['football_action']) ?></div>
+                        <div><strong>Voetbalhandeling:</strong> 
+                        <?php
+                        $decoded = json_decode($exercise['football_action'], true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $capitalized = array_map('ucfirst', $decoded);
+                            echo htmlspecialchars(implode(', ', $capitalized));
+                        } else {
+                            echo htmlspecialchars(ucfirst($exercise['football_action']));
+                        }
+                        ?>
+                        </div>
                     <?php endif; ?>
                 </div>
 

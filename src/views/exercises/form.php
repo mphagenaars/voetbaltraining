@@ -23,53 +23,97 @@ $isEdit = isset($exercise);
         </div>
 
         <div class="form-group">
-            <label for="training_objective">Doelstelling</label>
-            <select id="training_objective" name="training_objective">
-                <option value="">Selecteer doelstelling</option>
-                <?php
-                $objectives = [
-                    'Creëren van kansen',
-                    'Dieptespel in opbouw verbeteren',
-                    'Positiespel in opbouw verbeteren',
-                    'Scoren verbeteren',
-                    'Uitspelen van één tegen één situatie verbeteren',
-                    'Omschakelen bij veroveren van de bal verbeteren',
-                    'Omschakelen op moment van balverlies verbeteren',
-                    'Storen en veroveren van de bal verbeteren',
-                    'Verdedigen van dieptespel verbeteren',
-                    'Verdedigen van één tegen één situatie verbeteren',
-                    'Verdedigen wanneer de tegenstander kansen creëert verbeteren',
-                    'Voorkomen van doelpunten verbeteren'
-                ];
-                foreach ($objectives as $obj) {
-                    $selected = ($exercise['training_objective'] ?? '') === $obj ? 'selected' : '';
-                    echo "<option value=\"" . htmlspecialchars($obj) . "\" $selected>" . htmlspecialchars($obj) . "</option>";
-                }
-                ?>
-            </select>
+            <label>Doelstelling</label>
+            <div class="multi-select-wrapper" id="wrapper-objective">
+                <div class="multi-select-trigger" onclick="toggleMultiSelect('wrapper-objective')">
+                    Selecteer doelstelling(en)
+                </div>
+                <div class="multi-select-options">
+                    <?php
+                    $objectives = [
+                        'Creëren van kansen',
+                        'Dieptespel in opbouw verbeteren',
+                        'Positiespel in opbouw verbeteren',
+                        'Scoren verbeteren',
+                        'Uitspelen van één tegen één situatie verbeteren',
+                        'Omschakelen bij veroveren van de bal verbeteren',
+                        'Omschakelen op moment van balverlies verbeteren',
+                        'Storen en veroveren van de bal verbeteren',
+                        'Verdedigen van dieptespel verbeteren',
+                        'Verdedigen van één tegen één situatie verbeteren',
+                        'Verdedigen wanneer de tegenstander kansen creëert verbeteren',
+                        'Voorkomen van doelpunten verbeteren'
+                    ];
+                    
+                    $currentObjectives = [];
+                    if (!empty($exercise['training_objective'])) {
+                        $decoded = json_decode($exercise['training_objective'], true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $currentObjectives = $decoded;
+                        } else {
+                            $currentObjectives = [$exercise['training_objective']];
+                        }
+                    }
+
+                    foreach ($objectives as $obj) {
+                        $checked = in_array($obj, $currentObjectives) ? 'checked' : '';
+                        echo '<label class="multi-select-option">';
+                        echo '<input type="checkbox" name="training_objective[]" value="' . htmlspecialchars($obj) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-objective\')"> ';
+                        echo htmlspecialchars($obj);
+                        echo '</label>';
+                    }
+                    ?>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="football_action">Voetbalhandeling</label>
-            <select id="football_action" name="football_action">
-                <option value="">Selecteer voetbalhandeling</option>
-                <?php
-                $actions = [
-                    'kijken',
-                    'dribbelen',
-                    'passen',
-                    'schieten',
-                    'cheeta',
-                    'brug maken',
-                    'lijntje doorknippen',
-                    'jagen'
-                ];
-                foreach ($actions as $action) {
-                    $selected = ($exercise['football_action'] ?? '') === $action ? 'selected' : '';
-                    echo "<option value=\"" . htmlspecialchars($action) . "\" $selected>" . htmlspecialchars($action) . "</option>";
-                }
-                ?>
-            </select>
+            <label>Voetbalhandeling</label>
+            <div class="multi-select-wrapper" id="wrapper-action">
+                <div class="multi-select-trigger" onclick="toggleMultiSelect('wrapper-action')">
+                    Selecteer voetbalhandeling(en)
+                </div>
+                <div class="multi-select-options">
+                    <?php
+                    $actions = [
+                        'Kijken',
+                        'Dribbelen',
+                        'Passen',
+                        'Schieten',
+                        'Cheeta',
+                        'Brug maken',
+                        'Lijntje doorknippen',
+                        'Jagen'
+                    ];
+
+                    $currentActions = [];
+                    if (!empty($exercise['football_action'])) {
+                        $decoded = json_decode($exercise['football_action'], true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $currentActions = $decoded;
+                        } else {
+                            $currentActions = [$exercise['football_action']];
+                        }
+                    }
+
+                    foreach ($actions as $action) {
+                        // Case-insensitive check for legacy data support
+                        $isChecked = false;
+                        foreach ($currentActions as $current) {
+                            if (strtolower($current) === strtolower($action)) {
+                                $isChecked = true;
+                                break;
+                            }
+                        }
+                        $checked = $isChecked ? 'checked' : '';
+                        echo '<label class="multi-select-option">';
+                        echo '<input type="checkbox" name="football_action[]" value="' . htmlspecialchars($action) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-action\')"> ';
+                        echo htmlspecialchars($action);
+                        echo '</label>';
+                    }
+                    ?>
+                </div>
+            </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem;">
@@ -216,3 +260,53 @@ function updateNumber(id, change) {
 
 <script src="/js/konva.min.js"></script>
 <script src="/js/editor.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/editor.js') ?>"></script>
+
+<script>
+function toggleMultiSelect(id) {
+    const wrapper = document.getElementById(id);
+    const options = wrapper.querySelector('.multi-select-options');
+    const allOptions = document.querySelectorAll('.multi-select-options');
+    
+    // Close other open dropdowns
+    allOptions.forEach(opt => {
+        if (opt !== options) {
+            opt.classList.remove('open');
+        }
+    });
+    
+    options.classList.toggle('open');
+}
+
+function updateTrigger(id) {
+    const wrapper = document.getElementById(id);
+    const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
+    const trigger = wrapper.querySelector('.multi-select-trigger');
+    
+    if (checkboxes.length > 0) {
+        const values = Array.from(checkboxes).map(cb => cb.parentElement.textContent.trim());
+        trigger.textContent = values.join(', ');
+    } else {
+        // Default text based on ID
+        if (id === 'wrapper-objective') {
+            trigger.textContent = 'Selecteer doelstelling(en)';
+        } else if (id === 'wrapper-action') {
+            trigger.textContent = 'Selecteer voetbalhandeling(en)';
+        }
+    }
+}
+
+// Close when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.multi-select-wrapper')) {
+        document.querySelectorAll('.multi-select-options').forEach(opt => {
+            opt.classList.remove('open');
+        });
+    }
+});
+
+// Initialize triggers on load
+document.addEventListener('DOMContentLoaded', function() {
+    updateTrigger('wrapper-objective');
+    updateTrigger('wrapper-action');
+});
+</script>

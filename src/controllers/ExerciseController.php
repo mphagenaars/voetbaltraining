@@ -30,8 +30,8 @@ class ExerciseController {
             $description = $_POST['description'] ?? '';
             $variation = $_POST['variation'] ?? null;
             $teamTask = $_POST['team_task'] ?? null;
-            $trainingObjective = $_POST['training_objective'] ?? null;
-            $footballAction = $_POST['football_action'] ?? null;
+            $trainingObjective = isset($_POST['training_objective']) ? json_encode($_POST['training_objective']) : null;
+            $footballAction = isset($_POST['football_action']) ? json_encode($_POST['football_action']) : null;
             $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
             $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
@@ -94,8 +94,8 @@ class ExerciseController {
             $description = $_POST['description'] ?? '';
             $variation = $_POST['variation'] ?? null;
             $teamTask = $_POST['team_task'] ?? null;
-            $trainingObjective = $_POST['training_objective'] ?? null;
-            $footballAction = $_POST['football_action'] ?? null;
+            $trainingObjective = isset($_POST['training_objective']) ? json_encode($_POST['training_objective']) : null;
+            $footballAction = isset($_POST['football_action']) ? json_encode($_POST['football_action']) : null;
             $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
             $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;

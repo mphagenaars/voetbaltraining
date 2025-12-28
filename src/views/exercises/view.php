@@ -46,11 +46,34 @@
                 </div>
                 <div>
                     <strong>Doelstelling:</strong><br>
-                    <?= !empty($exercise['training_objective']) ? htmlspecialchars($exercise['training_objective']) : '-' ?>
+                    <?php
+                    if (!empty($exercise['training_objective'])) {
+                        $decoded = json_decode($exercise['training_objective'], true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            echo htmlspecialchars(implode(', ', $decoded));
+                        } else {
+                            echo htmlspecialchars($exercise['training_objective']);
+                        }
+                    } else {
+                        echo '-';
+                    }
+                    ?>
                 </div>
                 <div>
                     <strong>Voetbalhandeling:</strong><br>
-                    <?= !empty($exercise['football_action']) ? htmlspecialchars($exercise['football_action']) : '-' ?>
+                    <?php
+                    if (!empty($exercise['football_action'])) {
+                        $decoded = json_decode($exercise['football_action'], true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $capitalized = array_map('ucfirst', $decoded);
+                            echo htmlspecialchars(implode(', ', $capitalized));
+                        } else {
+                            echo htmlspecialchars(ucfirst($exercise['football_action']));
+                        }
+                    } else {
+                        echo '-';
+                    }
+                    ?>
                 </div>
                 <div>
                     <strong>Aantal spelers:</strong><br>
