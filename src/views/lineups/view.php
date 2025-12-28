@@ -18,7 +18,7 @@
 
     <div class="lineup-editor">
         <div class="field-container">
-            <div id="football-field" class="football-field">
+            <div id="football-field" class="football-field" data-formation="<?= htmlspecialchars($lineup['formation']) ?>">
                 <!-- Field Markings -->
                 <div class="field-line center-line"></div>
                 <div class="field-circle center-circle"></div>
@@ -264,6 +264,23 @@
     text-shadow: none;
 }
 
+.position-slot {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* Let clicks pass through to field */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: bold;
+    font-family: sans-serif;
+    z-index: 0;
+}
+
 </style>
 
 <script>
@@ -272,6 +289,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const field = document.getElementById('football-field');
     const saveBtn = document.getElementById('save-lineup');
     let draggedItem = null;
+
+    // Define formations and their slot coordinates (in percentages)
+    const formations = {
+        '6-vs-6': [
+            { x: 50, y: 90, label: 'K' },  // Keeper (Vic)
+            { x: 15, y: 65, label: 'V' },  // Linksachter (Raúl)
+            { x: 85, y: 65, label: 'V' },  // Rechtsachter (Laurens)
+            { x: 50, y: 48, label: 'M' },  // Middenvelder (Sabir)
+            { x: 15, y: 20, label: 'A' },  // Linksvoor (Luke)
+            { x: 85, y: 20, label: 'A' }   // Rechtsvoor (Deniz)
+        ],
+        // Placeholder for other formations
+        '8-vs-8': [],
+        '11-vs-11': []
+    };
+
+    // Render slots for current formation
+    const currentFormation = field.dataset.formation;
+    const slots = formations[currentFormation] || [];
+    
+    slots.forEach(slot => {
+        const slotEl = document.createElement('div');
+        slotEl.className = 'position-slot';
+        slotEl.style.left = slot.x + '%';
+        slotEl.style.top = slot.y + '%';
+        slotEl.textContent = slot.label;
+        // Insert before players so players appear on top
+        field.insertBefore(slotEl, field.firstChild);
+    });
 
     // Drag Events
     document.addEventListener('dragstart', (e) => {
@@ -312,9 +358,37 @@ document.addEventListener('DOMContentLoaded', () => {
         let xPercent = (x / rect.width) * 100;
         let yPercent = (y / rect.height) * 100;
 
-        // Snap to grid (nearest 5%) to help alignment
-        xPercent = Math.round(xPercent / 5) * 5;
-        yPercent = Math.round(yPercent / 5) * 5;
+        // Snap to nearest slot if within range (e.g., 10%)
+        let snapped = false;
+        const snapRange = 10; // Distance in percentage to trigger snap
+
+        if (slots.length > 0) {
+            let closestSlot = null;
+            let minDistance = Infinity;
+
+            slots.forEach(slot => {
+                const dx = xPercent - slot.x;
+                const dy = yPercent - slot.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestSlot = slot;
+                }
+            });
+
+            if (closestSlot && minDistance <= snapRange) {
+                xPercent = closestSlot.x;
+                yPercent = closestSlot.y;
+                snapped = true;
+            }
+        }
+
+        // If not snapped to a slot, snap to grid (nearest 5%)
+        if (!snapped) {
+            xPercent = Math.round(xPercent / 5) * 5;
+            yPercent = Math.round(yPercent / 5) * 5;
+        }
 
         // If item comes from sidebar, move it to field
         if (draggedItem.parentElement === playersList) {
