@@ -35,6 +35,7 @@ class ExerciseController {
             $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
             $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
+            $fieldType = $_POST['field_type'] ?? 'portrait';
             
             $imagePath = null;
 
@@ -60,7 +61,7 @@ class ExerciseController {
             
             if (!empty($title)) {
                 $exerciseModel = new Exercise($this->pdo);
-                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation);
+                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation, $fieldType);
                 header('Location: /exercises');
                 exit;
             }
@@ -98,6 +99,7 @@ class ExerciseController {
             $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
             $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
+            $fieldType = $_POST['field_type'] ?? 'portrait';
             
             $imagePath = null;
 
@@ -122,7 +124,7 @@ class ExerciseController {
             }
             
             if (!empty($title)) {
-                $exerciseModel->update($id, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation);
+                $exerciseModel->update($id, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation, $fieldType);
                 header('Location: /exercises');
                 exit;
             }

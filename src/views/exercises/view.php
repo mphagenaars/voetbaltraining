@@ -14,6 +14,7 @@
                     <div id="container" class="editor-canvas-container"></div>
                 </div>
                 <input type="hidden" id="drawing_data" value="<?= htmlspecialchars($exercise['drawing_data']) ?>">
+                <input type="hidden" id="field_type" value="<?= htmlspecialchars($exercise['field_type'] ?? 'portrait') ?>">
             <?php elseif (!empty($exercise['image_path'])): ?>
                 <div style="text-align: center;">
                     <img src="/uploads/<?= htmlspecialchars($exercise['image_path']) ?>" alt="<?= htmlspecialchars($exercise['title']) ?>" style="max-width: 100%; border-radius: 4px;">

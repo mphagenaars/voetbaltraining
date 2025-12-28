@@ -122,22 +122,16 @@ $isEdit = isset($exercise);
                         <div class="toolbar-group">
                             <div class="group-title">Veldindeling</div>
                             <div class="group-items">
+                                <button type="button" id="btn-field-square" class="tool-btn" title="Vierkant veld">
+                                    <div style="width: 26px; height: 26px; background: #4CAF50; border: 1px solid #fff; position: relative;">
+                                    </div>
+                                </button>
                                 <button type="button" id="btn-field-portrait" class="tool-btn" title="Heel veld (staand)">
                                     <div style="width: 20px; height: 30px; background: #4CAF50; border: 1px solid #fff; position: relative;">
-                                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #fff;"></div>
-                                        <div style="position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; border: 1px solid #fff; border-radius: 50%; transform: translate(-50%, -50%);"></div>
                                     </div>
                                 </button>
                                 <button type="button" id="btn-field-landscape" class="tool-btn" title="Heel veld (liggend)">
                                     <div style="width: 30px; height: 20px; background: #4CAF50; border: 1px solid #fff; position: relative;">
-                                        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #fff;"></div>
-                                        <div style="position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; border: 1px solid #fff; border-radius: 50%; transform: translate(-50%, -50%);"></div>
-                                    </div>
-                                </button>
-                                <button type="button" id="btn-field-square" class="tool-btn" title="Half veld">
-                                    <div style="width: 26px; height: 26px; background: #4CAF50; border: 1px solid #fff; position: relative;">
-                                        <div style="position: absolute; bottom: 0; left: 50%; width: 10px; height: 5px; border: 1px solid #fff; transform: translateX(-50%); border-bottom: none;"></div>
-                                        <div style="position: absolute; top: -8px; left: 50%; width: 14px; height: 14px; border: 1px solid #fff; border-radius: 50%; transform: translateX(-50%);"></div>
                                     </div>
                                 </button>
                             </div>
@@ -198,6 +192,7 @@ $isEdit = isset($exercise);
             </div>
             <input type="hidden" name="drawing_data" id="drawing_data" value="<?= htmlspecialchars($exercise['drawing_data'] ?? '') ?>">
             <input type="hidden" name="drawing_image" id="drawing_image">
+            <input type="hidden" name="field_type" id="field_type" value="<?= htmlspecialchars($exercise['field_type'] ?? 'square') ?>">
         </div>
 
         <div style="margin-top: 1rem;">

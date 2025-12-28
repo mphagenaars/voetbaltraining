@@ -4,7 +4,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Logical dimensions (Design resolution)
     let V_WIDTH = 400;
     let V_HEIGHT = 600;
-    let currentFieldType = 'portrait';
+    
+    const fieldTypeInput = document.getElementById('field_type');
+    let currentFieldType = fieldTypeInput ? fieldTypeInput.value : 'square';
+
+    if (currentFieldType === 'landscape') {
+        V_WIDTH = 600;
+        V_HEIGHT = 400;
+    } else if (currentFieldType === 'square') {
+        V_WIDTH = 400;
+        V_HEIGHT = 400;
+    }
 
     // Calculate scale to fit container width
     const containerWidth = containerEl.offsetWidth;
@@ -69,40 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 ...linePaint
             }));
 
-            // Center line
-            fieldLayer.add(new Konva.Line({
-                points: [padding, V_HEIGHT / 2, V_WIDTH - padding, V_HEIGHT / 2],
-                ...linePaint
-            }));
-
-            // Center circle
-            fieldLayer.add(new Konva.Circle({
-                x: V_WIDTH / 2,
-                y: V_HEIGHT / 2,
-                radius: 40,
-                ...linePaint
-            }));
-
-            // Penalty areas
-            const boxWidth = 160;
-            const boxDepth = 60;
-            
-            fieldLayer.add(new Konva.Rect({
-                x: (V_WIDTH - boxWidth) / 2,
-                y: padding,
-                width: boxWidth,
-                height: boxDepth,
-                ...linePaint
-            }));
-
-            fieldLayer.add(new Konva.Rect({
-                x: (V_WIDTH - boxWidth) / 2,
-                y: V_HEIGHT - padding - boxDepth,
-                width: boxWidth,
-                height: boxDepth,
-                ...linePaint
-            }));
-
         } else if (currentFieldType === 'landscape') {
             // Outer lines
             fieldLayer.add(new Konva.Rect({
@@ -110,40 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 y: padding,
                 width: V_WIDTH - 2 * padding,
                 height: V_HEIGHT - 2 * padding,
-                ...linePaint
-            }));
-
-            // Center line
-            fieldLayer.add(new Konva.Line({
-                points: [V_WIDTH / 2, padding, V_WIDTH / 2, V_HEIGHT - padding],
-                ...linePaint
-            }));
-
-            // Center circle
-            fieldLayer.add(new Konva.Circle({
-                x: V_WIDTH / 2,
-                y: V_HEIGHT / 2,
-                radius: 40,
-                ...linePaint
-            }));
-
-            // Penalty areas
-            const boxWidth = 60;
-            const boxHeight = 160;
-            
-            fieldLayer.add(new Konva.Rect({
-                x: padding,
-                y: (V_HEIGHT - boxHeight) / 2,
-                width: boxWidth,
-                height: boxHeight,
-                ...linePaint
-            }));
-
-            fieldLayer.add(new Konva.Rect({
-                x: V_WIDTH - padding - boxWidth,
-                y: (V_HEIGHT - boxHeight) / 2,
-                width: boxWidth,
-                height: boxHeight,
                 ...linePaint
             }));
 
@@ -157,34 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 height: V_HEIGHT - 2 * padding,
                 ...linePaint
             }));
-
-            // Penalty area (bottom)
-            const boxWidth = 160;
-            const boxDepth = 60;
-            
-            fieldLayer.add(new Konva.Rect({
-                x: (V_WIDTH - boxWidth) / 2,
-                y: V_HEIGHT - padding - boxDepth,
-                width: boxWidth,
-                height: boxDepth,
-                ...linePaint
-            }));
-
-            // Center circle arc (top)
-            fieldLayer.add(new Konva.Arc({
-                x: V_WIDTH / 2,
-                y: padding,
-                innerRadius: 40,
-                outerRadius: 40,
-                angle: 180,
-                rotation: 0,
-                ...linePaint
-            }));
-            
-            // Close the arc line? No, Arc is a shape. We want a line.
-            // Konva.Arc draws a pie slice if closed.
-            // Let's use Konva.Path or just Arc with stroke.
-            // Actually, for a center circle at the top line, we need a half circle.
         }
         
         fieldLayer.batchDraw();
@@ -192,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateFieldLayout(type) {
         currentFieldType = type;
+        if (fieldTypeInput) fieldTypeInput.value = type;
         
         if (type === 'portrait') {
             V_WIDTH = 400;

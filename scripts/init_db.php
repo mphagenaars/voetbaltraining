@@ -70,6 +70,10 @@ try {
         $db->exec("ALTER TABLE exercises ADD COLUMN max_players INTEGER");
         echo "- Kolom 'max_players' toegevoegd aan 'exercises'.\n";
     }
+    if (!in_array('field_type', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN field_type TEXT DEFAULT 'portrait'");
+        echo "- Kolom 'field_type' toegevoegd aan 'exercises'.\n";
+    }
     if (!in_array('variation', $columns)) {
         $db->exec("ALTER TABLE exercises ADD COLUMN variation TEXT");
         echo "- Kolom 'variation' toegevoegd aan 'exercises'.\n";

@@ -2,12 +2,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const containerEl = document.getElementById('container');
     if (!containerEl) return;
 
+    const fieldTypeInput = document.getElementById('field_type');
+    const currentFieldType = fieldTypeInput ? fieldTypeInput.value : 'square';
+
     // Logical resolution (matches editor.js)
-    const V_WIDTH = 400;
-    const V_HEIGHT = 600;
+    let V_WIDTH = 400;
+    let V_HEIGHT = 600;
+
+    if (currentFieldType === 'landscape') {
+        V_WIDTH = 600;
+        V_HEIGHT = 400;
+    } else if (currentFieldType === 'square') {
+        V_WIDTH = 400;
+        V_HEIGHT = 400;
+    }
     
     const containerWidth = containerEl.offsetWidth;
     const scale = containerWidth / V_WIDTH;
+    
+    // Adjust container height
+    const containerHeight = V_HEIGHT * scale;
+    containerEl.style.height = containerHeight + 'px';
 
     // Initialize Konva Stage
     const stage = new Konva.Stage({
@@ -40,51 +55,38 @@ document.addEventListener('DOMContentLoaded', function() {
             strokeWidth: 2
         };
 
-        // Outer lines
         const padding = 20;
-        fieldLayer.add(new Konva.Rect({
-            x: padding,
-            y: padding,
-            width: V_WIDTH - 2 * padding,
-            height: V_HEIGHT - 2 * padding,
-            ...linePaint
-        }));
 
-        // Center line (Horizontal for portrait)
-        fieldLayer.add(new Konva.Line({
-            points: [padding, V_HEIGHT / 2, V_WIDTH - padding, V_HEIGHT / 2],
-            ...linePaint
-        }));
+        if (currentFieldType === 'portrait') {
+            // Outer lines
+            fieldLayer.add(new Konva.Rect({
+                x: padding,
+                y: padding,
+                width: V_WIDTH - 2 * padding,
+                height: V_HEIGHT - 2 * padding,
+                ...linePaint
+            }));
 
-        // Center circle
-        fieldLayer.add(new Konva.Circle({
-            x: V_WIDTH / 2,
-            y: V_HEIGHT / 2,
-            radius: 40,
-            ...linePaint
-        }));
+        } else if (currentFieldType === 'landscape') {
+            // Outer lines
+            fieldLayer.add(new Konva.Rect({
+                x: padding,
+                y: padding,
+                width: V_WIDTH - 2 * padding,
+                height: V_HEIGHT - 2 * padding,
+                ...linePaint
+            }));
 
-        // Penalty areas (simplified)
-        const boxWidth = 160; // Wider for portrait proportion
-        const boxDepth = 60;
-        
-        // Top Goal Area
-        fieldLayer.add(new Konva.Rect({
-            x: (V_WIDTH - boxWidth) / 2,
-            y: padding,
-            width: boxWidth,
-            height: boxDepth,
-            ...linePaint
-        }));
-
-        // Bottom Goal Area
-        fieldLayer.add(new Konva.Rect({
-            x: (V_WIDTH - boxWidth) / 2,
-            y: V_HEIGHT - padding - boxDepth,
-            width: boxWidth,
-            height: boxDepth,
-            ...linePaint
-        }));
+        } else if (currentFieldType === 'square') {
+            // Outer lines
+            fieldLayer.add(new Konva.Rect({
+                x: padding,
+                y: padding,
+                width: V_WIDTH - 2 * padding,
+                height: V_HEIGHT - 2 * padding,
+                ...linePaint
+            }));
+        }
     }
 
     drawField();
