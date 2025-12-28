@@ -5,6 +5,10 @@
           <rect width="100" height="10" fill="black"/>
           <rect y="10" width="100" height="10" fill="#d32f2f"/>
         </pattern>
+        <pattern id="blue-jersey" patternUnits="userSpaceOnUse" width="100" height="20">
+          <rect width="100" height="10" fill="#1565c0"/>
+          <rect y="10" width="100" height="10" fill="#1976d2"/>
+        </pattern>
       </defs>
     </svg>
     <div class="header-actions">
@@ -207,11 +211,22 @@
 
 .player-token.on-field {
     position: absolute;
-    transform: translate(-50%, -50%);
+    /* Center on the shirt (50px height), ignoring the name label below */
+    transform: translate(-50%, -25px);
+}
+
+.player-token.on-field:active {
+    /* Maintain position and add scale */
+    transform: translate(-50%, -25px) scale(1.1);
 }
 
 .player-jersey {
     filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+
+/* Goalkeeper Jersey Override */
+.player-token.is-goalkeeper path {
+    fill: url(#blue-jersey) !important;
 }
 
 .player-name {
@@ -266,19 +281,27 @@
 
 .position-slot {
     position: absolute;
-    width: 40px;
-    height: 40px;
-    border: 2px dashed rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
+    width: 50px; /* Match player token size */
+    height: 50px;
     transform: translate(-50%, -50%);
-    pointer-events: none; /* Let clicks pass through to field */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: bold;
-    font-family: sans-serif;
+    pointer-events: none;
     z-index: 0;
+    opacity: 0.6;
+}
+
+.position-slot path {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.8);
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+}
+
+.position-slot text {
+    fill: rgba(255, 255, 255, 0.8);
+    font-family: Arial;
+    font-size: 30px;
+    font-weight: bold;
+    text-anchor: middle;
 }
 
 </style>
@@ -291,16 +314,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedItem = null;
 
     // Define formations and their slot coordinates (in percentages)
+    // Coordinates are center points of the player token
     const formations = {
         '6-vs-6': [
-            { x: 50, y: 90, label: 'K' },  // Keeper (Vic)
-            { x: 15, y: 65, label: 'V' },  // Linksachter (Raúl)
-            { x: 85, y: 65, label: 'V' },  // Rechtsachter (Laurens)
-            { x: 50, y: 48, label: 'M' },  // Middenvelder (Sabir)
-            { x: 15, y: 20, label: 'A' },  // Linksvoor (Luke)
-            { x: 85, y: 20, label: 'A' }   // Rechtsvoor (Deniz)
+            { x: 50, y: 88, label: 'K' },  // Keeper
+            { x: 20, y: 65, label: 'V' },  // Linksachter
+            { x: 80, y: 65, label: 'V' },  // Rechtsachter
+            { x: 50, y: 45, label: 'M' },  // Middenvelder
+            { x: 20, y: 20, label: 'A' },  // Linksvoor
+            { x: 80, y: 20, label: 'A' }   // Rechtsvoor
         ],
-        // Placeholder for other formations
         '8-vs-8': [],
         '11-vs-11': []
     };
@@ -314,9 +337,33 @@ document.addEventListener('DOMContentLoaded', () => {
         slotEl.className = 'position-slot';
         slotEl.style.left = slot.x + '%';
         slotEl.style.top = slot.y + '%';
-        slotEl.textContent = slot.label;
-        // Insert before players so players appear on top
+        
+        // Create SVG for the slot (same path as player but styled via CSS)
+        slotEl.innerHTML = `
+            <svg viewBox="0 0 100 100" width="50" height="50">
+                <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" />
+                <text x="50" y="65">${slot.label}</text>
+            </svg>
+        `;
+        
         field.insertBefore(slotEl, field.firstChild);
+    });
+
+    // Helper to check if a player is on the keeper slot
+    const checkGoalkeeper = (player, x, y) => {
+        const keeperSlot = slots.find(s => s.label === 'K');
+        if (keeperSlot && Math.abs(x - keeperSlot.x) < 1 && Math.abs(y - keeperSlot.y) < 1) {
+            player.classList.add('is-goalkeeper');
+        } else {
+            player.classList.remove('is-goalkeeper');
+        }
+    };
+
+    // Check initial positions
+    field.querySelectorAll('.player-token').forEach(player => {
+        const x = parseFloat(player.style.left);
+        const y = parseFloat(player.style.top);
+        checkGoalkeeper(player, x, y);
     });
 
     // Drag Events
@@ -360,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Snap to nearest slot if within range (e.g., 10%)
         let snapped = false;
-        const snapRange = 10; // Distance in percentage to trigger snap
+        const snapRange = 15; // Increased range for easier snapping on mobile
 
         if (slots.length > 0) {
             let closestSlot = null;
@@ -369,6 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
             slots.forEach(slot => {
                 const dx = xPercent - slot.x;
                 const dy = yPercent - slot.y;
+                // Simple Euclidean distance
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 
                 if (distance < minDistance) {
@@ -378,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (closestSlot && minDistance <= snapRange) {
+                // SNAP EXACTLY to the slot coordinates
                 xPercent = closestSlot.x;
                 yPercent = closestSlot.y;
                 snapped = true;
@@ -399,6 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update position
         draggedItem.style.left = xPercent + '%';
         draggedItem.style.top = yPercent + '%';
+        
+        // Check if player is now a goalkeeper
+        checkGoalkeeper(draggedItem, xPercent, yPercent);
     });
 
     // Bench Drop Zone (to remove from field)
@@ -413,6 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (draggedItem.parentElement === field) {
             draggedItem.classList.remove('on-field');
+            draggedItem.classList.remove('is-goalkeeper'); // Remove keeper jersey
             draggedItem.style.left = '';
             draggedItem.style.top = '';
             playersList.appendChild(draggedItem);
