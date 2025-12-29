@@ -29,13 +29,28 @@ class Exercise extends Model {
 
 
 
-    public function search(int $teamId, ?string $query = null): array {
+    public function search(int $teamId, ?string $query = null, ?string $teamTask = null, ?string $trainingObjective = null, ?string $footballAction = null): array {
         $sql = "SELECT DISTINCT e.* FROM exercises e WHERE e.team_id = :team_id";
         $params = [':team_id' => $teamId];
         
         if ($query) {
             $sql .= " AND (e.title LIKE :query OR e.description LIKE :query)";
             $params[':query'] = '%' . $query . '%';
+        }
+
+        if ($teamTask) {
+            $sql .= " AND e.team_task = :team_task";
+            $params[':team_task'] = $teamTask;
+        }
+
+        if ($trainingObjective) {
+            $sql .= " AND e.training_objective LIKE :training_objective";
+            $params[':training_objective'] = '%' . $trainingObjective . '%';
+        }
+
+        if ($footballAction) {
+            $sql .= " AND e.football_action LIKE :football_action";
+            $params[':football_action'] = '%' . $footballAction . '%';
         }
         
         $sql .= " ORDER BY e.created_at DESC";
@@ -83,5 +98,37 @@ class Exercise extends Model {
         $stmt->execute($params);
     }
 
+    public static function getTeamTasks(): array {
+        return ['Aanvallen', 'Omschakelen', 'Verdedigen', 'Neutraal'];
+    }
 
+    public static function getObjectives(): array {
+        return [
+            'Creëren van kansen',
+            'Dieptespel in opbouw verbeteren',
+            'Positiespel in opbouw verbeteren',
+            'Scoren verbeteren',
+            'Uitspelen van één tegen één situatie verbeteren',
+            'Omschakelen bij veroveren van de bal verbeteren',
+            'Omschakelen op moment van balverlies verbeteren',
+            'Storen en veroveren van de bal verbeteren',
+            'Verdedigen van dieptespel verbeteren',
+            'Verdedigen van één tegen één situatie verbeteren',
+            'Verdedigen wanneer de tegenstander kansen creëert verbeteren',
+            'Voorkomen van doelpunten verbeteren'
+        ];
+    }
+
+    public static function getFootballActions(): array {
+        return [
+            'Kijken',
+            'Dribbelen',
+            'Passen',
+            'Schieten',
+            'Cheeta',
+            'Brug maken',
+            'Lijntje doorknippen',
+            'Jagen'
+        ];
+    }
 }

@@ -11,8 +11,23 @@ class ExerciseController {
         }
         $exerciseModel = new Exercise($this->pdo);
         $query = $_GET['q'] ?? null;
-        $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query);
-        View::render('exercises/index', ['exercises' => $exercises, 'query' => $query, 'pageTitle' => 'Oefenstof - Trainer Bobby']);
+        $teamTask = $_GET['team_task'] ?? null;
+        $trainingObjective = $_GET['training_objective'] ?? null;
+        $footballAction = $_GET['football_action'] ?? null;
+
+        if ($teamTask === '') $teamTask = null;
+        if ($trainingObjective === '') $trainingObjective = null;
+        if ($footballAction === '') $footballAction = null;
+
+        $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query, $teamTask, $trainingObjective, $footballAction);
+        View::render('exercises/index', [
+            'exercises' => $exercises, 
+            'query' => $query, 
+            'teamTask' => $teamTask,
+            'trainingObjective' => $trainingObjective,
+            'footballAction' => $footballAction,
+            'pageTitle' => 'Oefenstof - Trainer Bobby'
+        ]);
     }
 
     public function create(): void {

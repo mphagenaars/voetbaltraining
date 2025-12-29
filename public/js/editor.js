@@ -222,49 +222,59 @@ document.addEventListener('DOMContentLoaded', function() {
         const pos = getPointerPosition();
 
         if (itemType) {
-            Konva.Image.fromURL(`/images/assets/${itemType}.svg`, function(image) {
-                let scaleX, scaleY;
-                
-                if (itemType.startsWith('shirt')) {
-                    // Player: Larger and wider
-                    const targetHeight = 50;
-                    const baseScale = targetHeight / image.height();
-                    scaleX = baseScale * 1.3; // 30% wider
-                    scaleY = baseScale;
-                } else if (itemType === 'goal') {
-                    // Goal: Larger
-                    const targetWidth = 80;
-                    const baseScale = targetWidth / image.width();
-                    scaleX = baseScale;
-                    scaleY = baseScale;
-                } else if (itemType === 'ball') {
-                    // Ball: Smaller relative to others
-                    const targetSize = 20;
-                    const baseScale = targetSize / Math.max(image.width(), image.height());
-                    scaleX = baseScale;
-                    scaleY = baseScale;
-                } else {
-                    // Cones, pawns (default)
-                    const targetSize = 25;
-                    const baseScale = targetSize / Math.max(image.width(), image.height());
-                    scaleX = baseScale;
-                    scaleY = baseScale;
-                }
-                
-                image.setAttrs({
+            if (itemType === 'ball') {
+                const text = new Konva.Text({
                     x: pos.x,
                     y: pos.y,
-                    scaleX: scaleX,
-                    scaleY: scaleY,
-                    offsetX: image.width() / 2,
-                    offsetY: image.height() / 2,
+                    text: '⚽',
+                    fontSize: 24,
                     draggable: true,
-                    name: 'item',
-                    imageSrc: `/images/assets/${itemType}.svg`
+                    name: 'item'
                 });
-                mainLayer.add(image);
-                itemType = ''; // Reset
-            });
+                text.offsetX(text.width() / 2);
+                text.offsetY(text.height() / 2);
+                mainLayer.add(text);
+                mainLayer.batchDraw();
+                itemType = '';
+            } else {
+                Konva.Image.fromURL(`/images/assets/${itemType}.svg`, function(image) {
+                    let scaleX, scaleY;
+                    
+                    if (itemType.startsWith('shirt')) {
+                        // Player: Larger and wider
+                        const targetHeight = 50;
+                        const baseScale = targetHeight / image.height();
+                        scaleX = baseScale * 1.3; // 30% wider
+                        scaleY = baseScale;
+                    } else if (itemType === 'goal') {
+                        // Goal: Larger
+                        const targetWidth = 80;
+                        const baseScale = targetWidth / image.width();
+                        scaleX = baseScale;
+                        scaleY = baseScale;
+                    } else {
+                        // Cones, pawns (default)
+                        const targetSize = 25;
+                        const baseScale = targetSize / Math.max(image.width(), image.height());
+                        scaleX = baseScale;
+                        scaleY = baseScale;
+                    }
+                    
+                    image.setAttrs({
+                        x: pos.x,
+                        y: pos.y,
+                        scaleX: scaleX,
+                        scaleY: scaleY,
+                        offsetX: image.width() / 2,
+                        offsetY: image.height() / 2,
+                        draggable: true,
+                        name: 'item',
+                        imageSrc: `/images/assets/${itemType}.svg`
+                    });
+                    mainLayer.add(image);
+                    itemType = ''; // Reset
+                });
+            }
         }
     });
 

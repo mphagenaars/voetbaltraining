@@ -16,10 +16,9 @@ $isEdit = isset($exercise);
             <label for="team_task">Teamtaak</label>
             <select id="team_task" name="team_task">
                 <option value="">Selecteer teamtaak</option>
-                <option value="Aanvallen" <?= ($exercise['team_task'] ?? '') === 'Aanvallen' ? 'selected' : '' ?>>Aanvallen</option>
-                <option value="Omschakelen" <?= ($exercise['team_task'] ?? '') === 'Omschakelen' ? 'selected' : '' ?>>Omschakelen</option>
-                <option value="Verdedigen" <?= ($exercise['team_task'] ?? '') === 'Verdedigen' ? 'selected' : '' ?>>Verdedigen</option>
-                <option value="Neutraal" <?= ($exercise['team_task'] ?? '') === 'Neutraal' ? 'selected' : '' ?>>Neutraal</option>
+                <?php foreach (Exercise::getTeamTasks() as $task): ?>
+                    <option value="<?= $task ?>" <?= ($exercise['team_task'] ?? '') === $task ? 'selected' : '' ?>><?= $task ?></option>
+                <?php endforeach; ?>
             </select>
         </div>
 
@@ -31,20 +30,7 @@ $isEdit = isset($exercise);
                 </div>
                 <div class="multi-select-options">
                     <?php
-                    $objectives = [
-                        'Creëren van kansen',
-                        'Dieptespel in opbouw verbeteren',
-                        'Positiespel in opbouw verbeteren',
-                        'Scoren verbeteren',
-                        'Uitspelen van één tegen één situatie verbeteren',
-                        'Omschakelen bij veroveren van de bal verbeteren',
-                        'Omschakelen op moment van balverlies verbeteren',
-                        'Storen en veroveren van de bal verbeteren',
-                        'Verdedigen van dieptespel verbeteren',
-                        'Verdedigen van één tegen één situatie verbeteren',
-                        'Verdedigen wanneer de tegenstander kansen creëert verbeteren',
-                        'Voorkomen van doelpunten verbeteren'
-                    ];
+                    $objectives = Exercise::getObjectives();
                     
                     $currentObjectives = [];
                     if (!empty($exercise['training_objective'])) {
@@ -76,16 +62,7 @@ $isEdit = isset($exercise);
                 </div>
                 <div class="multi-select-options">
                     <?php
-                    $actions = [
-                        'Kijken',
-                        'Dribbelen',
-                        'Passen',
-                        'Schieten',
-                        'Cheeta',
-                        'Brug maken',
-                        'Lijntje doorknippen',
-                        'Jagen'
-                    ];
+                    $actions = Exercise::getFootballActions();
 
                     $currentActions = [];
                     if (!empty($exercise['football_action'])) {
@@ -190,7 +167,7 @@ $isEdit = isset($exercise);
                                 <div class="draggable-item" draggable="true" data-type="cone_white"><img src="/images/assets/cone_white.svg" alt="Hoedje Wit"></div>
                                 <div class="draggable-item" draggable="true" data-type="cone_yellow"><img src="/images/assets/cone_yellow.svg" alt="Hoedje Geel"></div>
                                 <div class="draggable-item" draggable="true" data-type="cone_orange"><img src="/images/assets/cone_orange.svg" alt="Hoedje Oranje"></div>
-                                <div class="draggable-item" draggable="true" data-type="ball"><img src="/images/assets/ball.svg" alt="Bal"></div>
+                                <div class="draggable-item" draggable="true" data-type="ball" style="font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: grab;">⚽</div>
                                 <div class="draggable-item" draggable="true" data-type="goal"><img src="/images/assets/goal.svg" alt="Doel"></div>
                                 <div class="draggable-item" draggable="true" data-type="shirt_red_black"><img src="/images/assets/shirt_red_black.svg" alt="Speler Rood/Zwart"></div>
                                 <div class="draggable-item" draggable="true" data-type="shirt_red_white"><img src="/images/assets/shirt_red_white.svg" alt="Speler Rood/Wit"></div>

@@ -4,15 +4,53 @@
 </div>
 
 <div class="card" style="margin-bottom: 1rem;">
-    <form method="GET" action="/exercises" style="display: flex; gap: 1rem; align-items: flex-end;">
-        <div style="flex-grow: 1; margin-bottom: 0;">
+    <?php
+    $teamTasksList = Exercise::getTeamTasks();
+    $objectivesList = Exercise::getObjectives();
+    $actionsList = Exercise::getFootballActions();
+    ?>
+    <form method="GET" action="/exercises">
+        <div>
             <label for="q">Zoeken</label>
             <input type="text" id="q" name="q" value="<?= htmlspecialchars($query ?? '') ?>" placeholder="Titel of beschrijving...">
         </div>
-        <button type="submit" class="btn btn-outline">Zoeken</button>
-        <?php if (!empty($query)): ?>
-            <a href="/exercises" class="btn btn-outline" style="border: none;">Reset</a>
-        <?php endif; ?>
+        
+        <div>
+            <label for="team_task">Teamtaak</label>
+            <select id="team_task" name="team_task">
+                <option value="">Alle teamtaken</option>
+                <?php foreach ($teamTasksList as $task): ?>
+                    <option value="<?= $task ?>" <?= ($teamTask ?? '') === $task ? 'selected' : '' ?>><?= $task ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div>
+            <label for="training_objective">Doelstelling</label>
+            <select id="training_objective" name="training_objective">
+                <option value="">Alle doelstellingen</option>
+                <?php foreach ($objectivesList as $obj): ?>
+                    <option value="<?= $obj ?>" <?= ($trainingObjective ?? '') === $obj ? 'selected' : '' ?>><?= $obj ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div>
+            <label for="football_action">Voetbalhandeling</label>
+            <select id="football_action" name="football_action">
+                <option value="">Alle handelingen</option>
+                <?php foreach ($actionsList as $action): ?>
+                    <option value="<?= $action ?>" <?= ($footballAction ?? '') === $action ? 'selected' : '' ?>><?= $action ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-outline">Zoeken</button>
+            <?php if (!empty($query) || !empty($teamTask) || !empty($trainingObjective) || !empty($footballAction)): ?>
+                <a href="/exercises" class="btn btn-outline" style="border: none;">Reset</a>
+            <?php endif; ?>
+        </div>
     </form>
 </div>
 
