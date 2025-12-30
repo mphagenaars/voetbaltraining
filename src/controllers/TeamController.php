@@ -33,10 +33,17 @@ class TeamController {
             
             // Verifieer dat de user lid is van dit team
             if ($teamModel->isMember($teamId, $_SESSION['user_id'])) {
+                $roles = $teamModel->getMemberRoles($teamId, $_SESSION['user_id']);
+                
+                $roleParts = [];
+                if ($roles['is_coach']) $roleParts[] = 'Coach';
+                if ($roles['is_trainer']) $roleParts[] = 'Trainer';
+                $roleString = implode(' & ', $roleParts);
+
                 $_SESSION['current_team'] = [
                     'id' => $teamId,
                     'name' => $_POST['team_name'],
-                    'role' => $_POST['team_role'],
+                    'role' => $roleString,
                     'invite_code' => $_POST['team_invite_code']
                 ];
             }

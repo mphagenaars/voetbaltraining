@@ -48,6 +48,27 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 
+// Auto-login via Remember Me cookie
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_me'])) {
+    $parts = explode(':', $_COOKIE['remember_me']);
+    if (count($parts) === 2) {
+        $selector = $parts[0];
+        $validator = $parts[1];
+        
+        $userModel = new User($db);
+        $token = $userModel->findTokenBySelector($selector);
+        
+        if ($token && hash_equals($token['hashed_validator'], hash('sha256', $validator))) {
+            $user = $userModel->getById((int)$token['user_id']);
+            if ($user) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['is_admin'] = (bool)($user['is_admin'] ?? false);
+            }
+        }
+    }
+}
+
 // Simpele router
 switch ($path) {
     case '/':
@@ -150,6 +171,48 @@ switch ($path) {
 
     case '/logout':
         (new AuthController($db))->logout();
+        break;
+
+    // --- ACCOUNT ROUTES ---
+    case '/account':
+        (new AccountController($db))->index();
+        break;
+
+    case '/account/update-profile':
+        (new AccountController($db))->updateProfile();
+        break;
+
+    case '/account/update-password':
+        (new AccountController($db))->updatePassword();
+        break;
+
+    // --- ADMIN ROUTES ---
+    case '/admin':
+        (new AdminController($db))->index();
+        break;
+
+    case '/admin/delete-user':
+        (new AdminController($db))->deleteUser();
+        break;
+
+    case '/admin/toggle-admin':
+        (new AdminController($db))->toggleAdmin();
+        break;
+
+    case '/admin/user-teams':
+        (new AdminController($db))->manageTeams();
+        break;
+
+    case '/admin/add-team-member':
+        (new AdminController($db))->addTeamMember();
+        break;
+
+    case '/admin/update-team-role':
+        (new AdminController($db))->updateTeamRole();
+        break;
+
+    case '/admin/remove-team-member':
+        (new AdminController($db))->removeTeamMember();
         break;
 
     default:

@@ -15,6 +15,11 @@
             <label for="password">Wachtwoord</label>
             <input type="password" id="password" name="password" required>
         </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+                <input type="checkbox" name="remember_me" value="1"> Onthoud mij
+            </label>
+        </div>
         <button type="submit" class="btn" style="width: 100%;">Inloggen</button>
     </form>
 

@@ -89,6 +89,8 @@ a:hover {
     cursor: pointer;
     font-size: 1rem;
     text-decoration: none;
+    line-height: 1.5;
+    vertical-align: middle;
 }
 
 .btn:hover {
@@ -107,9 +109,35 @@ a:hover {
     color: white;
 }
 
+.btn-danger {
+    background-color: #c62828;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #b71c1c;
+}
+
+.btn-outline-danger {
+    background-color: transparent;
+    border: 1px solid #c62828;
+    color: #c62828;
+}
+
+.btn-outline-danger:hover {
+    background-color: #c62828;
+    color: white;
+}
+
 .btn-sm {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
+}
+
+.btn-min-w {
+    min-width: 120px;
+    text-align: center;
+    justify-content: center;
 }
 
 .card {
@@ -412,3 +440,13 @@ select:focus {
 .multi-select-option input[type="checkbox"] {
     margin-right: 0.5rem;
 }
+
+/* List Group Alignment Fix */
+.list-group {
+    padding-left: 1.2rem;
+    margin-top: 0.5rem;
+}
+
+    justify-content: flex-end;
+}
+

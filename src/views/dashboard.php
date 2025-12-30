@@ -26,10 +26,16 @@
     <?php else: ?>
         <ul style="list-style: none; padding: 0;">
             <?php foreach ($teams as $team): ?>
+                <?php
+                    $roleParts = [];
+                    if (!empty($team['is_coach'])) $roleParts[] = 'Coach';
+                    if (!empty($team['is_trainer'])) $roleParts[] = 'Trainer';
+                    $roleString = implode(' & ', $roleParts);
+                ?>
                 <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                     <span>
                         <strong><?= htmlspecialchars($team['name']) ?></strong> 
-                        <span class="text-muted">(<?= htmlspecialchars($team['role']) ?>)</span>
+                        <span class="text-muted">(<?= htmlspecialchars($roleString) ?>)</span>
                     </span>
                     
                     <?php if (!isset($_SESSION['current_team']) || $_SESSION['current_team']['id'] !== $team['id']): ?>
@@ -37,7 +43,6 @@
                             <?= Csrf::renderInput() ?>
                             <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
                             <input type="hidden" name="team_name" value="<?= htmlspecialchars($team['name']) ?>">
-                            <input type="hidden" name="team_role" value="<?= htmlspecialchars($team['role']) ?>">
                             <input type="hidden" name="team_invite_code" value="<?= htmlspecialchars($team['invite_code']) ?>">
                             <button type="submit" class="btn btn-sm btn-outline">Selecteer</button>
                         </form>

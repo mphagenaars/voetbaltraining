@@ -13,13 +13,34 @@ class AuthController {
                 $password = $_POST['password'] ?? '';
                 
                 try {
-                    $stmt = $this->pdo->prepare("SELECT id, name, password_hash FROM users WHERE username = :username");
+                    $stmt = $this->pdo->prepare("SELECT id, name, password_hash, is_admin FROM users WHERE username = :username");
                     $stmt->execute([':username' => $username]);
                     $user = $stmt->fetch();
                     
                     if ($user && password_verify($password, $user['password_hash'])) {
                         $_SESSION['user_id'] = $user['id'];
                         $_SESSION['user_name'] = $user['name'];
+                        $_SESSION['is_admin'] = (bool)($user['is_admin'] ?? false);
+
+                        // Remember Me Logic
+                        if (!empty($_POST['remember_me'])) {
+                            $selector = bin2hex(random_bytes(16));
+                            $validator = bin2hex(random_bytes(32));
+                            $hashedValidator = hash('sha256', $validator);
+                            $expiresAt = date('Y-m-d H:i:s', time() + 86400 * 30); // 30 days
+
+                            $userModel = new User($this->pdo);
+                            $userModel->createRememberToken((int)$user['id'], $selector, $hashedValidator, $expiresAt);
+
+                            setcookie('remember_me', "$selector:$validator", [
+                                'expires' => time() + 86400 * 30,
+                                'path' => '/',
+                                'httponly' => true,
+                                'samesite' => 'Strict',
+                                'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'
+                            ]);
+                        }
+
                         header('Location: /');
                         exit;
                     } else {
@@ -60,8 +81,8 @@ class AuthController {
                         // 3. Maak user aan
                         $userId = $userModel->create($username, $password, $name);
                         
-                        // 4. Voeg toe aan team
-                        $teamModel->addMember($team['id'], $userId, 'coach');
+                        // 4. Voeg toe aan team (als coach)
+                        $teamModel->addMember($team['id'], $userId, true, false);
 
                         // 5. Login en redirect
                         $_SESSION['user_id'] = $userId;
@@ -86,6 +107,22 @@ class AuthController {
     }
 
     public function logout(): void {
+        // Remove remember me token
+        if (isset($_COOKIE['remember_me'])) {
+            $parts = explode(':', $_COOKIE['remember_me']);
+            if (count($parts) === 2) {
+                $selector = $parts[0];
+                $userModel = new User($this->pdo);
+                $userModel->removeTokenBySelector($selector);
+            }
+            setcookie('remember_me', '', [
+                'expires' => time() - 3600, 
+                'path' => '/',
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]);
+        }
+
         session_destroy();
         header('Location: /');
         exit;
