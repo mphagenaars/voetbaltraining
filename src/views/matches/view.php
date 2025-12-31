@@ -34,7 +34,9 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3>Opstelling</h3>
-                <button id="save-lineup" class="btn btn-primary btn-sm">Opslaan</button>
+                <button id="save-lineup" class="btn-icon" title="Opslaan">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                </button>
                 <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
             </div>
 
@@ -98,10 +100,16 @@
         <div class="card">
             <h3>Wedstrijdverloop</h3>
             
-            <h4 style="margin-top: 1rem;">Gebeurtenis toevoegen</h4>
             <form action="/matches/add-event" method="POST" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee;">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; margin-top: 1rem;">
+                    <h4 style="margin: 0;">Gebeurtenis toevoegen</h4>
+                    <button type="submit" class="btn-icon" title="Toevoegen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    </button>
+                </div>
                 
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
                     <div style="width: 80px;">
@@ -134,8 +142,6 @@
                     <label style="font-size: 0.8rem;">Omschrijving</label>
                     <input type="text" name="description" placeholder="Bijv. Assist van..." style="width: 100%;">
                 </div>
-                
-                <button type="submit" class="btn btn-sm">Toevoegen</button>
             </form>
 
             <ul class="timeline" style="list-style: none; padding: 0;">
@@ -168,30 +174,30 @@
 
         <!-- Card 3: Eindstand & Evaluatie -->
         <div class="card">
-            <h3>Eindstand</h3>
-
-            <form action="/matches/update-score" method="POST" style="margin-bottom: 2rem;">
+            <form action="/matches/update-details" method="POST">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <label style="font-weight: bold;">Stand:</label>
-                    <input type="number" name="score_home" value="<?= $match['score_home'] ?>" min="0" style="width: 60px; text-align: center;">
-                    <span>-</span>
-                    <input type="number" name="score_away" value="<?= $match['score_away'] ?>" min="0" style="width: 60px; text-align: center;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Details</h3>
                     <button type="submit" class="btn-icon" title="Opslaan">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                     </button>
                 </div>
-            </form>
 
-            <h3>Evaluatie & Opmerkingen</h3>
-            <form action="/matches/update-evaluation" method="POST">
-                <?= Csrf::renderInput() ?>
-                <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Eindstand</label>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="number" name="score_home" value="<?= $match['score_home'] ?>" min="0" style="width: 60px; text-align: center;">
+                        <span>-</span>
+                        <input type="number" name="score_away" value="<?= $match['score_away'] ?>" min="0" style="width: 60px; text-align: center;">
+                    </div>
+                </div>
+
                 <div class="form-group">
+                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Evaluatie & Opmerkingen</label>
                     <textarea name="evaluation" rows="6" placeholder="Schrijf hier je evaluatie van de wedstrijd..." style="width: 100%;"><?= htmlspecialchars($match['evaluation'] ?? '') ?></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Opslaan</button>
             </form>
         </div>
     </div>

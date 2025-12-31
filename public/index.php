@@ -173,8 +173,8 @@ switch ($path) {
         (new GameController($db))->updateScore();
         break;
 
-    case '/matches/update-evaluation':
-        (new GameController($db))->updateEvaluation();
+    case '/matches/update-details':
+        (new GameController($db))->updateDetails();
         break;
 
     case '/matches/save-lineup':

@@ -135,7 +135,7 @@ class GameController {
         }
     }
 
-    public function updateEvaluation(): void {
+    public function updateDetails(): void {
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
             header('Location: /');
             exit;
@@ -148,10 +148,13 @@ class GameController {
             }
 
             $matchId = (int)$_POST['match_id'];
+            $scoreHome = (int)$_POST['score_home'];
+            $scoreAway = (int)$_POST['score_away'];
             $evaluation = $_POST['evaluation'] ?? '';
 
             $match = $this->gameModel->getById($matchId);
             if ($match && $match['team_id'] === $_SESSION['current_team']['id']) {
+                $this->gameModel->updateScore($matchId, $scoreHome, $scoreAway);
                 $this->gameModel->updateEvaluation($matchId, $evaluation);
             }
             
