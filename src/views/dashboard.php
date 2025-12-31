@@ -1,5 +1,13 @@
 <h1>Dashboard</h1>
 
+<div class="card" style="margin-bottom: 1.5rem; background-color: #e8f5e9; border-color: #c8e6c9;">
+    <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Algemeen</h2>
+    <p>Toegang tot de centrale database met oefenstof.</p>
+    <div style="margin-top: 1rem;">
+        <a href="/exercises" class="btn btn-sm">Oefenstof Database</a>
+    </div>
+</div>
+
 <?php if (isset($_SESSION['current_team'])): ?>
     <div class="alert alert-info">
         <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
@@ -7,10 +15,9 @@
         <p>Invite code: <code><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></p>
         
         <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="/exercises" class="btn btn-sm">Oefenstof</a>
             <a href="/trainings" class="btn btn-sm">Trainingen</a>
             <a href="/players" class="btn btn-sm">Spelers</a>
-            <a href="/lineups" class="btn btn-sm">Opstellingen</a>
+            <a href="/matches" class="btn btn-sm">Wedstrijden</a>
         </div>
     </div>
 <?php else: ?>

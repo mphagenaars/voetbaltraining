@@ -5,7 +5,7 @@ class ExerciseController {
     public function __construct(private PDO $pdo) {}
 
     public function index(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
+        if (!isset($_SESSION['user_id'])) {
             header('Location: /');
             exit;
         }
@@ -19,7 +19,8 @@ class ExerciseController {
         if ($trainingObjective === '') $trainingObjective = null;
         if ($footballAction === '') $footballAction = null;
 
-        $exercises = $exerciseModel->search($_SESSION['current_team']['id'], $query, $teamTask, $trainingObjective, $footballAction);
+        // Pass null for teamId to search all exercises
+        $exercises = $exerciseModel->search(null, $query, $teamTask, $trainingObjective, $footballAction);
         View::render('exercises/index', [
             'exercises' => $exercises, 
             'query' => $query, 
@@ -31,7 +32,7 @@ class ExerciseController {
     }
 
     public function create(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
+        if (!isset($_SESSION['user_id'])) {
             header('Location: /');
             exit;
         }
@@ -76,7 +77,8 @@ class ExerciseController {
             
             if (!empty($title)) {
                 $exerciseModel = new Exercise($this->pdo);
-                $exerciseId = $exerciseModel->create($_SESSION['current_team']['id'], $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation, $fieldType);
+                $teamId = $_SESSION['current_team']['id'] ?? null;
+                $exerciseId = $exerciseModel->create($teamId, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation, $fieldType);
                 header('Location: /exercises');
                 exit;
             }

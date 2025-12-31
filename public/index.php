@@ -148,25 +148,29 @@ switch ($path) {
         (new PlayerController($db))->update();
         break;
 
-    // --- LINEUPS ROUTES ---
-    case '/lineups':
-        (new LineupController($db))->index();
+    // --- MATCHES ROUTES ---
+    case '/matches':
+        (new GameController($db))->index();
         break;
 
-    case '/lineups/create':
-        (new LineupController($db))->create();
+    case '/matches/create':
+        (new GameController($db))->create();
         break;
 
-    case '/lineups/view':
-        (new LineupController($db))->view();
+    case '/matches/view':
+        (new GameController($db))->view();
         break;
 
-    case '/lineups/save':
-        (new LineupController($db))->save();
+    case '/matches/add-event':
+        (new GameController($db))->addEvent();
         break;
 
-    case '/lineups/delete':
-        (new LineupController($db))->delete();
+    case '/matches/update-score':
+        (new GameController($db))->updateScore();
+        break;
+
+    case '/matches/save-lineup':
+        (new GameController($db))->saveLineup();
         break;
 
     case '/logout':

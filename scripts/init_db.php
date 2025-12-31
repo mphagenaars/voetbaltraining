@@ -70,9 +70,10 @@ try {
     }
 
     // Exercises tabel
+    // team_id is nullable to allow global exercises
     $db->exec("CREATE TABLE IF NOT EXISTS exercises (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        team_id INTEGER NOT NULL,
+        team_id INTEGER, 
         title TEXT NOT NULL,
         description TEXT,
         team_task TEXT,
@@ -85,8 +86,9 @@ try {
         variation TEXT,
         image_path TEXT,
         drawing_data TEXT,
+        field_type TEXT DEFAULT 'portrait',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL
     )");
     echo "- Tabel 'exercises' aangemaakt (of bestond al).\n";
 
@@ -161,34 +163,98 @@ try {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         team_id INTEGER NOT NULL,
         name TEXT NOT NULL,
+        number INTEGER,
+        position TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
     echo "- Tabel 'players' aangemaakt (of bestond al).\n";
 
-    // Lineups tabel
-    $db->exec("CREATE TABLE IF NOT EXISTS lineups (
+    // Check columns for players migration
+    $plColumns = $db->query("PRAGMA table_info(players)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('number', $plColumns)) {
+        $db->exec("ALTER TABLE players ADD COLUMN number INTEGER");
+        echo "- Kolom 'number' toegevoegd aan 'players'.\n";
+    }
+    if (!in_array('position', $plColumns)) {
+        $db->exec("ALTER TABLE players ADD COLUMN position TEXT");
+        echo "- Kolom 'position' toegevoegd aan 'players'.\n";
+    }
+
+    // Matches tabel (Replaces Lineups)
+    $db->exec("CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         team_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
+        opponent TEXT NOT NULL,
+        date DATETIME NOT NULL,
+        is_home INTEGER DEFAULT 1,
+        score_home INTEGER DEFAULT 0,
+        score_away INTEGER DEFAULT 0,
         formation TEXT DEFAULT '4-3-3',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
-    echo "- Tabel 'lineups' aangemaakt (of bestond al).\n";
+    echo "- Tabel 'matches' aangemaakt (of bestond al).\n";
 
-    // Lineup Positions tabel
-    $db->exec("CREATE TABLE IF NOT EXISTS lineup_positions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        lineup_id INTEGER NOT NULL,
-        player_id INTEGER,
-        position_x INTEGER, -- Percentage 0-100
-        position_y INTEGER, -- Percentage 0-100
+    // Match players (Replaces Lineup positions)
+    $db->exec("CREATE TABLE IF NOT EXISTS match_players (
+        match_id INTEGER NOT NULL,
+        player_id INTEGER NOT NULL,
+        position_x INTEGER NOT NULL,
+        position_y INTEGER NOT NULL,
         is_substitute BOOLEAN DEFAULT 0,
-        FOREIGN KEY (lineup_id) REFERENCES lineups(id) ON DELETE CASCADE,
+        PRIMARY KEY (match_id, player_id),
+        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+        FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'match_players' aangemaakt (of bestond al).\n";
+
+    // Match events (Scoreverloop etc)
+    $db->exec("CREATE TABLE IF NOT EXISTS match_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        minute INTEGER NOT NULL,
+        type TEXT NOT NULL, -- 'goal', 'card', 'sub'
+        player_id INTEGER, -- Nullable (bijv. goal tegenstander)
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
         FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE SET NULL
     )");
-    echo "- Tabel 'lineup_positions' aangemaakt (of bestond al).\n";
+    echo "- Tabel 'match_events' aangemaakt (of bestond al).\n";
+
+    // Migratie van oude lineups naar matches
+    $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='lineups'")->fetchAll();
+    if (count($tables) > 0) {
+        $matchCount = $db->query("SELECT COUNT(*) FROM matches")->fetchColumn();
+        if ($matchCount == 0) {
+            echo "Migreren van oude lineups naar matches...\n";
+            $lineups = $db->query("SELECT * FROM lineups")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($lineups as $lineup) {
+                $stmt = $db->prepare("INSERT INTO matches (team_id, opponent, date, formation) VALUES (:team_id, :opponent, :date, :formation)");
+                $stmt->execute([
+                    ':team_id' => $lineup['team_id'],
+                    ':opponent' => $lineup['name'], 
+                    ':date' => date('Y-m-d H:i:s'), 
+                    ':formation' => $lineup['formation']
+                ]);
+                $matchId = $db->lastInsertId();
+
+                $positions = $db->query("SELECT * FROM lineup_positions WHERE lineup_id = " . $lineup['id'])->fetchAll(PDO::FETCH_ASSOC);
+                $posStmt = $db->prepare("INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute) VALUES (:match_id, :player_id, :x, :y, :sub)");
+                foreach ($positions as $pos) {
+                    $posStmt->execute([
+                        ':match_id' => $matchId,
+                        ':player_id' => $pos['player_id'],
+                        ':x' => $pos['position_x'] ?? 0,
+                        ':y' => $pos['position_y'] ?? 0,
+                        ':sub' => $pos['is_substitute'] ?? 0
+                    ]);
+                }
+            }
+            echo "- Migratie voltooid.\n";
+        }
+    }
 
     echo "Database succesvol geïnitialiseerd in data/database.sqlite\n";
 

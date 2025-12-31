@@ -2,3 +2,7 @@
 /data/*.db
 /vendor/
 .DS_Store
+.copilot/
+.github/
+PRD
+COPILOT_GUIDLINES.mdserver.log
