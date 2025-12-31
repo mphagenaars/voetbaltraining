@@ -77,4 +77,9 @@ class Game extends Model {
         $stmt = $this->pdo->prepare("UPDATE matches SET score_home = :home, score_away = :away WHERE id = :id");
         $stmt->execute([':home' => $home, ':away' => $away, ':id' => $matchId]);
     }
+
+    public function updateEvaluation(int $matchId, string $evaluation): void {
+        $stmt = $this->pdo->prepare("UPDATE matches SET evaluation = :evaluation WHERE id = :id");
+        $stmt->execute([':evaluation' => $evaluation, ':id' => $matchId]);
+    }
 }

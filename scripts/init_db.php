@@ -141,10 +141,18 @@ try {
         team_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         description TEXT,
+        training_date DATE,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
     echo "- Tabel 'trainings' aangemaakt (of bestond al).\n";
+
+    // Check of training_date kolom bestaat (voor migratie)
+    $tColumns = $db->query("PRAGMA table_info(trainings)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('training_date', $tColumns)) {
+        $db->exec("ALTER TABLE trainings ADD COLUMN training_date DATE");
+        echo "- Kolom 'training_date' toegevoegd aan 'trainings'.\n";
+    }
 
     // Training Exercises tabel
     $db->exec("CREATE TABLE IF NOT EXISTS training_exercises (
@@ -191,10 +199,18 @@ try {
         score_home INTEGER DEFAULT 0,
         score_away INTEGER DEFAULT 0,
         formation TEXT DEFAULT '4-3-3',
+        evaluation TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
     echo "- Tabel 'matches' aangemaakt (of bestond al).\n";
+
+    // Check of evaluation kolom bestaat (voor migratie)
+    $mColumns = $db->query("PRAGMA table_info(matches)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('evaluation', $mColumns)) {
+        $db->exec("ALTER TABLE matches ADD COLUMN evaluation TEXT");
+        echo "- Kolom 'evaluation' toegevoegd aan 'matches'.\n";
+    }
 
     // Match players (Replaces Lineup positions)
     $db->exec("CREATE TABLE IF NOT EXISTS match_players (

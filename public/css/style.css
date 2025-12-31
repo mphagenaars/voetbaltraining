@@ -179,6 +179,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="number"],
+input[type="date"],
 textarea,
 select {
     width: 100%;
@@ -508,4 +509,101 @@ select:focus {
 .btn-icon svg {
     width: 20px;
     height: 20px;
+}
+
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: var(--bg-card);
+    min-width: 180px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    margin-top: 0.5rem;
+}
+
+/* Bridge the gap so menu doesn't close */
+.dropdown-content::before {
+    content: '';
+    position: absolute;
+    top: -0.5rem;
+    left: 0;
+    right: 0;
+    height: 0.5rem;
+}
+
+.dropdown-content a {
+    color: var(--text-main);
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.2s;
+}
+
+.dropdown-content a:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.text-success {
+    color: var(--primary);
+}
+
+/* Action Card (Clickable Card) */
+.action-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: var(--spacing);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: var(--text-main);
+}
+
+.action-card h2, .action-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+}
+
+.action-card p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.action-card svg {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.action-card:hover svg {
+    color: var(--primary);
 }

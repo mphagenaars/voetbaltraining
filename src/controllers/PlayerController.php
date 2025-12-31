@@ -19,7 +19,12 @@ class PlayerController {
     }
 
     public function create(): void {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
+            header('Location: /');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
                 header('Location: /players');
                 exit;
@@ -28,9 +33,12 @@ class PlayerController {
             if (!empty($name)) {
                 $this->playerModel->create($_SESSION['current_team']['id'], $name);
             }
+            header('Location: /players');
+            exit;
         }
-        header('Location: /players');
-        exit;
+
+        // GET request
+        View::render('players/create', ['pageTitle' => 'Nieuwe Speler - Trainer Bobby']);
     }
 
     public function edit(): void {

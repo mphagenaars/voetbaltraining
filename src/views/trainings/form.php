@@ -1,16 +1,32 @@
-<h1>Nieuwe Training</h1>
+<?php
+$isEdit = isset($training);
+$formTitle = $isEdit ? 'Training Bewerken' : 'Nieuwe Training';
+$titleValue = $isEdit ? $training['title'] : '';
+$descValue = $isEdit ? $training['description'] : '';
+$dateValue = $isEdit ? ($training['training_date'] ?? '') : date('Y-m-d');
+$currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
+?>
+<div class="header-actions">
+    <h1><?= $formTitle ?></h1>
+    <a href="/trainings" class="btn btn-outline">Terug</a>
+</div>
 
 <form method="POST" id="training-form">
     <?= Csrf::renderInput() ?>
     <div class="card">
-        <div class="form-group">
-            <label for="title">Titel *</label>
-            <input type="text" id="title" name="title" required>
+        <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem;">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                <label for="training_date">Datum *</label>
+                <input type="date" id="training_date" name="training_date" required value="<?= htmlspecialchars($dateValue) ?>">
+            </div>
+            <button type="submit" class="btn-icon" title="Opslaan" style="margin-bottom: 4px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            </button>
         </div>
 
         <div class="form-group">
             <label for="description">Beschrijving</label>
-            <textarea id="description" name="description" rows="3"></textarea>
+            <textarea id="description" name="description" rows="3"><?= htmlspecialchars($descValue) ?></textarea>
         </div>
     </div>
 
@@ -33,14 +49,17 @@
         <div>
             <h3>Geselecteerde Oefeningen</h3>
             <div class="card" id="selected-list" style="min-height: 200px;">
-                <p class="text-muted" id="empty-msg">Klik op een oefening om toe te voegen.</p>
+                <p class="text-muted" id="empty-msg" style="<?= !empty($currentExercises) ? 'display: none;' : '' ?>">Klik op een oefening om toe te voegen.</p>
+                <?php foreach ($currentExercises as $ex): ?>
+                    <div class="selected-item" style="padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                        <span style="flex-grow: 1;"><?= htmlspecialchars($ex['title']) ?></span>
+                        <input type="hidden" name="exercises[]" value="<?= $ex['id'] ?>">
+                        <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min">
+                        <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
-    </div>
-
-    <div style="margin-top: 2rem;">
-        <button type="submit" class="btn">Training Opslaan</button>
-        <a href="/trainings" class="btn btn-outline">Annuleren</a>
     </div>
 </form>
 

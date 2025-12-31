@@ -135,6 +135,31 @@ class GameController {
         }
     }
 
+    public function updateEvaluation(): void {
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
+            header('Location: /');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
+                header('Location: /matches');
+                exit;
+            }
+
+            $matchId = (int)$_POST['match_id'];
+            $evaluation = $_POST['evaluation'] ?? '';
+
+            $match = $this->gameModel->getById($matchId);
+            if ($match && $match['team_id'] === $_SESSION['current_team']['id']) {
+                $this->gameModel->updateEvaluation($matchId, $evaluation);
+            }
+            
+            header('Location: /matches/view?id=' . $matchId);
+            exit;
+        }
+    }
+
     public function saveLineup(): void {
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
             http_response_code(403);

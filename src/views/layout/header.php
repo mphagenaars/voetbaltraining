@@ -20,15 +20,18 @@
                     </a>
                 <?php endif; ?>
                 
-                <a href="/account" style="text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <strong><?= htmlspecialchars($_SESSION['user_name']) ?></strong>
-                </a>
-                
-                <a href="/logout" style="text-decoration: none; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    Uitloggen
-                </a>
+                <div class="dropdown">
+                    <a href="#" style="text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <strong><?= htmlspecialchars($_SESSION['user_name']) ?></strong>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="/account">Profiel</a>
+                        <a href="/team/create">Nieuw Team</a>
+                        <a href="/logout">Uitloggen</a>
+                    </div>
+                </div>
             <?php else: ?>
                 <a href="/login" class="btn btn-sm btn-outline">Inloggen</a>
             <?php endif; ?>

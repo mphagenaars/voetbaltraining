@@ -23,12 +23,14 @@
     </div>
     
     <div class="card" style="margin-bottom: 1rem;">
-        <p><strong>Datum:</strong> <?= htmlspecialchars(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
-        <p><strong>Formatie:</strong> <?= htmlspecialchars($match['formation']) ?></p>
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            <p><strong>Datum:</strong> <?= htmlspecialchars(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
+            <p><strong>Formatie:</strong> <?= htmlspecialchars($match['formation']) ?></p>
+        </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <!-- Lineup Editor Section -->
+    <div class="match-grid">
+        <!-- Card 1: Opstelling -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3>Opstelling</h3>
@@ -92,54 +94,12 @@
             </div>
         </div>
 
-        <!-- Events Section -->
+        <!-- Card 2: Wedstrijdverloop -->
         <div class="card">
-            <h3>Eindstand</h3>
-
-            <form action="/matches/update-score" method="POST" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
-                <?= Csrf::renderInput() ?>
-                <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <label style="font-weight: bold;">Stand:</label>
-                    <input type="number" name="score_home" value="<?= $match['score_home'] ?>" min="0" style="width: 50px; text-align: center;">
-                    <span>-</span>
-                    <input type="number" name="score_away" value="<?= $match['score_away'] ?>" min="0" style="width: 50px; text-align: center;">
-                    <button type="submit" class="btn-icon" title="Opslaan">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    </button>
-                </div>
-            </form>
-            
             <h3>Wedstrijdverloop</h3>
-            <ul class="timeline" style="list-style: none; padding: 0;">
-                <?php foreach ($events as $event): ?>
-                    <li style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
-                        <strong><?= $event['minute'] ?>'</strong> 
-                        
-                        <?php 
-                        $typeLabel = match($event['type']) {
-                            'goal' => '⚽ Doelpunt',
-                            'card_yellow' => '🟨 Gele kaart',
-                            'card_red' => '🟥 Rode kaart',
-                            'sub' => '🔄 Wissel',
-                            default => 'Gebeurtenis'
-                        };
-                        echo $typeLabel;
-                        ?>
-                        
-                        <?php if ($event['player_name']): ?>
-                            door <strong><?= htmlspecialchars($event['player_name']) ?></strong>
-                        <?php endif; ?>
-                        
-                        <?php if ($event['description']): ?>
-                            (<?= htmlspecialchars($event['description']) ?>)
-                        <?php endif; ?>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-
+            
             <h4 style="margin-top: 1rem;">Gebeurtenis toevoegen</h4>
-            <form action="/matches/add-event" method="POST">
+            <form action="/matches/add-event" method="POST" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee;">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
                 
@@ -177,16 +137,91 @@
                 
                 <button type="submit" class="btn btn-sm">Toevoegen</button>
             </form>
+
+            <ul class="timeline" style="list-style: none; padding: 0;">
+                <?php foreach ($events as $event): ?>
+                    <li style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
+                        <strong><?= $event['minute'] ?>'</strong> 
+                        
+                        <?php 
+                        $typeLabel = match($event['type']) {
+                            'goal' => '⚽ Doelpunt',
+                            'card_yellow' => '🟨 Gele kaart',
+                            'card_red' => '🟥 Rode kaart',
+                            'sub' => '🔄 Wissel',
+                            default => 'Gebeurtenis'
+                        };
+                        echo $typeLabel;
+                        ?>
+                        
+                        <?php if ($event['player_name']): ?>
+                            door <strong><?= htmlspecialchars($event['player_name']) ?></strong>
+                        <?php endif; ?>
+                        
+                        <?php if ($event['description']): ?>
+                            (<?= htmlspecialchars($event['description']) ?>)
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+
+        <!-- Card 3: Eindstand & Evaluatie -->
+        <div class="card">
+            <h3>Eindstand</h3>
+
+            <form action="/matches/update-score" method="POST" style="margin-bottom: 2rem;">
+                <?= Csrf::renderInput() ?>
+                <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <label style="font-weight: bold;">Stand:</label>
+                    <input type="number" name="score_home" value="<?= $match['score_home'] ?>" min="0" style="width: 60px; text-align: center;">
+                    <span>-</span>
+                    <input type="number" name="score_away" value="<?= $match['score_away'] ?>" min="0" style="width: 60px; text-align: center;">
+                    <button type="submit" class="btn-icon" title="Opslaan">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    </button>
+                </div>
+            </form>
+
+            <h3>Evaluatie & Opmerkingen</h3>
+            <form action="/matches/update-evaluation" method="POST">
+                <?= Csrf::renderInput() ?>
+                <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
+                <div class="form-group">
+                    <textarea name="evaluation" rows="6" placeholder="Schrijf hier je evaluatie van de wedstrijd..." style="width: 100%;"><?= htmlspecialchars($match['evaluation'] ?? '') ?></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Opslaan</button>
+            </form>
         </div>
     </div>
 </div>
 
 <style>
+.match-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 900px) {
+    .match-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+    /* Make the lineup card span full height or take left column */
+    .match-grid > div:nth-child(1) {
+        grid-row: span 2;
+    }
+}
+
 .lineup-editor {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
+
 
 .field-container {
     position: relative;

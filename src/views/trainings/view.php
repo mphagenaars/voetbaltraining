@@ -3,11 +3,19 @@ $totalDuration = 0;
 foreach ($training['exercises'] as $ex) {
     $totalDuration += $ex['training_duration'] ?: $ex['duration'] ?: 0;
 }
+
+$displayTitle = htmlspecialchars($training['title']);
+if (!empty($training['training_date'])) {
+    $ts = strtotime($training['training_date']);
+    $days = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+    $months = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+    $displayTitle = $days[date('w', $ts)] . ', ' . date('j', $ts) . ' ' . $months[date('n', $ts) - 1] . ' ' . date('Y', $ts);
+}
 ?>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <div>
-        <h1><?= htmlspecialchars($training['title']) ?></h1>
+        <h1><?= $displayTitle ?></h1>
         <p class="text-muted"><?= htmlspecialchars($training['description'] ?? '') ?></p>
     </div>
     <div style="text-align: right;">

@@ -5,7 +5,12 @@ class TeamController {
     public function __construct(private PDO $pdo) {}
 
     public function create(): void {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
                 header('Location: /');
                 exit;
@@ -18,8 +23,9 @@ class TeamController {
             header('Location: /');
             exit;
         }
-        header('Location: /');
-        exit;
+
+        // GET request: show form
+        require __DIR__ . '/../views/teams/create.php';
     }
 
     public function select(): void {

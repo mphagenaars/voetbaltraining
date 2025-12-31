@@ -4,9 +4,14 @@ declare(strict_types=1);
 class Training extends Model {
     protected string $table = 'trainings';
 
-    public function create(int $teamId, string $title, string $description): int {
-        $stmt = $this->pdo->prepare("INSERT INTO trainings (team_id, title, description) VALUES (:team_id, :title, :description)");
-        $stmt->execute([':team_id' => $teamId, ':title' => $title, ':description' => $description]);
+    public function create(int $teamId, string $title, string $description, ?string $trainingDate = null): int {
+        $stmt = $this->pdo->prepare("INSERT INTO trainings (team_id, title, description, training_date) VALUES (:team_id, :title, :description, :training_date)");
+        $stmt->execute([
+            ':team_id' => $teamId, 
+            ':title' => $title, 
+            ':description' => $description,
+            ':training_date' => $trainingDate
+        ]);
         return (int)$this->pdo->lastInsertId();
     }
 
@@ -59,9 +64,14 @@ class Training extends Model {
         return $training;
     }
 
-    public function update(int $id, string $title, string $description): void {
-        $stmt = $this->pdo->prepare("UPDATE trainings SET title = :title, description = :description WHERE id = :id");
-        $stmt->execute([':id' => $id, ':title' => $title, ':description' => $description]);
+    public function update(int $id, string $title, string $description, ?string $trainingDate = null): void {
+        $stmt = $this->pdo->prepare("UPDATE trainings SET title = :title, description = :description, training_date = :training_date WHERE id = :id");
+        $stmt->execute([
+            ':id' => $id, 
+            ':title' => $title, 
+            ':description' => $description,
+            ':training_date' => $trainingDate
+        ]);
     }
 
     public function updateExercises(int $trainingId, array $exercises): void {

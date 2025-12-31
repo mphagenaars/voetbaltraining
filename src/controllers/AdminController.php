@@ -167,6 +167,15 @@ class AdminController {
             $teamModel = new Team($this->pdo);
             $teamModel->updateMemberRoles($teamId, $userId, $isCoach, $isTrainer);
 
+            // Update sessie als de admin zijn eigen rollen aanpast voor het actieve team
+            if ($userId === $_SESSION['user_id'] && isset($_SESSION['current_team']) && $_SESSION['current_team']['id'] === $teamId) {
+                $roleParts = [];
+                if ($isCoach) $roleParts[] = 'Coach';
+                if ($isTrainer) $roleParts[] = 'Trainer';
+                $roleString = implode(' & ', $roleParts);
+                $_SESSION['current_team']['role'] = $roleString;
+            }
+
             header('Location: /admin/user-teams?user_id=' . $userId . '&success=' . urlencode('Rollen bijgewerkt.'));
             exit;
         }
@@ -185,6 +194,11 @@ class AdminController {
 
             $teamModel = new Team($this->pdo);
             $teamModel->removeMember($teamId, $userId);
+
+            // Update sessie als de admin zichzelf uit het actieve team verwijdert
+            if ($userId === $_SESSION['user_id'] && isset($_SESSION['current_team']) && $_SESSION['current_team']['id'] === $teamId) {
+                unset($_SESSION['current_team']);
+            }
 
             header('Location: /admin/user-teams?user_id=' . $userId . '&success=' . urlencode('Verwijderd uit team.'));
             exit;

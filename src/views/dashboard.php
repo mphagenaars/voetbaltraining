@@ -1,75 +1,82 @@
 <h1>Dashboard</h1>
 
-<div class="card" style="margin-bottom: 1.5rem; background-color: #e8f5e9; border-color: #c8e6c9;">
-    <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Algemeen</h2>
-    <p>Toegang tot de centrale database met oefenstof.</p>
-    <div style="margin-top: 1rem;">
-        <a href="/exercises" class="btn btn-sm">Oefenstof Database</a>
+<a href="/exercises" class="action-card">
+    <div>
+        <h2>Oefenstof</h2>
+        <p>Toegang tot de centrale database met oefenstof.</p>
     </div>
-</div>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+</a>
 
 <?php if (isset($_SESSION['current_team'])): ?>
-    <div class="alert alert-info">
-        <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
-        <p>Rol: <?= htmlspecialchars($_SESSION['current_team']['role']) ?></p>
-        <p>Invite code: <code><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></p>
-        
-        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="/trainings" class="btn btn-sm">Trainingen</a>
-            <a href="/players" class="btn btn-sm">Spelers</a>
-            <a href="/matches" class="btn btn-sm">Wedstrijden</a>
+    <div style="margin-bottom: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+            <h2 style="font-size: 1.25rem; margin-bottom: 0.25rem;">Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
+            <div style="display: flex; gap: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                <span>Rol: <?= htmlspecialchars($_SESSION['current_team']['role']) ?></span>
+                <span>Code: <code style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></span>
+            </div>
         </div>
-    </div>
-<?php else: ?>
-    <div class="alert" style="background-color: #fff3e0; color: #e65100; border-color: #ffe0b2;">
-        <p>Selecteer een team om te beginnen.</p>
+        
+        <div style="display: grid; gap: 0.5rem;">
+            <a href="/players" class="action-card" style="margin-bottom: 0; padding: 0.75rem;">
+                <span style="font-weight: 500;">Spelers</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+            <a href="/trainings" class="action-card" style="margin-bottom: 0; padding: 0.75rem;">
+                <span style="font-weight: 500;">Trainingen</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+            <a href="/matches" class="action-card" style="margin-bottom: 0; padding: 0.75rem;">
+                <span style="font-weight: 500;">Wedstrijden</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+        </div>
     </div>
 <?php endif; ?>
 
-<div class="card">
-    <h2>Mijn Teams</h2>
-    <?php if (empty($teams)): ?>
+<h2>Mijn Teams</h2>
+<?php if (empty($teams)): ?>
+    <div class="card">
         <p>Je bent nog geen lid van een team.</p>
-    <?php else: ?>
-        <ul style="list-style: none; padding: 0;">
-            <?php foreach ($teams as $team): ?>
-                <?php
-                    $roleParts = [];
-                    if (!empty($team['is_coach'])) $roleParts[] = 'Coach';
-                    if (!empty($team['is_trainer'])) $roleParts[] = 'Trainer';
-                    $roleString = implode(' & ', $roleParts);
-                ?>
-                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                    <span>
-                        <strong><?= htmlspecialchars($team['name']) ?></strong> 
-                        <span class="text-muted">(<?= htmlspecialchars($roleString) ?>)</span>
-                    </span>
-                    
-                    <?php if (!isset($_SESSION['current_team']) || $_SESSION['current_team']['id'] !== $team['id']): ?>
-                        <form method="POST" action="/team/select" style="margin: 0;">
-                            <?= Csrf::renderInput() ?>
-                            <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
-                            <input type="hidden" name="team_name" value="<?= htmlspecialchars($team['name']) ?>">
-                            <input type="hidden" name="team_invite_code" value="<?= htmlspecialchars($team['invite_code']) ?>">
-                            <button type="submit" class="btn btn-sm btn-outline">Selecteer</button>
-                        </form>
-                    <?php else: ?>
-                        <span class="btn btn-sm" style="cursor: default; opacity: 0.7;">Geselecteerd</span>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
-</div>
+    </div>
+<?php else: ?>
+    <?php foreach ($teams as $team): ?>
+        <?php
+            $roleParts = [];
+            if (!empty($team['is_coach'])) $roleParts[] = 'Coach';
+            if (!empty($team['is_trainer'])) $roleParts[] = 'Trainer';
+            $roleString = implode(' & ', $roleParts);
+            
+            $isCurrent = isset($_SESSION['current_team']) && $_SESSION['current_team']['id'] === $team['id'];
+        ?>
+        
+        <?php if (!$isCurrent): ?>
+            <form method="POST" action="/team/select" style="display: block; width: 100%;">
+                <?= Csrf::renderInput() ?>
+                <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
+                <input type="hidden" name="team_name" value="<?= htmlspecialchars($team['name']) ?>">
+                <input type="hidden" name="team_invite_code" value="<?= htmlspecialchars($team['invite_code']) ?>">
+                
+                <button type="submit" class="action-card">
+                    <div>
+                        <h3><?= htmlspecialchars($team['name']) ?></h3>
+                        <p><?= htmlspecialchars($roleString) ?></p>
+                    </div>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </form>
+        <?php else: ?>
+            <div class="action-card" style="cursor: default; border-color: var(--primary);">
+                <div>
+                    <h3 style="color: var(--primary);"><?= htmlspecialchars($team['name']) ?></h3>
+                    <p><?= htmlspecialchars($roleString) ?></p>
+                </div>
+                <span class="text-success" title="Huidig team">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+            </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
+<?php endif; ?>
 
-<div class="card">
-    <h3>Nieuw team aanmaken</h3>
-    <form method="POST" action="/team/create" style="display: flex; gap: 1rem; align-items: flex-end;">
-        <?= Csrf::renderInput() ?>
-        <div style="flex-grow: 1; margin-bottom: 0;">
-            <label for="name">Team naam</label>
-            <input type="text" id="name" name="name" required placeholder="Bijv. JO11-1">
-        </div>
-        <button type="submit" class="btn">Aanmaken</button>
-    </form>
-</div>

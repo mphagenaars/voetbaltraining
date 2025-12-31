@@ -111,6 +111,10 @@ switch ($path) {
         (new TrainingController($db))->create();
         break;
 
+    case '/trainings/edit':
+        (new TrainingController($db))->edit();
+        break;
+
     case '/trainings/view':
         (new TrainingController($db))->view();
         break;
@@ -167,6 +171,10 @@ switch ($path) {
 
     case '/matches/update-score':
         (new GameController($db))->updateScore();
+        break;
+
+    case '/matches/update-evaluation':
+        (new GameController($db))->updateEvaluation();
         break;
 
     case '/matches/save-lineup':
