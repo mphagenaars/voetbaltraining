@@ -35,8 +35,8 @@
                         <?php endif; ?>
                     </td>
                     <td style="padding: 10px;">
-                        <?php if ($user['id'] !== $_SESSION['user_id']): ?>
-                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+                            <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                                 <form action="/admin/toggle-admin" method="POST">
                                     <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
                                     <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
@@ -45,16 +45,18 @@
                                         <?= !empty($user['is_admin']) ? 'Ontneem Rechten' : 'Maak Admin' ?>
                                     </button>
                                 </form>
+                            <?php endif; ?>
 
-                                <a href="/admin/user-teams?user_id=<?= $user['id'] ?>" class="btn btn-sm btn-outline btn-min-w">Teams</a>
+                            <a href="/admin/user-teams?user_id=<?= $user['id'] ?>" class="btn btn-sm btn-outline btn-min-w">Teams</a>
 
+                            <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                                 <form action="/admin/delete-user" method="POST" onsubmit="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?');">
                                     <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
                                     <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger btn-min-w">Verwijderen</button>
                                 </form>
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </td>
                 </tr>
             <?php endforeach; ?>
