@@ -339,6 +339,7 @@
     width: 60px;
     z-index: 10;
     transition: transform 0.1s;
+    touch-action: none; /* Prevents browser scrolling/zooming on the token */
 }
 
 .player-token:active {
@@ -512,6 +513,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Helper for snapping logic (shared between mouse and touch)
+    const getSnappedPosition = (xPercent, yPercent) => {
+        let finalX = xPercent;
+        let finalY = yPercent;
+        let snapped = false;
+        const snapRange = 10;
+
+        if (slots.length > 0) {
+            let closestSlot = null;
+            let minDistance = Infinity;
+
+            slots.forEach(slot => {
+                const dx = xPercent - slot.x;
+                const dy = yPercent - slot.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestSlot = slot;
+                }
+            });
+
+            if (closestSlot && minDistance <= snapRange) {
+                finalX = closestSlot.x;
+                finalY = closestSlot.y;
+                snapped = true;
+            }
+        }
+
+        if (!snapped) {
+            finalX = Math.round(finalX / 5) * 5;
+            finalY = Math.round(finalY / 5) * 5;
+        }
+        return { x: finalX, y: finalY };
+    };
+
     // Check initial positions
     field.querySelectorAll('.player-token').forEach(player => {
         const x = parseFloat(player.style.left);
@@ -519,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkGoalkeeper(player, x, y);
     });
 
-    // Drag Events
+    // --- MOUSE DRAG EVENTS (Desktop) ---
     document.addEventListener('dragstart', (e) => {
         const target = e.target.closest('.player-token');
         if (target) {
@@ -555,46 +592,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let xPercent = (x / rect.width) * 100;
         let yPercent = (y / rect.height) * 100;
 
-        // Snap to nearest slot
-        let snapped = false;
-        const snapRange = 10;
-
-        if (slots.length > 0) {
-            let closestSlot = null;
-            let minDistance = Infinity;
-
-            slots.forEach(slot => {
-                const dx = xPercent - slot.x;
-                const dy = yPercent - slot.y;
-                const distance = Math.sqrt(dx*dx + dy*dy);
-                
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestSlot = slot;
-                }
-            });
-
-            if (closestSlot && minDistance <= snapRange) {
-                xPercent = closestSlot.x;
-                yPercent = closestSlot.y;
-                snapped = true;
-            }
-        }
-
-        if (!snapped) {
-            xPercent = Math.round(xPercent / 5) * 5;
-            yPercent = Math.round(yPercent / 5) * 5;
-        }
+        const pos = getSnappedPosition(xPercent, yPercent);
 
         if (draggedItem.parentElement === playersList) {
             draggedItem.classList.add('on-field');
             field.appendChild(draggedItem);
         }
 
-        draggedItem.style.left = xPercent + '%';
-        draggedItem.style.top = yPercent + '%';
+        draggedItem.style.left = pos.x + '%';
+        draggedItem.style.top = pos.y + '%';
         
-        checkGoalkeeper(draggedItem, xPercent, yPercent);
+        checkGoalkeeper(draggedItem, pos.x, pos.y);
     });
 
     // Bench Drop Zone
@@ -614,6 +622,130 @@ document.addEventListener('DOMContentLoaded', () => {
             draggedItem.style.top = '';
             playersList.appendChild(draggedItem);
         }
+    });
+
+    // --- TOUCH EVENTS (Mobile) ---
+    let activeTouchItem = null;
+    let touchOffsetX = 0;
+    let touchOffsetY = 0;
+    let originalParent = null;
+    let originalNextSibling = null; // To restore position if needed
+
+    document.addEventListener('touchstart', (e) => {
+        const target = e.target.closest('.player-token');
+        if (!target) return;
+        
+        // Prevent default to stop scrolling and long-press delay
+        e.preventDefault();
+        
+        activeTouchItem = target;
+        originalParent = target.parentElement;
+        originalNextSibling = target.nextElementSibling;
+        
+        const touch = e.touches[0];
+        const rect = target.getBoundingClientRect();
+        
+        // Calculate offset so we drag from where we touched
+        touchOffsetX = touch.clientX - rect.left;
+        touchOffsetY = touch.clientY - rect.top;
+        
+        // Prepare for dragging: Move to body and set fixed position
+        // We clone the width to prevent resizing
+        const width = rect.width;
+        
+        activeTouchItem.style.position = 'fixed';
+        activeTouchItem.style.zIndex = '1000';
+        activeTouchItem.style.width = width + 'px';
+        activeTouchItem.style.left = (touch.clientX - touchOffsetX) + 'px';
+        activeTouchItem.style.top = (touch.clientY - touchOffsetY) + 'px';
+        activeTouchItem.style.pointerEvents = 'none'; // Allow touch to pass through to check element below
+        
+        // Visual feedback
+        activeTouchItem.style.opacity = '0.8';
+        activeTouchItem.style.transform = 'scale(1.1)';
+        
+        // Append to body so it floats over everything
+        document.body.appendChild(activeTouchItem);
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!activeTouchItem) return;
+        e.preventDefault(); // Stop scrolling
+        
+        const touch = e.touches[0];
+        activeTouchItem.style.left = (touch.clientX - touchOffsetX) + 'px';
+        activeTouchItem.style.top = (touch.clientY - touchOffsetY) + 'px';
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+        if (!activeTouchItem) return;
+        
+        const touch = e.changedTouches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        // Check what is underneath the finger
+        // We temporarily hid pointer events on the item so this works
+        const elementBelow = document.elementFromPoint(x, y);
+        
+        // Reset styles
+        activeTouchItem.style.position = '';
+        activeTouchItem.style.zIndex = '';
+        activeTouchItem.style.width = '';
+        activeTouchItem.style.transform = '';
+        activeTouchItem.style.opacity = '';
+        activeTouchItem.style.pointerEvents = '';
+        
+        // Check drop zone
+        const dropField = elementBelow ? elementBelow.closest('#football-field') : null;
+        const dropBench = elementBelow ? elementBelow.closest('#players-list') : null;
+        
+        if (dropField) {
+            // Logic to place on field
+            const rect = dropField.getBoundingClientRect();
+            let xPercent = ((x - rect.left) / rect.width) * 100;
+            let yPercent = ((y - rect.top) / rect.height) * 100;
+            
+            const pos = getSnappedPosition(xPercent, yPercent);
+            
+            activeTouchItem.classList.add('on-field');
+            dropField.appendChild(activeTouchItem);
+            activeTouchItem.style.left = pos.x + '%';
+            activeTouchItem.style.top = pos.y + '%';
+            checkGoalkeeper(activeTouchItem, pos.x, pos.y);
+            
+        } else if (dropBench) {
+            // Logic to place on bench
+            activeTouchItem.classList.remove('on-field');
+            activeTouchItem.classList.remove('is-goalkeeper');
+            activeTouchItem.style.left = '';
+            activeTouchItem.style.top = '';
+            dropBench.appendChild(activeTouchItem);
+        } else {
+            // Dropped nowhere valid? Return to original place
+            if (originalParent === field) {
+                // If it was on field, keep it there (or put back to bench?)
+                // Let's put it back on bench to be safe, or try to restore.
+                // Restoring to field without coords is hard.
+                // Default to bench.
+                activeTouchItem.classList.remove('on-field');
+                activeTouchItem.classList.remove('is-goalkeeper');
+                activeTouchItem.style.left = '';
+                activeTouchItem.style.top = '';
+                playersList.appendChild(activeTouchItem);
+            } else {
+                // Put back in list at original position if possible
+                if (originalNextSibling) {
+                    originalParent.insertBefore(activeTouchItem, originalNextSibling);
+                } else {
+                    originalParent.appendChild(activeTouchItem);
+                }
+            }
+        }
+        
+        activeTouchItem = null;
+        originalParent = null;
+        originalNextSibling = null;
     });
 
     // Save Functionality
