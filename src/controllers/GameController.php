@@ -16,8 +16,20 @@ class GameController extends BaseController {
         if (!Session::has('current_team')) {
             $this->redirect('/');
         }
-        $matches = $this->gameModel->getAllForTeam(Session::get('current_team')['id'], 'date DESC');
-        View::render('matches/index', ['matches' => $matches, 'pageTitle' => 'Wedstrijden - Trainer Bobby']);
+
+        $sort = $_GET['sort'] ?? 'desc';
+        if (!in_array($sort, ['asc', 'desc'])) {
+            $sort = 'desc';
+        }
+
+        $orderBy = $sort === 'asc' ? 'date ASC' : 'date DESC';
+        $matches = $this->gameModel->getAllForTeam(Session::get('current_team')['id'], $orderBy);
+        
+        View::render('matches/index', [
+            'matches' => $matches, 
+            'pageTitle' => 'Wedstrijden - Trainer Bobby',
+            'currentSort' => $sort
+        ]);
     }
 
     public function create(): void {

@@ -1,6 +1,12 @@
 <div class="header-actions">
     <h1>Wedstrijden</h1>
-    <div style="display: flex; gap: 0.5rem;">
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <form method="GET" action="/matches" style="margin: 0;">
+            <select name="sort" onchange="this.form.submit()" style="padding: 0.4rem; border-radius: var(--radius); border: 1px solid var(--border-color); cursor: pointer;">
+                <option value="desc" <?= ($currentSort ?? 'desc') === 'desc' ? 'selected' : '' ?>>Nieuwste eerst</option>
+                <option value="asc" <?= ($currentSort ?? 'desc') === 'asc' ? 'selected' : '' ?>>Oudste eerst</option>
+            </select>
+        </form>
         <a href="/matches/create" class="btn btn-outline">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Nieuwe Wedstrijd
