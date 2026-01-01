@@ -20,6 +20,11 @@ abstract class Model {
         $stmt = $this->pdo->prepare("DELETE FROM {$this->table} WHERE id = :id");
         $stmt->execute([':id' => $id]);
     }
+
+    public function getAll(string $orderBy = 'id ASC'): array {
+        $stmt = $this->pdo->query("SELECT * FROM {$this->table} ORDER BY $orderBy");
+        return $stmt->fetchAll();
+    }
     
     public function getAllForTeam(int $teamId, string $orderBy = 'created_at DESC'): array {
         $stmt = $this->pdo->prepare("SELECT * FROM {$this->table} WHERE team_id = :team_id ORDER BY $orderBy");

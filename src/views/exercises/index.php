@@ -15,7 +15,7 @@
     <form method="GET" action="/exercises">
         <div>
             <label for="q">Zoeken</label>
-            <input type="text" id="q" name="q" value="<?= htmlspecialchars($query ?? '') ?>" placeholder="Titel of beschrijving...">
+            <input type="text" id="q" name="q" value="<?= e($query ?? '') ?>" placeholder="Titel of beschrijving...">
         </div>
         
         <div>
@@ -23,7 +23,7 @@
             <select id="team_task" name="team_task">
                 <option value="">Alle teamtaken</option>
                 <?php foreach ($teamTasksList as $task): ?>
-                    <option value="<?= $task ?>" <?= ($teamTask ?? '') === $task ? 'selected' : '' ?>><?= $task ?></option>
+                    <option value="<?= e($task) ?>" <?= ($teamTask ?? '') === $task ? 'selected' : '' ?>><?= e($task) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -33,7 +33,7 @@
             <select id="training_objective" name="training_objective">
                 <option value="">Alle doelstellingen</option>
                 <?php foreach ($objectivesList as $obj): ?>
-                    <option value="<?= $obj ?>" <?= ($trainingObjective ?? '') === $obj ? 'selected' : '' ?>><?= $obj ?></option>
+                    <option value="<?= e($obj) ?>" <?= ($trainingObjective ?? '') === $obj ? 'selected' : '' ?>><?= e($obj) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -43,7 +43,7 @@
             <select id="football_action" name="football_action">
                 <option value="">Alle handelingen</option>
                 <?php foreach ($actionsList as $action): ?>
-                    <option value="<?= $action ?>" <?= ($footballAction ?? '') === $action ? 'selected' : '' ?>><?= $action ?></option>
+                    <option value="<?= e($action) ?>" <?= ($footballAction ?? '') === $action ? 'selected' : '' ?>><?= e($action) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -67,11 +67,11 @@
             <div class="card">
                 <?php if (!empty($exercise['image_path'])): ?>
                     <div style="margin-bottom: 1rem; text-align: center;">
-                        <img src="/uploads/<?= htmlspecialchars($exercise['image_path']) ?>" alt="<?= htmlspecialchars($exercise['title']) ?>" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
+                        <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
                     </div>
                 <?php endif; ?>
-                <h3><?= htmlspecialchars($exercise['title']) ?></h3>
-                <p><?= nl2br(htmlspecialchars(substr($exercise['description'] ?? '', 0, 100))) ?>...</p>
+                <h3><?= e($exercise['title']) ?></h3>
+                <p><?= nl2br(e(substr($exercise['description'] ?? '', 0, 100))) ?>...</p>
                 
                 <div style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
                     <?php if (!empty($exercise['min_players']) || !empty($exercise['max_players'])): ?>
@@ -96,16 +96,16 @@
 
                 <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #555;">
                     <?php if (!empty($exercise['team_task'])): ?>
-                        <div><strong>Teamtaak:</strong> <?= htmlspecialchars($exercise['team_task']) ?></div>
+                        <div><strong>Teamtaak:</strong> <?= e($exercise['team_task']) ?></div>
                     <?php endif; ?>
                     <?php if (!empty($exercise['training_objective'])): ?>
                         <div><strong>Doelstelling:</strong> 
                         <?php
                         $decoded = json_decode($exercise['training_objective'], true);
                         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            echo htmlspecialchars(implode(', ', $decoded));
+                            echo e(implode(', ', $decoded));
                         } else {
-                            echo htmlspecialchars($exercise['training_objective']);
+                            echo e($exercise['training_objective']);
                         }
                         ?>
                         </div>
@@ -116,9 +116,9 @@
                         $decoded = json_decode($exercise['football_action'], true);
                         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                             $capitalized = array_map('ucfirst', $decoded);
-                            echo htmlspecialchars(implode(', ', $capitalized));
+                            echo e(implode(', ', $capitalized));
                         } else {
-                            echo htmlspecialchars(ucfirst($exercise['football_action']));
+                            echo e(ucfirst($exercise['football_action']));
                         }
                         ?>
                         </div>

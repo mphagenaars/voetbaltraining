@@ -1,14 +1,10 @@
 <?php
 declare(strict_types=1);
 
-class AdminController {
-    public function __construct(private PDO $pdo) {}
+class AdminController extends BaseController {
 
     private function requireAdmin(): void {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAuth();
         
         // Check DB voor zekerheid (sessie kan verouderd zijn)
         $userModel = new User($this->pdo);
@@ -25,7 +21,7 @@ class AdminController {
         $this->requireAdmin();
         
         $userModel = new User($this->pdo);
-        $users = $userModel->getAll();
+        $users = $userModel->getAll('name ASC');
         
         $success = $_GET['success'] ?? null;
         $error = $_GET['error'] ?? null;
@@ -42,10 +38,7 @@ class AdminController {
         $this->requireAdmin();
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /admin?error=' . urlencode('Ongeldige sessie.'));
-                exit;
-            }
+             $this->verifyCsrf('/admin?error=' . urlencode('Ongeldige sessie.'));
             
             $userId = (int)($_POST['user_id'] ?? 0);
             
@@ -107,7 +100,7 @@ class AdminController {
         }
 
         $userTeams = $teamModel->getTeamsForUser($userId);
-        $allTeams = $teamModel->getAll();
+        $allTeams = $teamModel->getAll('name ASC');
         
         // Filter teams where user is NOT a member
         $availableTeams = array_filter($allTeams, function($team) use ($userTeams) {
@@ -133,10 +126,7 @@ class AdminController {
     public function addTeamMember(): void {
         $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /admin?error=' . urlencode('Ongeldige sessie.'));
-                exit;
-            }
+            $this->verifyCsrf('/admin?error=' . urlencode('Ongeldige sessie.'));
 
             $userId = (int)$_POST['user_id'];
             $teamId = (int)$_POST['team_id'];
@@ -146,18 +136,14 @@ class AdminController {
             $teamModel = new Team($this->pdo);
             $teamModel->addMember($teamId, $userId, $isCoach, $isTrainer);
 
-            header('Location: /admin/user-teams?user_id=' . $userId . '&success=' . urlencode('Toegevoegd aan team.'));
-            exit;
+            $this->redirect('/admin/user-teams?user_id=' . $userId . '&success=' . urlencode('Toegevoegd aan team.'));
         }
     }
 
     public function updateTeamRole(): void {
         $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /admin?error=' . urlencode('Ongeldige sessie.'));
-                exit;
-            }
+            $this->verifyCsrf('/admin?error=' . urlencode('Ongeldige sessie.'));
 
             $userId = (int)$_POST['user_id'];
             $teamId = (int)$_POST['team_id'];

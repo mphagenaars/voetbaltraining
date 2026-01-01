@@ -1,39 +1,30 @@
 <?php
 declare(strict_types=1);
 
-class TeamController {
-    public function __construct(private PDO $pdo) {}
+class TeamController extends BaseController {
 
     public function create(): void {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAuth();
+        $this->verifyCsrf();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /');
-                exit;
-            }
             $name = $_POST['name'] ?? '';
             if (!empty($name)) {
                 $teamModel = new Team($this->pdo);
                 $teamModel->create($name, $_SESSION['user_id']);
             }
-            header('Location: /');
-            exit;
+            $this->redirect('/');
         }
 
         // GET request: show form
-        require __DIR__ . '/../views/teams/create.php';
+        View::render('teams/create', ['pageTitle' => 'Nieuw Team - Trainer Bobby']);
     }
 
     public function select(): void {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /');
-                exit;
-            }
+        $this->requireAuth();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf();
             $teamId = (int)($_POST['team_id'] ?? 0);
             $teamModel = new Team($this->pdo);
             

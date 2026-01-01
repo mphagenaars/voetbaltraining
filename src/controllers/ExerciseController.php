@@ -1,14 +1,10 @@
 <?php
 declare(strict_types=1);
 
-class ExerciseController {
-    public function __construct(private PDO $pdo) {}
-
+class ExerciseController extends BaseController {
     public function index(): void {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /');
-            exit;
-        }
+        $this->requireAuth();
+        
         $exerciseModel = new Exercise($this->pdo);
         $query = $_GET['q'] ?? null;
         $teamTask = $_GET['team_task'] ?? null;
@@ -32,16 +28,10 @@ class ExerciseController {
     }
 
     public function create(): void {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /');
-            exit;
-        }
+        $this->requireAuth();
+        $this->verifyCsrf();
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /exercises');
-                exit;
-            }
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
             $variation = $_POST['variation'] ?? null;

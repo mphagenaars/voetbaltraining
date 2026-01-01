@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-class TrainingController {
+class TrainingController extends BaseController {
     private Training $trainingModel;
     private Exercise $exerciseModel;
 
-    public function __construct(private PDO $pdo) {
+    public function __construct(PDO $pdo) {
+        parent::__construct($pdo);
         $this->trainingModel = new Training($pdo);
         $this->exerciseModel = new Exercise($pdo);
     }
@@ -22,16 +23,14 @@ class TrainingController {
     }
 
     public function create(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /trainings');
-                exit;
-            }
+            $this->verifyCsrf('/trainings');
+            
             $trainingDate = !empty($_POST['training_date']) ? $_POST['training_date'] : date('Y-m-d');
             $title = "Training " . date('d-m-Y', strtotime($trainingDate));
             $description = $_POST['description'] ?? '';
@@ -53,8 +52,7 @@ class TrainingController {
                     $this->trainingModel->updateExercises($trainingId, $exercisesData);
                 }
 
-                header('Location: /trainings');
-                exit;
+                $this->redirect('/trainings');
             }
         }
 
@@ -65,24 +63,20 @@ class TrainingController {
     }
 
     public function edit(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
         $training = $this->trainingModel->getById($id);
 
         if (!$training || $training['team_id'] !== $_SESSION['current_team']['id']) {
-            header('Location: /trainings');
-            exit;
+            $this->redirect('/trainings');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /trainings');
-                exit;
-            }
+            $this->verifyCsrf('/trainings');
             
             $trainingDate = !empty($_POST['training_date']) ? $_POST['training_date'] : date('Y-m-d');
             $title = "Training " . date('d-m-Y', strtotime($trainingDate));
@@ -104,8 +98,7 @@ class TrainingController {
                 }
                 $this->trainingModel->updateExercises($id, $exercisesData);
                 
-                header('Location: /trainings');
-                exit;
+                $this->redirect('/trainings');
             }
         }
 
@@ -119,28 +112,30 @@ class TrainingController {
     }
 
     public function view(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
         $training = $this->trainingModel->getById($id);
 
         if (!$training || $training['team_id'] !== $_SESSION['current_team']['id']) {
-            header('Location: /trainings');
-            exit;
+            $this->redirect('/trainings');
         }
 
         View::render('trainings/view', ['training' => $training, 'pageTitle' => $training['title'] . ' - Trainer Bobby']);
     }
 
     public function delete(): void {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /trainings');
-                exit;
-            }
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/trainings');
+            
             $id = (int)($_POST['id'] ?? 0);
             $training = $this->trainingModel->getById($id);
 
@@ -148,7 +143,6 @@ class TrainingController {
                 $this->trainingModel->delete($id);
             }
         }
-        header('Location: /trainings');
-        exit;
+        $this->redirect('/trainings');
     }
 }

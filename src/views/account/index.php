@@ -3,11 +3,11 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+    <div class="alert alert-success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <div class="alert alert-danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <div class="grid-2">
@@ -15,17 +15,17 @@
     <div class="card">
         <h2>Profiel</h2>
         <form action="/account/update-profile" method="POST">
-            <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+            <?= Csrf::renderInput() ?>
             
             <div class="form-group">
                 <label>Gebruikersnaam</label>
-                <input type="text" value="<?= htmlspecialchars($user['username']) ?>" disabled class="form-control" style="background-color: #f0f0f0;">
+                <input type="text" value="<?= e($user['username']) ?>" disabled class="form-control" style="background-color: #f0f0f0;">
                 <small class="text-muted">Je gebruikersnaam kan niet gewijzigd worden.</small>
             </div>
 
             <div class="form-group">
                 <label for="name">Naam</label>
-                <input type="text" id="name" name="name" value="<?= htmlspecialchars($user['name']) ?>" class="form-control" required>
+                <input type="text" id="name" name="name" value="<?= e($user['name']) ?>" class="form-control" required>
             </div>
 
             <div class="form-group">
@@ -39,8 +39,8 @@
                             $roleString = implode(' & ', $roleParts);
                         ?>
                         <li class="list-group-item">
-                            <strong><?= htmlspecialchars($team['name']) ?></strong>: 
-                            <span class="badge"><?= htmlspecialchars($roleString) ?></span>
+                            <strong><?= e($team['name']) ?></strong>: 
+                            <span class="badge"><?= e($roleString) ?></span>
                         </li>
                     <?php endforeach; ?>
                     <?php if (empty($teams)): ?>
@@ -60,7 +60,7 @@
     <div class="card">
         <h2>Wachtwoord Wijzigen</h2>
         <form action="/account/update-password" method="POST">
-            <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+            <?= Csrf::renderInput() ?>
             
             <div class="form-group">
                 <label for="current_password">Huidig wachtwoord</label>

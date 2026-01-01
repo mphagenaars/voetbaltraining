@@ -4,7 +4,7 @@ foreach ($training['exercises'] as $ex) {
     $totalDuration += $ex['training_duration'] ?: $ex['duration'] ?: 0;
 }
 
-$displayTitle = htmlspecialchars($training['title']);
+$displayTitle = e($training['title']);
 if (!empty($training['training_date'])) {
     $ts = strtotime($training['training_date']);
     $days = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
@@ -16,7 +16,7 @@ if (!empty($training['training_date'])) {
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <div>
         <h1><?= $displayTitle ?></h1>
-        <p class="text-muted"><?= htmlspecialchars($training['description'] ?? '') ?></p>
+        <p class="text-muted"><?= e($training['description'] ?? '') ?></p>
     </div>
     <div style="text-align: right;">
         <span style="font-size: 1.2rem; font-weight: bold;">⏱️ <?= $totalDuration ?> min</span>
@@ -32,7 +32,7 @@ if (!empty($training['training_date'])) {
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <h3 style="margin-top: 0;">
                     <span style="color: var(--primary-color); margin-right: 0.5rem;">#<?= $index + 1 ?></span>
-                    <?= htmlspecialchars($exercise['title']) ?>
+                    <?= e($exercise['title']) ?>
                 </h3>
                 <span style="background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold;">
                     <?= $exercise['training_duration'] ?: $exercise['duration'] ?: '?' ?> min
@@ -41,17 +41,17 @@ if (!empty($training['training_date'])) {
 
             <?php if (!empty($exercise['image_path'])): ?>
                 <div style="margin: 1rem 0; text-align: center;">
-                    <img src="/uploads/<?= htmlspecialchars($exercise['image_path']) ?>" alt="<?= htmlspecialchars($exercise['title']) ?>" style="max-width: 100%; max-height: 300px; border-radius: 4px;">
+                    <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 300px; border-radius: 4px;">
                 </div>
             <?php endif; ?>
 
             <div style="margin-top: 0.5rem;">
-                <?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?>
+                <?= nl2br(e($exercise['description'] ?? '')) ?>
             </div>
 
             <?php if (!empty($exercise['requirements'])): ?>
                 <div style="margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid #eee; font-size: 0.9rem; color: #666;">
-                    <strong>Benodigdheden:</strong> <?= htmlspecialchars($exercise['requirements']) ?>
+                    <strong>Benodigdheden:</strong> <?= e($exercise['requirements']) ?>
                 </div>
             <?php endif; ?>
         </div>

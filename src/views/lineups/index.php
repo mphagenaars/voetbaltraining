@@ -10,9 +10,9 @@
         <?php else: ?>
             <?php foreach ($lineups as $lineup): ?>
                 <div class="card">
-                    <h3><?= htmlspecialchars($lineup['name']) ?></h3>
-                    <p>Formatie: <?= htmlspecialchars($lineup['formation']) ?></p>
-                    <p><small>Aangemaakt op: <?= htmlspecialchars($lineup['created_at']) ?></small></p>
+                    <h3><?= e($lineup['name']) ?></h3>
+                    <p>Formatie: <?= e($lineup['formation']) ?></p>
+                    <p><small>Aangemaakt op: <?= e($lineup['created_at']) ?></small></p>
                     <div class="actions">
                         <a href="/lineups/view?id=<?= $lineup['id'] ?>" class="btn btn-secondary">Bekijken/Bewerken</a>
                         <form action="/lineups/delete" method="POST" style="display:inline;" onsubmit="return confirm('Weet je zeker dat je deze opstelling wilt verwijderen?');">

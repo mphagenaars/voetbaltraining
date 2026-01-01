@@ -8,7 +8,7 @@
             
             <div class="form-group">
                 <label for="name">Naam</label>
-                <input type="text" id="name" name="name" value="<?= htmlspecialchars($player['name']) ?>" required class="form-control">
+                <input type="text" id="name" name="name" value="<?= e($player['name']) ?>" required class="form-control">
             </div>
             
             <div class="form-actions">

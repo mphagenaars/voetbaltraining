@@ -14,7 +14,7 @@
     <div class="training-list">
         <?php foreach ($trainings as $training): ?>
             <?php
-                $displayTitle = htmlspecialchars($training['title']);
+                $displayTitle = e($training['title']);
                 if (!empty($training['training_date'])) {
                     $ts = strtotime($training['training_date']);
                     $days = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
@@ -25,7 +25,7 @@
             <div class="action-card" onclick="location.href='/trainings/view?id=<?= $training['id'] ?>'" style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="flex: 1;">
                     <h3><?= $displayTitle ?></h3>
-                    <p class="text-muted" style="margin-bottom: 0.5rem;"><?= nl2br(htmlspecialchars(substr($training['description'] ?? '', 0, 100))) ?>...</p>
+                    <p class="text-muted" style="margin-bottom: 0.5rem;"><?= nl2br(e(substr($training['description'] ?? '', 0, 100))) ?>...</p>
                     
                     <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 1rem;">
                         <span>📝 <?= $training['exercise_count'] ?> oefeningen</span>

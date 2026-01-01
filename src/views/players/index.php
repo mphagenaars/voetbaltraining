@@ -15,7 +15,7 @@
             <div class="player-list">
                 <?php foreach ($players as $player): ?>
                     <div class="player-item">
-                        <span class="player-name"><?= htmlspecialchars($player['name']) ?></span>
+                        <span class="player-name"><?= e($player['name']) ?></span>
                         <div class="player-actions">
                             <a href="/players/edit?id=<?= $player['id'] ?>" class="btn-icon" title="Bewerken">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

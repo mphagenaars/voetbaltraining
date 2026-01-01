@@ -2,7 +2,7 @@
     <h1 class="mb-2">Inloggen</h1>
     
     <?php if (isset($error)): ?>
-        <div class="alert"><?= htmlspecialchars($error) ?></div>
+        <div class="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
     <form method="POST" action="/login">

@@ -10,12 +10,6 @@ class Player extends Model {
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function getAllForTeam(int $teamId, string $orderBy = 'name ASC'): array {
-        return parent::getAllForTeam($teamId, $orderBy);
-    }
-
-
-
     public function update(int $id, string $name): void {
         $stmt = $this->pdo->prepare("UPDATE players SET name = :name WHERE id = :id");
         $stmt->execute([':id' => $id, ':name' => $name]);

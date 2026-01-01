@@ -12,7 +12,7 @@
       </defs>
     </svg>
     <div class="header-actions">
-        <h1><?= htmlspecialchars($lineup['name']) ?> (<?= htmlspecialchars($lineup['formation']) ?>)</h1>
+        <h1><?= e($lineup['name']) ?> (<?= e($lineup['formation']) ?>)</h1>
         <div class="actions">
             <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
             <button id="save-lineup" class="btn btn-primary">Opslaan</button>
@@ -22,7 +22,7 @@
 
     <div class="lineup-editor">
         <div class="field-container">
-            <div id="football-field" class="football-field" data-formation="<?= htmlspecialchars($lineup['formation']) ?>">
+            <div id="football-field" class="football-field" data-formation="<?= e($lineup['formation']) ?>">
                 <!-- Field Markings -->
                 <div class="field-line center-line"></div>
                 <div class="field-circle center-circle"></div>
@@ -46,7 +46,7 @@
                                 <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($pos['player_name'], 0, 1)) ?></text>
                             </svg>
                         </div>
-                        <div class="player-name"><?= htmlspecialchars($pos['player_name']) ?></div>
+                        <div class="player-name"><?= e($pos['player_name']) ?></div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -67,7 +67,7 @@
                                     <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($player['name'], 0, 1)) ?></text>
                                 </svg>
                             </div>
-                            <div class="player-name"><?= htmlspecialchars($player['name']) ?></div>
+                            <div class="player-name"><?= e($player['name']) ?></div>
                         </div>
                     <?php endif; ?>
                 <?php endforeach; ?>

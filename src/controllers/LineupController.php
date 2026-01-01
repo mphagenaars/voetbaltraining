@@ -2,42 +2,40 @@
 
 declare(strict_types=1);
 
-class LineupController {
+class LineupController extends BaseController {
     private Lineup $lineupModel;
     private Player $playerModel;
 
-    public function __construct(private PDO $pdo) {
+    public function __construct(PDO $pdo) {
+        parent::__construct($pdo);
         $this->lineupModel = new Lineup($pdo);
         $this->playerModel = new Player($pdo);
     }
 
     public function index(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
         $lineups = $this->lineupModel->getAllForTeam($_SESSION['current_team']['id']);
         View::render('lineups/index', ['lineups' => $lineups, 'pageTitle' => 'Opstellingen - Trainer Bobby']);
     }
 
     public function create(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /lineups');
-                exit;
-            }
+            $this->verifyCsrf('/lineups');
+            
             $name = trim($_POST['name'] ?? '');
             $formation = trim($_POST['formation'] ?? '4-3-3');
 
             if (!empty($name)) {
                 $lineupId = $this->lineupModel->create($_SESSION['current_team']['id'], $name, $formation);
-                header('Location: /lineups/view?id=' . $lineupId);
-                exit;
+                $this->redirect('/lineups/view?id=' . $lineupId);
             }
         }
 
@@ -45,9 +43,9 @@ class LineupController {
     }
 
     public function view(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
@@ -62,7 +60,7 @@ class LineupController {
             exit;
         }
 
-        $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id']);
+        $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id'], 'name ASC');
         $positions = $this->lineupModel->getPositions($id);
 
         View::render('lineups/view', ['lineup' => $lineup, 'players' => $players, 'positions' => $positions, 'pageTitle' => $lineup['name'] . ' - Trainer Bobby']);

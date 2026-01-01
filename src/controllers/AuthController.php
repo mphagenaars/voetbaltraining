@@ -1,8 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class AuthController {
-    public function __construct(private PDO $pdo) {}
+class AuthController extends BaseController {
 
     public function login(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,8 +40,7 @@ class AuthController {
                             ]);
                         }
 
-                        header('Location: /');
-                        exit;
+                        $this->redirect('/');
                     } else {
                         $error = "Ongeldige gebruikersnaam of wachtwoord.";
                     }
@@ -94,8 +92,7 @@ class AuthController {
                             'invite_code' => $team['invite_code']
                         ];
                         
-                        header('Location: /');
-                        exit;
+                        $this->redirect('/');
                     }
 
                 } catch (Exception $e) {
@@ -124,7 +121,6 @@ class AuthController {
         }
 
         session_destroy();
-        header('Location: /');
-        exit;
+        $this->redirect('/');
     }
 }

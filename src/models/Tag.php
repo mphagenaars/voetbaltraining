@@ -23,12 +23,6 @@ class Tag extends Model {
         return $tag ?: null;
     }
 
-    public function getAllForTeam(int $teamId, string $orderBy = 'name ASC'): array {
-        $stmt = $this->pdo->prepare("SELECT * FROM tags WHERE team_id = :team_id ORDER BY $orderBy");
-        $stmt->execute([':team_id' => $teamId]);
-        return $stmt->fetchAll();
-    }
-
     public function getTagsForExercise(int $exerciseId): array {
         $stmt = $this->pdo->prepare("
             SELECT t.* 

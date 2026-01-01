@@ -11,10 +11,10 @@
 <?php if (isset($_SESSION['current_team'])): ?>
     <div style="margin-bottom: 1.5rem;">
         <div style="margin-bottom: 1rem;">
-            <h2 style="font-size: 1.25rem; margin-bottom: 0.25rem;">Huidig team: <?= htmlspecialchars($_SESSION['current_team']['name']) ?></h2>
+            <h2 style="font-size: 1.25rem; margin-bottom: 0.25rem;">Huidig team: <?= e($_SESSION['current_team']['name']) ?></h2>
             <div style="display: flex; gap: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                <span>Rol: <?= htmlspecialchars($_SESSION['current_team']['role']) ?></span>
-                <span>Code: <code style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($_SESSION['current_team']['invite_code']) ?></code></span>
+                <span>Rol: <?= e($_SESSION['current_team']['role']) ?></span>
+                <span>Code: <code style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;"><?= e($_SESSION['current_team']['invite_code']) ?></code></span>
             </div>
         </div>
         
@@ -55,13 +55,13 @@
             <form method="POST" action="/team/select" style="display: block; width: 100%;">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
-                <input type="hidden" name="team_name" value="<?= htmlspecialchars($team['name']) ?>">
-                <input type="hidden" name="team_invite_code" value="<?= htmlspecialchars($team['invite_code']) ?>">
+                <input type="hidden" name="team_name" value="<?= e($team['name']) ?>">
+                <input type="hidden" name="team_invite_code" value="<?= e($team['invite_code']) ?>">
                 
                 <button type="submit" class="action-card">
                     <div>
-                        <h3><?= htmlspecialchars($team['name']) ?></h3>
-                        <p><?= htmlspecialchars($roleString) ?></p>
+                        <h3><?= e($team['name']) ?></h3>
+                        <p><?= e($roleString) ?></p>
                     </div>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
@@ -69,8 +69,8 @@
         <?php else: ?>
             <div class="action-card" style="cursor: default; border-color: var(--primary);">
                 <div>
-                    <h3 style="color: var(--primary);"><?= htmlspecialchars($team['name']) ?></h3>
-                    <p><?= htmlspecialchars($roleString) ?></p>
+                    <h3 style="color: var(--primary);"><?= e($team['name']) ?></h3>
+                    <p><?= e($roleString) ?></p>
                 </div>
                 <span class="text-success" title="Huidig team">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>

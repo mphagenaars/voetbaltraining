@@ -9,7 +9,7 @@ $isEdit = isset($exercise);
         <?= Csrf::renderInput() ?>
         <div class="form-group">
             <label for="title">Titel *</label>
-            <input type="text" id="title" name="title" value="<?= htmlspecialchars($exercise['title'] ?? '') ?>" required>
+            <input type="text" id="title" name="title" value="<?= e($exercise['title'] ?? '') ?>" required>
         </div>
 
         <div class="form-group">
@@ -45,8 +45,8 @@ $isEdit = isset($exercise);
                     foreach ($objectives as $obj) {
                         $checked = in_array($obj, $currentObjectives) ? 'checked' : '';
                         echo '<label class="multi-select-option">';
-                        echo '<input type="checkbox" name="training_objective[]" value="' . htmlspecialchars($obj) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-objective\')"> ';
-                        echo htmlspecialchars($obj);
+                        echo '<input type="checkbox" name="training_objective[]" value="' . e($obj) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-objective\')"> ';
+                        echo e($obj);
                         echo '</label>';
                     }
                     ?>
@@ -85,8 +85,8 @@ $isEdit = isset($exercise);
                         }
                         $checked = $isChecked ? 'checked' : '';
                         echo '<label class="multi-select-option">';
-                        echo '<input type="checkbox" name="football_action[]" value="' . htmlspecialchars($action) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-action\')"> ';
-                        echo htmlspecialchars($action);
+                        echo '<input type="checkbox" name="football_action[]" value="' . e($action) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-action\')"> ';
+                        echo e($action);
                         echo '</label>';
                     }
                     ?>
@@ -100,12 +100,12 @@ $isEdit = isset($exercise);
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0;">
                     <div class="number-stepper" style="margin-bottom: 0;">
                         <button type="button" class="stepper-btn" onclick="updateNumber('min_players', -1)">-</button>
-                        <input type="number" id="min_players" name="min_players" value="<?= htmlspecialchars((string)($exercise['min_players'] ?? '')) ?>" placeholder="Min" style="width: 100%; flex: 1;">
+                        <input type="number" id="min_players" name="min_players" value="<?= e((string)($exercise['min_players'] ?? '')) ?>" placeholder="Min" style="width: 100%; flex: 1;">
                         <button type="button" class="stepper-btn" onclick="updateNumber('min_players', 1)">+</button>
                     </div>
                     <div class="number-stepper" style="margin-bottom: 0;">
                         <button type="button" class="stepper-btn" onclick="updateNumber('max_players', -1)">-</button>
-                        <input type="number" id="max_players" name="max_players" value="<?= htmlspecialchars((string)($exercise['max_players'] ?? '')) ?>" placeholder="Max" style="width: 100%; flex: 1;">
+                        <input type="number" id="max_players" name="max_players" value="<?= e((string)($exercise['max_players'] ?? '')) ?>" placeholder="Max" style="width: 100%; flex: 1;">
                         <button type="button" class="stepper-btn" onclick="updateNumber('max_players', 1)">+</button>
                     </div>
                 </div>
@@ -117,7 +117,7 @@ $isEdit = isset($exercise);
                 <label for="duration">Duur (minuten)</label>
                 <div class="number-stepper" style="margin-bottom: 0;">
                     <button type="button" class="stepper-btn" onclick="updateNumber('duration', -5)">-</button>
-                    <input type="number" id="duration" name="duration" value="<?= htmlspecialchars((string)($exercise['duration'] ?? '')) ?>" style="width: 100%; flex: 1;">
+                    <input type="number" id="duration" name="duration" value="<?= e((string)($exercise['duration'] ?? '')) ?>" style="width: 100%; flex: 1;">
                     <button type="button" class="stepper-btn" onclick="updateNumber('duration', 5)">+</button>
                 </div>
             </div>
@@ -125,12 +125,12 @@ $isEdit = isset($exercise);
 
         <div class="form-group">
             <label for="description">Beschrijving</label>
-            <textarea id="description" name="description" rows="5"><?= htmlspecialchars($exercise['description'] ?? '') ?></textarea>
+            <textarea id="description" name="description" rows="5"><?= e($exercise['description'] ?? '') ?></textarea>
         </div>
 
         <div class="form-group">
             <label for="variation">Moeilijker / makkelijker maken</label>
-            <textarea id="variation" name="variation" rows="3"><?= htmlspecialchars($exercise['variation'] ?? '') ?></textarea>
+            <textarea id="variation" name="variation" rows="3"><?= e($exercise['variation'] ?? '') ?></textarea>
         </div>
 
         <!-- Tekentool -->
@@ -213,9 +213,9 @@ $isEdit = isset($exercise);
                 </div>
                 <div id="container" class="editor-canvas-container"></div>
             </div>
-            <input type="hidden" name="drawing_data" id="drawing_data" value="<?= htmlspecialchars($exercise['drawing_data'] ?? '') ?>">
+            <input type="hidden" name="drawing_data" id="drawing_data" value="<?= e($exercise['drawing_data'] ?? '') ?>">
             <input type="hidden" name="drawing_image" id="drawing_image">
-            <input type="hidden" name="field_type" id="field_type" value="<?= htmlspecialchars($exercise['field_type'] ?? 'square') ?>">
+            <input type="hidden" name="field_type" id="field_type" value="<?= e($exercise['field_type'] ?? 'square') ?>">
         </div>
 
         <div style="margin-top: 1rem;">

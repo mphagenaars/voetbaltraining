@@ -3,11 +3,11 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+    <div class="alert alert-success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <div class="alert alert-danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <div class="card">
@@ -25,8 +25,8 @@
             <?php foreach ($users as $user): ?>
                 <tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 10px;"><?= $user['id'] ?></td>
-                    <td style="padding: 10px;"><?= htmlspecialchars($user['username']) ?></td>
-                    <td style="padding: 10px;"><?= htmlspecialchars($user['name']) ?></td>
+                    <td style="padding: 10px;"><?= e($user['username']) ?></td>
+                    <td style="padding: 10px;"><?= e($user['name']) ?></td>
                     <td style="padding: 10px;">
                         <?php if (!empty($user['is_admin'])): ?>
                             <span class="badge">Ja</span>
@@ -38,7 +38,7 @@
                         <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                                 <form action="/admin/toggle-admin" method="POST">
-                                    <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+                                    <?= Csrf::renderInput() ?>
                                     <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                     <input type="hidden" name="is_admin" value="<?= !empty($user['is_admin']) ? 0 : 1 ?>">
                                     <button type="submit" class="btn btn-sm btn-outline btn-min-w">
@@ -51,7 +51,7 @@
 
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                                 <form action="/admin/delete-user" method="POST" onsubmit="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?');">
-                                    <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+                                    <?= Csrf::renderInput() ?>
                                     <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger btn-min-w">Verwijderen</button>
                                 </form>

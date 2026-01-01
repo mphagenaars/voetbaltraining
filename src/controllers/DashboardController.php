@@ -1,8 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class DashboardController {
-    public function __construct(private PDO $pdo) {}
+class DashboardController extends BaseController {
 
     public function index(): void {
         if (isset($_SESSION['user_id'])) {

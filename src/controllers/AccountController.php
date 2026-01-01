@@ -1,15 +1,11 @@
 <?php
 declare(strict_types=1);
 
-class AccountController {
-    public function __construct(private PDO $pdo) {}
+class AccountController extends BaseController {
 
     public function index(): void {
         // Check of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAuth();
 
         $userId = $_SESSION['user_id'];
         $userModel = new User($this->pdo);
@@ -31,21 +27,18 @@ class AccountController {
     }
 
     public function updateProfile(): void {
-        if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /login');
-            exit;
+        $this->requireAuth();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/account');
         }
 
-        if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-            header('Location: /account?error=' . urlencode('Ongeldige sessie.'));
-            exit;
-        }
+        $this->verifyCsrf('/account?error=' . urlencode('Ongeldige sessie.'));
 
         $name = trim($_POST['name'] ?? '');
         
         if (empty($name)) {
-            header('Location: /account?error=' . urlencode('Naam mag niet leeg zijn.'));
-            exit;
+            $this->redirect('/account?error=' . urlencode('Naam mag niet leeg zijn.'));
         }
 
         try {
@@ -55,41 +48,35 @@ class AccountController {
             // Update sessie naam ook
             $_SESSION['user_name'] = $name;
 
-            header('Location: /account?success=' . urlencode('Profiel bijgewerkt.'));
+            $this->redirect('/account?success=' . urlencode('Profiel bijgewerkt.'));
         } catch (Exception $e) {
-            header('Location: /account?error=' . urlencode('Er ging iets mis.'));
+            $this->redirect('/account?error=' . urlencode('Er ging iets mis.'));
         }
-        exit;
     }
 
     public function updatePassword(): void {
-        if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /login');
-            exit;
+        $this->requireAuth();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/account');
         }
 
-        if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-            header('Location: /account?error=' . urlencode('Ongeldige sessie.'));
-            exit;
-        }
+        $this->verifyCsrf('/account?error=' . urlencode('Ongeldige sessie.'));
 
         $currentPassword = $_POST['current_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
         if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
-            header('Location: /account?error=' . urlencode('Vul alle velden in.'));
-            exit;
+            $this->redirect('/account?error=' . urlencode('Vul alle velden in.'));
         }
 
         if ($newPassword !== $confirmPassword) {
-            header('Location: /account?error=' . urlencode('Nieuwe wachtwoorden komen niet overeen.'));
-            exit;
+            $this->redirect('/account?error=' . urlencode('Nieuwe wachtwoorden komen niet overeen.'));
         }
 
         if (strlen($newPassword) < 8) {
-            header('Location: /account?error=' . urlencode('Nieuw wachtwoord moet minimaal 8 tekens zijn.'));
-            exit;
+            $this->redirect('/account?error=' . urlencode('Nieuw wachtwoord moet minimaal 8 tekens zijn.'));
         }
 
         try {
@@ -97,17 +84,15 @@ class AccountController {
             $user = $userModel->getById($_SESSION['user_id']);
 
             if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
-                header('Location: /account?error=' . urlencode('Huidig wachtwoord is onjuist.'));
-                exit;
+                $this->redirect('/account?error=' . urlencode('Huidig wachtwoord is onjuist.'));
             }
 
             $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
             $userModel->updatePassword($_SESSION['user_id'], $newHash);
 
-            header('Location: /account?success=' . urlencode('Wachtwoord gewijzigd.'));
+            $this->redirect('/account?success=' . urlencode('Wachtwoord gewijzigd.'));
         } catch (Exception $e) {
-            header('Location: /account?error=' . urlencode('Er ging iets mis.'));
+            $this->redirect('/account?error=' . urlencode('Er ging iets mis.'));
         }
-        exit;
     }
 }

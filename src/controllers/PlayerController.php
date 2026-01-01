@@ -2,39 +2,37 @@
 
 declare(strict_types=1);
 
-class PlayerController {
+class PlayerController extends BaseController {
     private Player $playerModel;
 
-    public function __construct(private PDO $pdo) {
+    public function __construct(PDO $pdo) {
+        parent::__construct($pdo);
         $this->playerModel = new Player($pdo);
     }
 
     public function index(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
-        $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id']);
+        $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id'], 'name ASC');
         View::render('players/index', ['players' => $players, 'pageTitle' => 'Spelers - Trainer Bobby']);
     }
 
     public function create(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /players');
-                exit;
-            }
+            $this->verifyCsrf('/players');
+            
             $name = trim($_POST['name'] ?? '');
             if (!empty($name)) {
                 $this->playerModel->create($_SESSION['current_team']['id'], $name);
             }
-            header('Location: /players');
-            exit;
+            $this->redirect('/players');
         }
 
         // GET request
@@ -42,9 +40,9 @@ class PlayerController {
     }
 
     public function edit(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
@@ -59,11 +57,9 @@ class PlayerController {
     }
 
     public function update(): void {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /players');
-                exit;
-            }
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/players');
+            
             $id = (int)($_POST['id'] ?? 0);
             $name = trim($_POST['name'] ?? '');
 
@@ -74,17 +70,19 @@ class PlayerController {
                     $this->playerModel->update($id, $name);
                 }
             }
+            $this->redirect('/players');
         }
-        header('Location: /players');
-        exit;
     }
 
     public function delete(): void {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id']) && isset($_SESSION['current_team'])) {
-            if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
-                header('Location: /players');
-                exit;
-            }
+        $this->requireAuth();
+        if (!isset($_SESSION['current_team'])) {
+            $this->redirect('/');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/players');
+            
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
                 // TODO: Check if player belongs to current team (Model should probably handle this or we check here)
@@ -96,7 +94,6 @@ class PlayerController {
                 }
             }
         }
-        header('Location: /players');
-        exit;
+        $this->redirect('/players');
     }
 }

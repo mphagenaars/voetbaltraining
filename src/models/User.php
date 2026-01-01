@@ -22,13 +22,6 @@ class User extends Model {
         return $user ?: null;
     }
 
-    public function getById(int $id): ?array {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $user = $stmt->fetch();
-        return $user ?: null;
-    }
-
     public function updateName(int $id, string $name): void {
         $stmt = $this->pdo->prepare("UPDATE users SET name = :name WHERE id = :id");
         $stmt->execute([':name' => $name, ':id' => $id]);
@@ -37,16 +30,6 @@ class User extends Model {
     public function updatePassword(int $id, string $hash): void {
         $stmt = $this->pdo->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
         $stmt->execute([':hash' => $hash, ':id' => $id]);
-    }
-
-    public function getAll(): array {
-        $stmt = $this->pdo->query("SELECT * FROM users ORDER BY name ASC");
-        return $stmt->fetchAll();
-    }
-
-    public function delete(int $id): void {
-        $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = :id");
-        $stmt->execute([':id' => $id]);
     }
 
     public function setAdminStatus(int $id, bool $isAdmin): void {

@@ -66,11 +66,6 @@ class Team extends Model {
         return $team ?: null;
     }
 
-    public function getAll(): array {
-        $stmt = $this->pdo->query("SELECT * FROM teams ORDER BY name ASC");
-        return $stmt->fetchAll();
-    }
-
     public function updateMemberRoles(int $teamId, int $userId, bool $isCoach, bool $isTrainer): void {
         $stmt = $this->pdo->prepare("UPDATE team_members SET is_coach = :is_coach, is_trainer = :is_trainer WHERE team_id = :team_id AND user_id = :user_id");
         $stmt->execute([

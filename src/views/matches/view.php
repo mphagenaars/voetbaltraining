@@ -13,14 +13,14 @@
     </svg>
 
     <div class="header-actions">
-        <h1><?= htmlspecialchars($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h1>
+        <h1><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h1>
         <a href="/matches" class="btn btn-outline">Terug</a>
     </div>
     
     <div class="card" style="margin-bottom: 1rem;">
         <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-            <p><strong>Datum:</strong> <?= htmlspecialchars(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
-            <p><strong>Formatie:</strong> <?= htmlspecialchars($match['formation']) ?></p>
+            <p><strong>Datum:</strong> <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
+            <p><strong>Formatie:</strong> <?= e($match['formation']) ?></p>
         </div>
     </div>
 
@@ -37,7 +37,7 @@
 
             <div class="lineup-editor">
                 <div class="field-container">
-                    <div id="football-field" class="football-field" data-formation="<?= htmlspecialchars($match['formation']) ?>">
+                    <div id="football-field" class="football-field" data-formation="<?= e($match['formation']) ?>">
                         <!-- Field Markings -->
                         <div class="field-line center-line"></div>
                         <div class="field-circle center-circle"></div>
@@ -61,7 +61,7 @@
                                         <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($pos['player_name'], 0, 1)) ?></text>
                                     </svg>
                                 </div>
-                                <div class="player-name"><?= htmlspecialchars($pos['player_name']) ?></div>
+                                <div class="player-name"><?= e($pos['player_name']) ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -82,7 +82,7 @@
                                             <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($player['name'], 0, 1)) ?></text>
                                         </svg>
                                     </div>
-                                    <div class="player-name"><?= htmlspecialchars($player['name']) ?></div>
+                                    <div class="player-name"><?= e($player['name']) ?></div>
                                 </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -128,7 +128,7 @@
                     <select name="player_id" style="width: 100%;">
                         <option value="">-- Selecteer speler --</option>
                         <?php foreach ($players as $player): ?>
-                            <option value="<?= $player['id'] ?>"><?= htmlspecialchars($player['name']) ?></option>
+                            <option value="<?= $player['id'] ?>"><?= e($player['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -156,11 +156,11 @@
                         ?>
                         
                         <?php if ($event['player_name']): ?>
-                            door <strong><?= htmlspecialchars($event['player_name']) ?></strong>
+                            door <strong><?= e($event['player_name']) ?></strong>
                         <?php endif; ?>
                         
                         <?php if ($event['description']): ?>
-                            (<?= htmlspecialchars($event['description']) ?>)
+                            (<?= e($event['description']) ?>)
                         <?php endif; ?>
                     </li>
                 <?php endforeach; ?>
@@ -191,7 +191,7 @@
 
                 <div class="form-group">
                     <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Evaluatie & Opmerkingen</label>
-                    <textarea name="evaluation" rows="6" placeholder="Schrijf hier je evaluatie van de wedstrijd..." style="width: 100%;"><?= htmlspecialchars($match['evaluation'] ?? '') ?></textarea>
+                    <textarea name="evaluation" rows="6" placeholder="Schrijf hier je evaluatie van de wedstrijd..." style="width: 100%;"><?= e($match['evaluation'] ?? '') ?></textarea>
                 </div>
             </form>
         </div>

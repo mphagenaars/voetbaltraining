@@ -15,9 +15,9 @@
         <?php foreach ($matches as $match): ?>
             <div class="action-card" onclick="location.href='/matches/view?id=<?= $match['id'] ?>'" style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="flex: 1;">
-                    <h3><?= htmlspecialchars($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h3>
+                    <h3><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h3>
                     <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 1rem;">
-                        <span>📅 <?= htmlspecialchars(date('d-m-Y H:i', strtotime($match['date']))) ?></span>
+                        <span>📅 <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></span>
                         <span>⚽ <?= $match['score_home'] ?> - <?= $match['score_away'] ?></span>
                     </div>
                 </div>

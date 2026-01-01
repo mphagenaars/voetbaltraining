@@ -4,7 +4,7 @@
 </div>
 
 <div class="card">
-    <p>Voeg een nieuwe speler toe aan <strong><?= htmlspecialchars($_SESSION['current_team']['name']) ?></strong>.</p>
+    <p>Voeg een nieuwe speler toe aan <strong><?= e($_SESSION['current_team']['name']) ?></strong>.</p>
     
     <form method="POST" action="/players/create" style="max-width: 400px;">
         <?= Csrf::renderInput() ?>

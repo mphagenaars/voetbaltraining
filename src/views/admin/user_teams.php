@@ -1,16 +1,16 @@
 <div class="dashboard-header">
     <div style="display: flex; align-items: center; gap: 1rem;">
         <a href="/admin" class="btn btn-sm btn-outline">← Terug</a>
-        <h1>Teams van <?= htmlspecialchars($user['name']) ?></h1>
+        <h1>Teams van <?= e($user['name']) ?></h1>
     </div>
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+    <div class="alert alert-success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <div class="alert alert-danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <div class="grid-2">
@@ -24,12 +24,12 @@
                 <?php foreach ($userTeams as $team): ?>
                     <li class="list-group-item" style="display: flex; align-items: center; justify-content: space-between;">
                         <div style="font-weight: bold;">
-                            <?= htmlspecialchars($team['name']) ?>
+                            <?= e($team['name']) ?>
                         </div>
                         
                         <div style="display: flex; align-items: center; gap: 1.5rem;">
                             <form action="/admin/update-team-role" method="POST" style="display: flex; align-items: center; gap: 1rem; margin: 0;">
-                                <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+                                <?= Csrf::renderInput() ?>
                                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                 <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
                                 
@@ -44,7 +44,7 @@
                             </form>
 
                             <form action="/admin/remove-team-member" method="POST" style="margin: 0;" onsubmit="return confirm('Weet je zeker dat je deze gebruiker uit het team wilt verwijderen?');">
-                                <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+                                <?= Csrf::renderInput() ?>
                                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                 <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-outline-danger" style="border: none; background: transparent; padding: 0.25rem; display: flex; align-items: center;" title="Verwijderen">
@@ -68,7 +68,7 @@
             <p class="text-muted">Geen teams beschikbaar om toe te voegen.</p>
         <?php else: ?>
             <form action="/admin/add-team-member" method="POST">
-                <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+                <?= Csrf::renderInput() ?>
                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                 
                 <div class="form-group">
@@ -76,7 +76,7 @@
                     <select name="team_id" required class="form-control">
                         <option value="">-- Selecteer Team --</option>
                         <?php foreach ($availableTeams as $team): ?>
-                            <option value="<?= $team['id'] ?>"><?= htmlspecialchars($team['name']) ?></option>
+                            <option value="<?= $team['id'] ?>"><?= e($team['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

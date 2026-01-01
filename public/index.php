@@ -15,6 +15,9 @@ header("X-Frame-Options: SAMEORIGIN");
 header("X-XSS-Protection: 1; mode=block");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 
+// Load helper functions
+require_once __DIR__ . '/../src/functions.php';
+
 session_start();
 
 // Autoloader
@@ -69,166 +72,13 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_me'])) {
     }
 }
 
-// Simpele router
-switch ($path) {
-    case '/':
-        (new DashboardController($db))->index();
-        break;
-        
-    case '/team/create':
-        (new TeamController($db))->create();
-        break;
+// Load routes
+$routes = require __DIR__ . '/../src/routes.php';
 
-    case '/team/select':
-        (new TeamController($db))->select();
-        break;
-
-    case '/exercises':
-        (new ExerciseController($db))->index();
-        break;
-
-    case '/exercises/create':
-        (new ExerciseController($db))->create();
-        break;
-
-    case '/exercises/edit':
-        (new ExerciseController($db))->edit();
-        break;
-
-    case '/exercises/view':
-        (new ExerciseController($db))->view();
-        break;
-
-    case '/exercises/delete':
-        (new ExerciseController($db))->delete();
-        break;
-
-    case '/trainings':
-        (new TrainingController($db))->index();
-        break;
-
-    case '/trainings/create':
-        (new TrainingController($db))->create();
-        break;
-
-    case '/trainings/edit':
-        (new TrainingController($db))->edit();
-        break;
-
-    case '/trainings/view':
-        (new TrainingController($db))->view();
-        break;
-
-    case '/trainings/delete':
-        (new TrainingController($db))->delete();
-        break;
-
-    case '/login':
-        (new AuthController($db))->login();
-        break;
-
-    case '/register':
-        (new AuthController($db))->register();
-        break;
-
-    // --- PLAYERS ROUTES ---
-    case '/players':
-        (new PlayerController($db))->index();
-        break;
-
-    case '/players/create':
-        (new PlayerController($db))->create();
-        break;
-
-    case '/players/delete':
-        (new PlayerController($db))->delete();
-        break;
-
-    case '/players/edit':
-        (new PlayerController($db))->edit();
-        break;
-
-    case '/players/update':
-        (new PlayerController($db))->update();
-        break;
-
-    // --- MATCHES ROUTES ---
-    case '/matches':
-        (new GameController($db))->index();
-        break;
-
-    case '/matches/create':
-        (new GameController($db))->create();
-        break;
-
-    case '/matches/view':
-        (new GameController($db))->view();
-        break;
-
-    case '/matches/add-event':
-        (new GameController($db))->addEvent();
-        break;
-
-    case '/matches/update-score':
-        (new GameController($db))->updateScore();
-        break;
-
-    case '/matches/update-details':
-        (new GameController($db))->updateDetails();
-        break;
-
-    case '/matches/save-lineup':
-        (new GameController($db))->saveLineup();
-        break;
-
-    case '/logout':
-        (new AuthController($db))->logout();
-        break;
-
-    // --- ACCOUNT ROUTES ---
-    case '/account':
-        (new AccountController($db))->index();
-        break;
-
-    case '/account/update-profile':
-        (new AccountController($db))->updateProfile();
-        break;
-
-    case '/account/update-password':
-        (new AccountController($db))->updatePassword();
-        break;
-
-    // --- ADMIN ROUTES ---
-    case '/admin':
-        (new AdminController($db))->index();
-        break;
-
-    case '/admin/delete-user':
-        (new AdminController($db))->deleteUser();
-        break;
-
-    case '/admin/toggle-admin':
-        (new AdminController($db))->toggleAdmin();
-        break;
-
-    case '/admin/user-teams':
-        (new AdminController($db))->manageTeams();
-        break;
-
-    case '/admin/add-team-member':
-        (new AdminController($db))->addTeamMember();
-        break;
-
-    case '/admin/update-team-role':
-        (new AdminController($db))->updateTeamRole();
-        break;
-
-    case '/admin/remove-team-member':
-        (new AdminController($db))->removeTeamMember();
-        break;
-
-    default:
-        http_response_code(404);
-        View::render('404', ['pageTitle' => '404 - Niet gevonden']);
-        break;
+if (isset($routes[$path])) {
+    [$controllerName, $method] = $routes[$path];
+    (new $controllerName($db))->$method();
+} else {
+    http_response_code(404);
+    View::render('404', ['pageTitle' => '404 - Niet gevonden']);
 }

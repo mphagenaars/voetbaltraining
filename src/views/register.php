@@ -3,22 +3,22 @@
     <p class="text-muted mb-2">Gebruik de invite code van je team.</p>
     
     <?php if (isset($error)): ?>
-        <div class="alert"><?= htmlspecialchars($error) ?></div>
+        <div class="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
     <form method="POST" action="/register">
         <?= Csrf::renderInput() ?>
         <div>
             <label for="invite_code">Invite Code</label>
-            <input type="text" id="invite_code" name="invite_code" required value="<?= htmlspecialchars($_POST['invite_code'] ?? '') ?>">
+            <input type="text" id="invite_code" name="invite_code" required value="<?= e($_POST['invite_code'] ?? '') ?>">
         </div>
         <div>
             <label for="name">Volledige naam</label>
-            <input type="text" id="name" name="name" required value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
+            <input type="text" id="name" name="name" required value="<?= e($_POST['name'] ?? '') ?>">
         </div>
         <div>
             <label for="username">Gebruikersnaam</label>
-            <input type="text" id="username" name="username" required value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+            <input type="text" id="username" name="username" required value="<?= e($_POST['username'] ?? '') ?>">
         </div>
         <div>
             <label for="password">Wachtwoord</label>

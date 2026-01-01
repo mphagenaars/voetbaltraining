@@ -17,7 +17,7 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
         <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem;">
             <div class="form-group" style="flex: 1; margin-bottom: 0;">
                 <label for="training_date">Datum *</label>
-                <input type="date" id="training_date" name="training_date" required value="<?= htmlspecialchars($dateValue) ?>">
+                <input type="date" id="training_date" name="training_date" required value="<?= e($dateValue) ?>">
             </div>
             <button type="submit" class="btn-icon" title="Opslaan" style="margin-bottom: 4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -26,7 +26,7 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
 
         <div class="form-group">
             <label for="description">Beschrijving</label>
-            <textarea id="description" name="description" rows="3"><?= htmlspecialchars($descValue) ?></textarea>
+            <textarea id="description" name="description" rows="3"><?= e($descValue) ?></textarea>
         </div>
     </div>
 
@@ -37,8 +37,8 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
                 <input type="text" id="search-exercises" placeholder="Zoek oefening..." style="margin-bottom: 1rem; width: 100%;">
                 <div id="library-list">
                     <?php foreach ($allExercises as $exercise): ?>
-                        <div class="exercise-item" data-id="<?= $exercise['id'] ?>" data-title="<?= htmlspecialchars($exercise['title']) ?>" data-duration="<?= $exercise['duration'] ?? 0 ?>" style="padding: 0.5rem; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                            <span><?= htmlspecialchars($exercise['title']) ?></span>
+                        <div class="exercise-item" data-id="<?= $exercise['id'] ?>" data-title="<?= e($exercise['title']) ?>" data-duration="<?= $exercise['duration'] ?? 0 ?>" style="padding: 0.5rem; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <span><?= e($exercise['title']) ?></span>
                             <span class="btn btn-sm btn-outline">+</span>
                         </div>
                     <?php endforeach; ?>
@@ -52,7 +52,7 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
                 <p class="text-muted" id="empty-msg" style="<?= !empty($currentExercises) ? 'display: none;' : '' ?>">Klik op een oefening om toe te voegen.</p>
                 <?php foreach ($currentExercises as $ex): ?>
                     <div class="selected-item" style="padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                        <span style="flex-grow: 1;"><?= htmlspecialchars($ex['title']) ?></span>
+                        <span style="flex-grow: 1;"><?= e($ex['title']) ?></span>
                         <input type="hidden" name="exercises[]" value="<?= $ex['id'] ?>">
                         <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min">
                         <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
