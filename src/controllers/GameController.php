@@ -33,7 +33,7 @@ class GameController extends BaseController {
             $validator->required('opponent')->required('date');
 
             if ($validator->isValid()) {
-                $isHome = isset($_POST['is_home']) ? 1 : 0;
+                $isHome = (int)($_POST['is_home'] ?? 1);
                 $formation = trim($_POST['formation'] ?? '4-3-3');
                 
                 $matchId = $this->gameModel->create(Session::get('current_team')['id'], $_POST['opponent'], $_POST['date'], $isHome, $formation);
