@@ -461,6 +461,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (currentTool === 'dashed') {
                 config.dash = [10, 10];
+            } else if (currentTool === 'zigzag') {
+                config.tension = 0.4;
             }
             
             lastLine = new Konva.Arrow(config);
