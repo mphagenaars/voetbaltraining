@@ -7,21 +7,16 @@ class AccountController extends BaseController {
         // Check of gebruiker is ingelogd
         $this->requireAuth();
 
-        $userId = $_SESSION['user_id'];
+        $userId = Session::get('user_id');
         $userModel = new User($this->pdo);
         $teamModel = new Team($this->pdo);
 
         $user = $userModel->getById($userId);
         $teams = $teamModel->getTeamsForUser($userId);
 
-        $success = $_GET['success'] ?? null;
-        $error = $_GET['error'] ?? null;
-
         View::render('account/index', [
             'user' => $user,
             'teams' => $teams,
-            'success' => $success,
-            'error' => $error,
             'pageTitle' => 'Mijn Account - Trainer Bobby'
         ]);
     }
@@ -33,24 +28,28 @@ class AccountController extends BaseController {
             $this->redirect('/account');
         }
 
-        $this->verifyCsrf('/account?error=' . urlencode('Ongeldige sessie.'));
+        $this->verifyCsrf('/account');
 
-        $name = trim($_POST['name'] ?? '');
+        $validator = new Validator($_POST);
+        $validator->required('name');
         
-        if (empty($name)) {
-            $this->redirect('/account?error=' . urlencode('Naam mag niet leeg zijn.'));
+        if (!$validator->isValid()) {
+            Session::flash('error', 'Naam mag niet leeg zijn.');
+            $this->redirect('/account');
         }
 
         try {
             $userModel = new User($this->pdo);
-            $userModel->updateName($_SESSION['user_id'], $name);
+            $userModel->updateName(Session::get('user_id'), $_POST['name']);
             
             // Update sessie naam ook
-            $_SESSION['user_name'] = $name;
+            Session::set('user_name', $_POST['name']);
 
-            $this->redirect('/account?success=' . urlencode('Profiel bijgewerkt.'));
+            Session::flash('success', 'Profiel bijgewerkt.');
+            $this->redirect('/account');
         } catch (Exception $e) {
-            $this->redirect('/account?error=' . urlencode('Er ging iets mis.'));
+            Session::flash('error', 'Er ging iets mis.');
+            $this->redirect('/account');
         }
     }
 
@@ -61,38 +60,45 @@ class AccountController extends BaseController {
             $this->redirect('/account');
         }
 
-        $this->verifyCsrf('/account?error=' . urlencode('Ongeldige sessie.'));
+        $this->verifyCsrf('/account');
 
-        $currentPassword = $_POST['current_password'] ?? '';
-        $newPassword = $_POST['new_password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
+        $validator = new Validator($_POST);
+        $validator->required('current_password')
+                  ->required('new_password')
+                  ->required('confirm_password')
+                  ->min('new_password', 8);
 
-        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
-            $this->redirect('/account?error=' . urlencode('Vul alle velden in.'));
+        if (!$validator->isValid()) {
+            Session::flash('error', 'Controleer de invoer. Wachtwoord moet minimaal 8 tekens zijn.');
+            $this->redirect('/account');
         }
+
+        $currentPassword = $_POST['current_password'];
+        $newPassword = $_POST['new_password'];
+        $confirmPassword = $_POST['confirm_password'];
 
         if ($newPassword !== $confirmPassword) {
-            $this->redirect('/account?error=' . urlencode('Nieuwe wachtwoorden komen niet overeen.'));
-        }
-
-        if (strlen($newPassword) < 8) {
-            $this->redirect('/account?error=' . urlencode('Nieuw wachtwoord moet minimaal 8 tekens zijn.'));
+            Session::flash('error', 'Nieuwe wachtwoorden komen niet overeen.');
+            $this->redirect('/account');
         }
 
         try {
             $userModel = new User($this->pdo);
-            $user = $userModel->getById($_SESSION['user_id']);
+            $user = $userModel->getById(Session::get('user_id'));
 
             if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
-                $this->redirect('/account?error=' . urlencode('Huidig wachtwoord is onjuist.'));
+                Session::flash('error', 'Huidig wachtwoord is onjuist.');
+                $this->redirect('/account');
             }
 
             $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-            $userModel->updatePassword($_SESSION['user_id'], $newHash);
+            $userModel->updatePassword(Session::get('user_id'), $newHash);
 
-            $this->redirect('/account?success=' . urlencode('Wachtwoord gewijzigd.'));
+            Session::flash('success', 'Wachtwoord gewijzigd.');
+            $this->redirect('/account');
         } catch (Exception $e) {
-            $this->redirect('/account?error=' . urlencode('Er ging iets mis.'));
+            Session::flash('error', 'Er ging iets mis.');
+            $this->redirect('/account');
         }
     }
 }

@@ -13,18 +13,17 @@ class TrainingController extends BaseController {
     }
 
     public function index(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
-            header('Location: /');
-            exit;
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            $this->redirect('/');
         }
 
-        $trainings = $this->trainingModel->getAllForTeam($_SESSION['current_team']['id']);
+        $trainings = $this->trainingModel->getAllForTeam(Session::get('current_team')['id']);
         View::render('trainings/index', ['trainings' => $trainings, 'pageTitle' => 'Trainingen - Trainer Bobby']);
     }
 
     public function create(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
@@ -38,7 +37,7 @@ class TrainingController extends BaseController {
             $durations = $_POST['durations'] ?? []; // Array of durations keyed by exercise ID (or index)
 
             if (!empty($trainingDate)) {
-                $trainingId = $this->trainingModel->create($_SESSION['current_team']['id'], $title, $description, $trainingDate);
+                $trainingId = $this->trainingModel->create(Session::get('current_team')['id'], $title, $description, $trainingDate);
 
                 // Add exercises
                 if (is_array($selectedExercises)) {
@@ -52,26 +51,27 @@ class TrainingController extends BaseController {
                     $this->trainingModel->updateExercises($trainingId, $exercisesData);
                 }
 
+                Session::flash('success', 'Training aangemaakt.');
                 $this->redirect('/trainings');
             }
         }
 
         // Get all exercises to select from
-        $allExercises = $this->exerciseModel->getAllForTeam($_SESSION['current_team']['id']);
+        $allExercises = $this->exerciseModel->getAllForTeam(Session::get('current_team')['id']);
 
         View::render('trainings/form', ['allExercises' => $allExercises, 'pageTitle' => 'Nieuwe Training - Trainer Bobby']);
     }
 
     public function edit(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
         $training = $this->trainingModel->getById($id);
 
-        if (!$training || $training['team_id'] !== $_SESSION['current_team']['id']) {
+        if (!$training || $training['team_id'] !== Session::get('current_team')['id']) {
             $this->redirect('/trainings');
         }
 
@@ -98,11 +98,12 @@ class TrainingController extends BaseController {
                 }
                 $this->trainingModel->updateExercises($id, $exercisesData);
                 
+                Session::flash('success', 'Training bijgewerkt.');
                 $this->redirect('/trainings');
             }
         }
 
-        $allExercises = $this->exerciseModel->getAllForTeam($_SESSION['current_team']['id']);
+        $allExercises = $this->exerciseModel->getAllForTeam(Session::get('current_team')['id']);
 
         View::render('trainings/form', [
             'allExercises' => $allExercises, 
@@ -113,14 +114,14 @@ class TrainingController extends BaseController {
 
     public function view(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
         $training = $this->trainingModel->getById($id);
 
-        if (!$training || $training['team_id'] !== $_SESSION['current_team']['id']) {
+        if (!$training || $training['team_id'] !== Session::get('current_team')['id']) {
             $this->redirect('/trainings');
         }
 
@@ -129,7 +130,7 @@ class TrainingController extends BaseController {
 
     public function delete(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
@@ -139,8 +140,9 @@ class TrainingController extends BaseController {
             $id = (int)($_POST['id'] ?? 0);
             $training = $this->trainingModel->getById($id);
 
-            if ($training && $training['team_id'] === $_SESSION['current_team']['id']) {
+            if ($training && $training['team_id'] === Session::get('current_team')['id']) {
                 $this->trainingModel->delete($id);
+                Session::flash('success', 'Training verwijderd.');
             }
         }
         $this->redirect('/trainings');

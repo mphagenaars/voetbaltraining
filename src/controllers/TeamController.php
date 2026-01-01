@@ -8,12 +8,15 @@ class TeamController extends BaseController {
         $this->verifyCsrf();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = $_POST['name'] ?? '';
-            if (!empty($name)) {
+            $validator = new Validator($_POST);
+            $validator->required('name');
+
+            if ($validator->isValid()) {
                 $teamModel = new Team($this->pdo);
-                $teamModel->create($name, $_SESSION['user_id']);
+                $teamModel->create($_POST['name'], Session::get('user_id'));
+                Session::flash('success', 'Team succesvol aangemaakt.');
+                $this->redirect('/');
             }
-            $this->redirect('/');
         }
 
         // GET request: show form
@@ -28,24 +31,24 @@ class TeamController extends BaseController {
             $teamId = (int)($_POST['team_id'] ?? 0);
             $teamModel = new Team($this->pdo);
             
+            $userId = Session::get('user_id');
             // Verifieer dat de user lid is van dit team
-            if ($teamModel->isMember($teamId, $_SESSION['user_id'])) {
-                $roles = $teamModel->getMemberRoles($teamId, $_SESSION['user_id']);
+            if ($teamModel->isMember($teamId, $userId)) {
+                $roles = $teamModel->getMemberRoles($teamId, $userId);
                 
                 $roleParts = [];
                 if ($roles['is_coach']) $roleParts[] = 'Coach';
                 if ($roles['is_trainer']) $roleParts[] = 'Trainer';
                 $roleString = implode(' & ', $roleParts);
 
-                $_SESSION['current_team'] = [
+                Session::set('current_team', [
                     'id' => $teamId,
                     'name' => $_POST['team_name'],
                     'role' => $roleString,
                     'invite_code' => $_POST['team_invite_code']
-                ];
+                ]);
             }
         }
-        header('Location: /');
-        exit;
+        $this->redirect('/');
     }
 }

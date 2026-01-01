@@ -1,7 +1,9 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <h1><?= e($exercise['title']) ?></h1>
     <div>
-        <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn btn-outline">Bewerken</a>
+        <?php if (!empty($canEdit)): ?>
+            <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn btn-outline">Bewerken</a>
+        <?php endif; ?>
         <a href="/exercises" class="btn btn-outline">Terug</a>
     </div>
 </div>

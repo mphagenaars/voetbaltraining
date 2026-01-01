@@ -1,19 +1,23 @@
 # Voetbaltraining
 
-Een self-hosted webapplicatie voor voetbaltrainers om trainingen, oefeningen en teamopstellingen te beheren. Deze applicatie is gebouwd met vanilla PHP en maakt gebruik van een SQLite database.
+Een self-hosted webapplicatie voor voetbaltrainers om trainingen, oefeningen, wedstrijden en teamopstellingen te beheren. Deze applicatie is gebouwd met vanilla PHP (MVC architectuur) en maakt gebruik van een SQLite database.
 
 ## Kenmerken
 
-- **Oefeningen Beheer**: Creëer en beheer voetbaloefeningen. Voeg beschrijvingen en tekeningen toe.
+- **Oefeningen Beheer**: Creëer en beheer voetbaloefeningen. Voeg beschrijvingen, tags en tekeningen toe.
 - **Trainingsplanner**: Stel complete trainingen samen door oefeningen te combineren.
-- **Team & Speler Beheer**: Beheer je teams en spelerslijsten.
-- **Opstellingen**: Maak tactische opstellingen en deel deze met je team.
+- **Wedstrijdbeheer**: Plan wedstrijden, houd scores bij, noteer gebeurtenissen (doelpunten, kaarten) en voeg evaluaties toe.
+- **Team & Speler Beheer**: Beheer meerdere teams en spelerslijsten.
+- **Opstellingen**: Maak tactische opstellingen en koppel deze aan wedstrijden.
 - **Tekentool**: Geïntegreerde tekentool (gebaseerd op Konva.js) om oefeningen en tactieken visueel uit te werken.
+- **Admin Dashboard**: Beheer gebruikers en teams (voor beheerders).
+- **Accountbeheer**: Profielinstellingen en wachtwoordbeheer.
 
 ## Vereisten
 
 - PHP 8.1 of hoger
 - SQLite extensie voor PHP
+- PDO extensie voor PHP
 
 ## Installatie & Gebruik
 
@@ -77,21 +81,33 @@ Dit script haalt de laatste code op, werkt de database bij (indien nodig) en her
 
 ## Projectstructuur
 
-- `public/`: De web root. Bevat `index.php` (entry point), CSS, JS en uploads.
+De applicatie volgt een strikte MVC (Model-View-Controller) structuur:
+
+- `public/`: De web root. Bevat `index.php` (Front Controller & Router), CSS, JS en uploads.
 - `src/`: Broncode van de applicatie.
-    - `controllers/`: Afhandeling van verzoeken.
-    - `models/`: Database interacties en logica.
+    - `controllers/`: Afhandeling van verzoeken en business logic.
+    - `models/`: Database interacties (CRUD).
     - `views/`: PHP templates voor de HTML weergave.
-    - `Database.php`: Database connectie setup.
+    - `Database.php`: Singleton database connectie wrapper.
+    - `Session.php`: Helper voor veilig sessiebeheer en flash messages.
+    - `Validator.php`: Helper voor input validatie.
+    - `Csrf.php`: Beveiliging tegen Cross-Site Request Forgery.
+    - `View.php`: Template rendering engine.
 - `data/`: Bevat de SQLite database (`database.sqlite`).
 - `scripts/`: Hulpscripts voor installatie en onderhoud.
 
-## Technologie
+## Technologie & Beveiliging
 
-- **Backend**: PHP (Custom MVC structuur, geen framework)
+- **Backend**: PHP 8.1+ (Custom MVC, geen framework)
 - **Database**: SQLite
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Libraries**: Konva.js (voor tekeningen)
+- **Beveiliging**:
+    - CSRF protectie op alle formulieren.
+    - XSS preventie via automatische output escaping in Views.
+    - Veilig sessiebeheer via `Session` class.
+    - Wachtwoord hashing met `password_hash` (Bcrypt).
+    - Prepared statements (PDO) tegen SQL injectie.
 
 ## Licentie
 

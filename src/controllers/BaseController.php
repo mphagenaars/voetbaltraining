@@ -5,9 +5,8 @@ abstract class BaseController {
     public function __construct(protected PDO $pdo) {}
 
     protected function requireAuth(): void {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
+        if (!Session::has('user_id')) {
+            $this->redirect('/login');
         }
     }
 

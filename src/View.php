@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 class View {
     public static function render(string $viewPath, array $data = []): void {
+        // Inject flash messages if not already present in data
+        if (!isset($data['success']) && Session::hasFlash('success')) {
+            $data['success'] = Session::getFlash('success');
+        }
+        if (!isset($data['error']) && Session::hasFlash('error')) {
+            $data['error'] = Session::getFlash('error');
+        }
+
         // Extract data to variables
         extract($data);
 

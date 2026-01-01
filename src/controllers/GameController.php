@@ -13,29 +13,31 @@ class GameController extends BaseController {
 
     public function index(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
-        $matches = $this->gameModel->getAllForTeam($_SESSION['current_team']['id'], 'date DESC');
+        $matches = $this->gameModel->getAllForTeam(Session::get('current_team')['id'], 'date DESC');
         View::render('matches/index', ['matches' => $matches, 'pageTitle' => 'Wedstrijden - Trainer Bobby']);
     }
 
     public function create(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/matches');
             
-            $opponent = trim($_POST['opponent'] ?? '');
-            $date = $_POST['date'] ?? date('Y-m-d H:i:s');
-            $isHome = isset($_POST['is_home']) ? 1 : 0;
-            $formation = trim($_POST['formation'] ?? '4-3-3');
+            $validator = new Validator($_POST);
+            $validator->required('opponent')->required('date');
 
-            if (!empty($opponent)) {
-                $matchId = $this->gameModel->create($_SESSION['current_team']['id'], $opponent, $date, $isHome, $formation);
+            if ($validator->isValid()) {
+                $isHome = isset($_POST['is_home']) ? 1 : 0;
+                $formation = trim($_POST['formation'] ?? '4-3-3');
+                
+                $matchId = $this->gameModel->create(Session::get('current_team')['id'], $_POST['opponent'], $_POST['date'], $isHome, $formation);
+                Session::flash('success', 'Wedstrijd aangemaakt.');
                 $this->redirect('/matches/view?id=' . $matchId);
             }
         }
@@ -45,19 +47,18 @@ class GameController extends BaseController {
 
     public function view(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
         $match = $this->gameModel->getById($id);
 
-        if (!$match || $match['team_id'] !== $_SESSION['current_team']['id']) {
-            header('Location: /matches');
-            exit;
+        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+            $this->redirect('/matches');
         }
 
-        $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id'], 'name ASC');
+        $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
         $matchPlayers = $this->gameModel->getPlayers($id);
         $events = $this->gameModel->getEvents($id);
 
@@ -72,41 +73,48 @@ class GameController extends BaseController {
 
     public function addEvent(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              $this->verifyCsrf('/matches');
 
-             $matchId = (int)$_POST['match_id'];
-             $minute = (int)$_POST['minute'];
-             $type = $_POST['type'];
-             $playerId = !empty($_POST['player_id']) ? (int)$_POST['player_id'] : null;
-             $description = $_POST['description'] ?? '';
-             
-             $match = $this->gameModel->getById($matchId);
-             if ($match && $match['team_id'] === $_SESSION['current_team']['id']) {
-                 $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description);
+             $validator = new Validator($_POST);
+             $validator->required('match_id')->required('minute')->required('type');
+
+             if ($validator->isValid()) {
+                 $matchId = (int)$_POST['match_id'];
+                 $minute = (int)$_POST['minute'];
+                 $type = $_POST['type'];
+                 $playerId = !empty($_POST['player_id']) ? (int)$_POST['player_id'] : null;
+                 $description = $_POST['description'] ?? '';
                  
-                 if ($type === 'goal') {
-                     if ($playerId) {
-                         // Our goal
-                         if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
-                     } else {
-                         // Opponent goal
-                         if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
+                 $match = $this->gameModel->getById($matchId);
+                 if ($match && $match['team_id'] === Session::get('current_team')['id']) {
+                     $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description);
+                     
+                     if ($type === 'goal') {
+                         if ($playerId) {
+                             // Our goal
+                             if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
+                         } else {
+                             // Opponent goal
+                             if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
+                         }
+                         $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
                      }
-                     $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
+                     Session::flash('success', 'Gebeurtenis toegevoegd.');
                  }
+                 $this->redirect('/matches/view?id=' . $matchId);
              }
-             $this->redirect('/matches/view?id=' . $matchId);
         }
+        $this->redirect('/matches');
     }
 
     public function updateScore(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
@@ -118,8 +126,9 @@ class GameController extends BaseController {
             $scoreAway = (int)$_POST['score_away'];
 
             $match = $this->gameModel->getById($matchId);
-            if ($match && $match['team_id'] === $_SESSION['current_team']['id']) {
+            if ($match && $match['team_id'] === Session::get('current_team')['id']) {
                 $this->gameModel->updateScore($matchId, $scoreHome, $scoreAway);
+                Session::flash('success', 'Score bijgewerkt.');
             }
             
             $this->redirect('/matches/view?id=' . $matchId);
@@ -128,7 +137,7 @@ class GameController extends BaseController {
 
     public function updateDetails(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
@@ -141,9 +150,10 @@ class GameController extends BaseController {
             $evaluation = $_POST['evaluation'] ?? '';
 
             $match = $this->gameModel->getById($matchId);
-            if ($match && $match['team_id'] === $_SESSION['current_team']['id']) {
+            if ($match && $match['team_id'] === Session::get('current_team')['id']) {
                 $this->gameModel->updateScore($matchId, $scoreHome, $scoreAway);
                 $this->gameModel->updateEvaluation($matchId, $evaluation);
+                Session::flash('success', 'Wedstrijd details bijgewerkt.');
             }
             
             $this->redirect('/matches/view?id=' . $matchId);
@@ -151,7 +161,7 @@ class GameController extends BaseController {
     }
 
     public function saveLineup(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['current_team'])) {
+        if (!Session::has('user_id') || !Session::has('current_team')) {
             http_response_code(403);
             exit;
         }
@@ -165,7 +175,7 @@ class GameController extends BaseController {
         $matchId = (int)$data['match_id'];
         $match = $this->gameModel->getById($matchId);
 
-        if (!$match || $match['team_id'] !== $_SESSION['current_team']['id']) {
+        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
             http_response_code(403);
             exit;
         }

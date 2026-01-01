@@ -18,7 +18,9 @@ header("Referrer-Policy: strict-origin-when-cross-origin");
 // Load helper functions
 require_once __DIR__ . '/../src/functions.php';
 
-session_start();
+// Start Session
+require_once __DIR__ . '/../src/Session.php';
+Session::start();
 
 // Autoloader
 spl_autoload_register(function ($class) {

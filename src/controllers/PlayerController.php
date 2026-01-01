@@ -12,27 +12,30 @@ class PlayerController extends BaseController {
 
     public function index(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
-        $players = $this->playerModel->getAllForTeam($_SESSION['current_team']['id'], 'name ASC');
+        $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
         View::render('players/index', ['players' => $players, 'pageTitle' => 'Spelers - Trainer Bobby']);
     }
 
     public function create(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/players');
             
-            $name = trim($_POST['name'] ?? '');
-            if (!empty($name)) {
-                $this->playerModel->create($_SESSION['current_team']['id'], $name);
+            $validator = new Validator($_POST);
+            $validator->required('name');
+
+            if ($validator->isValid()) {
+                $this->playerModel->create(Session::get('current_team')['id'], $_POST['name']);
+                Session::flash('success', 'Speler toegevoegd.');
+                $this->redirect('/players');
             }
-            $this->redirect('/players');
         }
 
         // GET request
@@ -41,16 +44,15 @@ class PlayerController extends BaseController {
 
     public function edit(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
         $id = (int)($_GET['id'] ?? 0);
         $player = $this->playerModel->getById($id);
 
-        if (!$player || $player['team_id'] !== $_SESSION['current_team']['id']) {
-            header('Location: /players');
-            exit;
+        if (!$player || $player['team_id'] !== Session::get('current_team')['id']) {
+            $this->redirect('/players');
         }
 
         View::render('players/edit', ['player' => $player, 'pageTitle' => 'Speler Bewerken - Trainer Bobby']);
@@ -66,8 +68,9 @@ class PlayerController extends BaseController {
             if ($id > 0 && !empty($name)) {
                 // Verify ownership
                 $player = $this->playerModel->getById($id);
-                if ($player && $player['team_id'] === $_SESSION['current_team']['id']) {
+                if ($player && $player['team_id'] === Session::get('current_team')['id']) {
                     $this->playerModel->update($id, $name);
+                    Session::flash('success', 'Speler bijgewerkt.');
                 }
             }
             $this->redirect('/players');
@@ -76,7 +79,7 @@ class PlayerController extends BaseController {
 
     public function delete(): void {
         $this->requireAuth();
-        if (!isset($_SESSION['current_team'])) {
+        if (!Session::has('current_team')) {
             $this->redirect('/');
         }
 
@@ -85,12 +88,10 @@ class PlayerController extends BaseController {
             
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
-                // TODO: Check if player belongs to current team (Model should probably handle this or we check here)
-                // For now, following existing logic which didn't explicitly check ownership in the delete block in index.php (it had a TODO comment)
-                // But let's be safe and check it if we can.
                 $player = $this->playerModel->getById($id);
-                if ($player && $player['team_id'] === $_SESSION['current_team']['id']) {
+                if ($player && $player['team_id'] === Session::get('current_team')['id']) {
                     $this->playerModel->delete($id);
+                    Session::flash('success', 'Speler verwijderd.');
                 }
             }
         }
