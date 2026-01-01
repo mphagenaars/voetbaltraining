@@ -5,4 +5,5 @@
 .copilot/
 .github/
 PRD
-COPILOT_GUIDLINES.mdserver.log
+COPILOT_GUIDLINES.md
+server.log

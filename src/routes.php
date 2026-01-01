@@ -37,6 +37,7 @@ return [
     // Matches
     '/matches' => ['GameController', 'index'],
     '/matches/create' => ['GameController', 'create'],
+    '/matches/delete' => ['GameController', 'delete'],
     '/matches/view' => ['GameController', 'view'],
     '/matches/add-event' => ['GameController', 'addEvent'],
     '/matches/update-score' => ['GameController', 'updateScore'],

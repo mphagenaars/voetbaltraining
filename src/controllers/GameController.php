@@ -45,6 +45,28 @@ class GameController extends BaseController {
         View::render('matches/create', ['pageTitle' => 'Nieuwe Wedstrijd - Trainer Bobby']);
     }
 
+    public function delete(): void {
+        $this->requireAuth();
+        
+        // Only admins can delete matches
+        if (!Session::get('is_admin')) {
+            http_response_code(403);
+            die('Geen toegang');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/matches');
+            
+            $id = (int)($_POST['id'] ?? 0);
+            if ($id > 0) {
+                $this->gameModel->delete($id);
+                Session::flash('success', 'Wedstrijd verwijderd.');
+            }
+        }
+        
+        $this->redirect('/matches');
+    }
+
     public function view(): void {
         $this->requireAuth();
         if (!Session::has('current_team')) {

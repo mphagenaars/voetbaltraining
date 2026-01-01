@@ -20,7 +20,8 @@ if (!empty($training['training_date'])) {
     </div>
     <div style="text-align: right;">
         <span style="font-size: 1.2rem; font-weight: bold;">⏱️ <?= $totalDuration ?> min</span>
-        <div style="margin-top: 0.5rem;">
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <a href="/trainings" class="btn btn-sm btn-outline">Terug</a>
             <button onclick="window.print()" class="btn btn-sm btn-outline">🖨️ Print / PDF</button>
         </div>
     </div>
