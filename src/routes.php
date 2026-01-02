@@ -51,6 +51,7 @@ return [
 
     // Admin
     '/admin' => ['AdminController', 'index'],
+    '/admin/users' => ['AdminController', 'users'],
     '/admin/delete-user' => ['AdminController', 'deleteUser'],
     '/admin/toggle-admin' => ['AdminController', 'toggleAdmin'],
     '/admin/user-teams' => ['AdminController', 'manageTeams'],

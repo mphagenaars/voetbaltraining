@@ -1,6 +1,6 @@
 <div class="header-actions">
     <h1>Oefenstof Opties Beheren</h1>
-    <a href="/admin" class="btn btn-outline">Terug naar Admin</a>
+    <a href="/admin" class="btn btn-outline">Terug</a>
 </div>
 
 <?php if (!empty($success)): ?>

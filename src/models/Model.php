@@ -31,4 +31,9 @@ abstract class Model {
         $stmt->execute([':team_id' => $teamId]);
         return $stmt->fetchAll();
     }
+
+    public function count(): int {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM {$this->table}");
+        return (int)$stmt->fetchColumn();
+    }
 }

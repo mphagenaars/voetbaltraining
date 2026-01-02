@@ -18,7 +18,7 @@ class AuthController extends BaseController {
                     $password = $_POST['password'];
                     
                     try {
-                        $stmt = $this->pdo->prepare("SELECT id, name, password_hash, is_admin FROM users WHERE username = :username");
+                        $stmt = $this->pdo->prepare("SELECT id, name, password_hash, is_admin FROM users WHERE username = :username COLLATE NOCASE");
                         $stmt->execute([':username' => $username]);
                         $user = $stmt->fetch();
                         

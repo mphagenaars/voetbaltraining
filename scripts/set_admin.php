@@ -24,7 +24,7 @@ try {
     $db = (new Database())->getConnection();
     
     // Check of user bestaat
-    $stmt = $db->prepare("SELECT id, name, is_admin FROM users WHERE username = :username");
+    $stmt = $db->prepare("SELECT id, name, is_admin FROM users WHERE username = :username COLLATE NOCASE");
     $stmt->execute([':username' => $username]);
     $user = $stmt->fetch();
 

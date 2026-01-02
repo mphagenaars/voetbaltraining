@@ -41,7 +41,7 @@ try {
     $db = (new Database())->getConnection();
     
     // Check of user al bestaat
-    $stmt = $db->prepare("SELECT id FROM users WHERE username = :username");
+    $stmt = $db->prepare("SELECT id FROM users WHERE username = :username COLLATE NOCASE");
     $stmt->execute([':username' => $username]);
     if ($stmt->fetch()) {
         echo "\n❌ Fout: Gebruiker '$username' bestaat al.\n";

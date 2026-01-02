@@ -20,10 +20,18 @@ class AdminController extends BaseController {
     public function index(): void {
         $this->requireAdmin();
         
+        View::render('admin/index', [
+            'pageTitle' => 'Admin Dashboard - Trainer Bobby'
+        ]);
+    }
+
+    public function users(): void {
+        $this->requireAdmin();
+        
         $userModel = new User($this->pdo);
         $users = $userModel->getAll('name ASC');
         
-        View::render('admin/index', [
+        View::render('admin/users', [
             'users' => $users,
             'pageTitle' => 'Gebruikersbeheer - Trainer Bobby'
         ]);
@@ -314,5 +322,22 @@ class AdminController extends BaseController {
             }
             exit;
         }
+    }
+
+    public function dashboard() {
+        $this->requireAdmin();
+        
+        $userModel = new \User();
+        $exerciseModel = new \Exercise();
+        $trainingModel = new \Training();
+
+        // Fetch counts for the dashboard
+        $stats = [
+            'users' => $userModel->count(),
+            'exercises' => $exerciseModel->count(),
+            'trainings' => $trainingModel->count(),
+        ];
+
+        View::render('admin/dashboard', ['stats' => $stats]);
     }
 }

@@ -16,7 +16,7 @@ class User extends Model {
     }
 
     public function getByUsername(string $username): ?array {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = :username");
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = :username COLLATE NOCASE");
         $stmt->execute([':username' => $username]);
         $user = $stmt->fetch();
         return $user ?: null;
