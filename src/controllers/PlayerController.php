@@ -11,19 +11,13 @@ class PlayerController extends BaseController {
     }
 
     public function index(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
         $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
         View::render('players/index', ['players' => $players, 'pageTitle' => 'Spelers - Trainer Bobby']);
     }
 
     public function create(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/players');
@@ -33,6 +27,10 @@ class PlayerController extends BaseController {
 
             if ($validator->isValid()) {
                 $this->playerModel->create(Session::get('current_team')['id'], $_POST['name']);
+                
+                // Log activity
+                $this->logActivity('create_player', null, $_POST['name']);
+
                 Session::flash('success', 'Speler toegevoegd.');
                 $this->redirect('/players');
             }
@@ -43,10 +41,7 @@ class PlayerController extends BaseController {
     }
 
     public function edit(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
         $id = (int)($_GET['id'] ?? 0);
         $player = $this->playerModel->getById($id);
@@ -91,6 +86,11 @@ class PlayerController extends BaseController {
                 $player = $this->playerModel->getById($id);
                 if ($player && $player['team_id'] === Session::get('current_team')['id']) {
                     $this->playerModel->delete($id);
+                    
+                    // Log activity
+                    $logModel = new ActivityLog($this->pdo);
+                    $logModel->log(Session::get('user_id'), 'delete_player', $id, $player['name']);
+
                     Session::flash('success', 'Speler verwijderd.');
                 }
             }

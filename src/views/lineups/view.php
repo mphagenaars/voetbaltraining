@@ -231,7 +231,7 @@
 
 .player-name {
     margin-top: 2px;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
     color: #333;
     background: rgba(255,255,255,0.8);
@@ -239,7 +239,7 @@
     border-radius: 10px;
     white-space: nowrap;
     text-align: center;
-    max-width: 100px;
+    max-width: 90px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { x: 80, y: 20, label: 'A' }   // Rechtsvoor
         ],
         '8-vs-8': [
-            { x: 50, y: 90, label: 'K' },  // Keeper
+            { x: 50, y: 85, label: 'K' },  // Keeper
             { x: 30, y: 75, label: 'V' },  // Linksachter
             { x: 70, y: 75, label: 'V' },  // Rechtsachter
             { x: 20, y: 50, label: 'M' },  // Linksmidden
@@ -358,10 +358,12 @@ document.addEventListener('DOMContentLoaded', () => {
         field.insertBefore(slotEl, field.firstChild);
     });
 
-    // Helper to check if a player is on the keeper slot
-    const checkGoalkeeper = (player, x, y) => {
+    // Helper to check player state (keeper jersey)
+    const checkPlayerState = (player, x, y) => {
+        // Check for goalkeeper slot
         const keeperSlot = slots.find(s => s.label === 'K');
-        if (keeperSlot && Math.abs(x - keeperSlot.x) < 1 && Math.abs(y - keeperSlot.y) < 1) {
+        // Increased tolerance to catch players even if they are slightly off the new position
+        if (keeperSlot && Math.abs(x - keeperSlot.x) < 10 && Math.abs(y - keeperSlot.y) < 15) {
             player.classList.add('is-goalkeeper');
         } else {
             player.classList.remove('is-goalkeeper');
@@ -372,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
     field.querySelectorAll('.player-token').forEach(player => {
         const x = parseFloat(player.style.left);
         const y = parseFloat(player.style.top);
-        checkGoalkeeper(player, x, y);
+        checkPlayerState(player, x, y);
     });
 
     // Drag Events
@@ -458,8 +460,8 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedItem.style.left = xPercent + '%';
         draggedItem.style.top = yPercent + '%';
         
-        // Check if player is now a goalkeeper
-        checkGoalkeeper(draggedItem, xPercent, yPercent);
+        // Check player state
+        checkPlayerState(draggedItem, xPercent, yPercent);
     });
 
     // Bench Drop Zone (to remove from field)

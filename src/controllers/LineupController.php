@@ -13,19 +13,13 @@ class LineupController extends BaseController {
     }
 
     public function index(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
         $lineups = $this->lineupModel->getAllForTeam(Session::get('current_team')['id']);
         View::render('lineups/index', ['lineups' => $lineups, 'pageTitle' => 'Opstellingen - Trainer Bobby']);
     }
 
     public function create(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/lineups');
@@ -36,6 +30,10 @@ class LineupController extends BaseController {
             if ($validator->isValid()) {
                 $formation = trim($_POST['formation'] ?? '11-vs-11');
                 $lineupId = $this->lineupModel->create(Session::get('current_team')['id'], $_POST['name'], $formation);
+                
+                // Log activity
+                $this->logActivity('create_lineup', $lineupId, $_POST['name']);
+
                 Session::flash('success', 'Opstelling aangemaakt.');
                 $this->redirect('/lineups/view?id=' . $lineupId);
             }
@@ -45,10 +43,7 @@ class LineupController extends BaseController {
     }
 
     public function view(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
         $id = (int)($_GET['id'] ?? 0);
         if ($id <= 0) {
@@ -82,6 +77,11 @@ class LineupController extends BaseController {
                 $lineup = $this->lineupModel->getById((int)$input['id']);
                 if ($lineup && $lineup['team_id'] === Session::get('current_team')['id']) {
                     $this->lineupModel->savePositions((int)$input['id'], $input['positions']);
+                    
+                    // Log activity
+                    $logModel = new ActivityLog($this->pdo);
+                    $logModel->log(Session::get('user_id'), 'update_lineup', (int)$input['id'], $lineup['name']);
+
                     echo json_encode(['success' => true]);
                     exit;
                 }

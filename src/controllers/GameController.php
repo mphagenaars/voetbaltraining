@@ -12,23 +12,9 @@ class GameController extends BaseController {
     }
 
     public function index(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
-        $sort = $_GET['sort'] ?? Session::get('matches_sort', 'desc');
-        if (!in_array($sort, ['asc', 'desc'])) {
-            $sort = 'desc';
-        }
-
-        Session::set('matches_sort', $sort);
-
-        $filter = $_GET['filter'] ?? Session::get('matches_filter', 'all');
-        if (!in_array($filter, ['all', 'upcoming'])) {
-            $filter = 'all';
-        }
-        Session::set('matches_filter', $filter);
+        [$sort, $filter] = $this->resolveSortFilter('matches');
 
         $orderBy = $sort === 'asc' ? 'date ASC' : 'date DESC';
         $matches = $this->gameModel->getMatches(Session::get('current_team')['id'], $orderBy, $filter === 'upcoming');
@@ -42,10 +28,7 @@ class GameController extends BaseController {
     }
 
     public function create(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/matches');
@@ -58,6 +41,10 @@ class GameController extends BaseController {
                 $formation = trim($_POST['formation'] ?? '11-vs-11');
                 
                 $matchId = $this->gameModel->create(Session::get('current_team')['id'], $_POST['opponent'], $_POST['date'], $isHome, $formation);
+                
+                // Log activity
+                $this->logActivity('create_match', $matchId, $_POST['opponent']);
+
                 Session::flash('success', 'Wedstrijd aangemaakt.');
                 $this->redirect('/matches/view?id=' . $matchId);
             }
@@ -80,8 +67,15 @@ class GameController extends BaseController {
             
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
-                $this->gameModel->delete($id);
-                Session::flash('success', 'Wedstrijd verwijderd.');
+                $match = $this->gameModel->getById($id);
+                if ($match) {
+                    $this->gameModel->delete($id);
+                    
+                    // Log activity
+                    $this->logActivity('delete_match', $id, $match['opponent']);
+
+                    Session::flash('success', 'Wedstrijd verwijderd.');
+                }
             }
         }
         
@@ -89,10 +83,7 @@ class GameController extends BaseController {
     }
 
     public function view(): void {
-        $this->requireAuth();
-        if (!Session::has('current_team')) {
-            $this->redirect('/');
-        }
+        $this->requireTeamContext();
 
         $id = (int)($_GET['id'] ?? 0);
         $match = $this->gameModel->getById($id);
@@ -100,6 +91,9 @@ class GameController extends BaseController {
         if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
             $this->redirect('/matches');
         }
+
+        // Log activity
+        $this->logActivity('view_match', $id, $match['opponent']);
 
         $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
         $matchPlayers = $this->gameModel->getPlayers($id);
@@ -225,6 +219,11 @@ class GameController extends BaseController {
 
         try {
             $this->gameModel->savePlayers($matchId, $data['players']);
+            
+            // Log activity
+            $logModel = new ActivityLog($this->pdo);
+            $logModel->log(Session::get('user_id'), 'update_match_lineup', $matchId, $match['opponent']);
+
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
             http_response_code(500);

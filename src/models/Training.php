@@ -100,28 +100,19 @@ class Training extends Model {
     public function updateExercises(int $trainingId, array $exercises): void {
         // $exercises is array of ['id' => exercise_id, 'duration' => duration]
         
-        $this->pdo->beginTransaction();
-        try {
-            // Remove old
-            $stmt = $this->pdo->prepare("DELETE FROM training_exercises WHERE training_id = :training_id");
-            $stmt->execute([':training_id' => $trainingId]);
-
-            // Add new
-            $stmt = $this->pdo->prepare("INSERT INTO training_exercises (training_id, exercise_id, sort_order, duration) VALUES (:training_id, :exercise_id, :sort_order, :duration)");
-            
-            foreach ($exercises as $index => $ex) {
-                $stmt->execute([
+        $this->replaceMany(
+            "DELETE FROM training_exercises WHERE training_id = :training_id",
+            [':training_id' => $trainingId],
+            "INSERT INTO training_exercises (training_id, exercise_id, sort_order, duration) VALUES (:training_id, :exercise_id, :sort_order, :duration)",
+            $exercises,
+            function($ex, $index) use ($trainingId) {
+                return [
                     ':training_id' => $trainingId,
                     ':exercise_id' => $ex['id'],
                     ':sort_order' => $index,
                     ':duration' => !empty($ex['duration']) ? $ex['duration'] : null
-                ]);
+                ];
             }
-            
-            $this->pdo->commit();
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            throw $e;
-        }
+        );
     }
 }

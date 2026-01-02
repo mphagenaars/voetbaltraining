@@ -27,6 +27,10 @@ class AuthController extends BaseController {
                             Session::set('user_name', $user['name']);
                             Session::set('is_admin', (bool)($user['is_admin'] ?? false));
 
+                            // Log login
+                            $logModel = new ActivityLog($this->pdo);
+                            $logModel->log((int)$user['id'], 'login');
+
                             // Remember Me Logic
                             if (!empty($_POST['remember_me'])) {
                                 $selector = bin2hex(random_bytes(16));

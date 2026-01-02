@@ -36,4 +36,27 @@ abstract class Model {
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM {$this->table}");
         return (int)$stmt->fetchColumn();
     }
+
+    protected function replaceMany(string $deleteSql, array $deleteParams, string $insertSql, array $items, callable $mapItemToParams): void {
+        $this->pdo->beginTransaction();
+        try {
+            // Delete
+            $stmt = $this->pdo->prepare($deleteSql);
+            $stmt->execute($deleteParams);
+
+            // Insert
+            if (!empty($items)) {
+                $stmt = $this->pdo->prepare($insertSql);
+                foreach ($items as $index => $item) {
+                    $params = $mapItemToParams($item, $index);
+                    $stmt->execute($params);
+                }
+            }
+            
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
 }

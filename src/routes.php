@@ -63,6 +63,7 @@ return [
     '/admin/options/update' => ['AdminController', 'updateOption'],
     '/admin/options/delete' => ['AdminController', 'deleteOption'],
     '/admin/options/reorder' => ['AdminController', 'reorderOptions'],
+    '/admin/system' => ['AdminController', 'system'],
     
     // Lineups
     '/lineups' => ['LineupController', 'index'],

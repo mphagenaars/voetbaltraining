@@ -40,8 +40,8 @@
         <button class="btn btn-outline" disabled style="width: 100%; text-align: center;">Binnenkort</button>
     </div>
 
-    <!-- System Tile (Placeholder) -->
-    <div class="card" style="cursor: not-allowed; opacity: 0.7;">
+    <!-- System Tile -->
+    <div class="card" style="cursor: pointer;" onclick="window.location.href='/admin/system'">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
             <div style="background: #f5f5f5; padding: 1rem; border-radius: 50%; color: #616161;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -49,7 +49,7 @@
             <h2 style="margin: 0;">Systeem</h2>
         </div>
         <p style="color: #666; margin-bottom: 1.5rem;">Logs, instellingen en systeemstatus.</p>
-        <button class="btn btn-outline" disabled style="width: 100%; text-align: center;">Binnenkort</button>
+        <a href="/admin/system" class="btn btn-outline" style="width: 100%; text-align: center;">Bekijken</a>
     </div>
 
 </div>

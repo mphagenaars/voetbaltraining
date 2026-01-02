@@ -10,6 +10,13 @@ abstract class BaseController {
         }
     }
 
+    protected function requireTeamContext(): void {
+        $this->requireAuth();
+        if (!Session::has('current_team')) {
+            $this->redirect('/');
+        }
+    }
+
     protected function verifyCsrf(?string $redirectPath = null): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
@@ -24,5 +31,33 @@ abstract class BaseController {
     protected function redirect(string $path): void {
         header("Location: $path");
         exit;
+    }
+
+    protected function resolveSortFilter(string $prefix, array $allowedSort = ['asc', 'desc'], array $allowedFilter = ['all', 'upcoming']): array {
+        $sortKey = $prefix . '_sort';
+        $filterKey = $prefix . '_filter';
+
+        // Default values
+        $defaultSort = 'desc';
+        $defaultFilter = 'all';
+
+        $sort = $_GET['sort'] ?? Session::get($sortKey, $defaultSort);
+        if (!in_array($sort, $allowedSort)) {
+            $sort = $defaultSort;
+        }
+        Session::set($sortKey, $sort);
+
+        $filter = $_GET['filter'] ?? Session::get($filterKey, $defaultFilter);
+        if (!in_array($filter, $allowedFilter)) {
+            $filter = $defaultFilter;
+        }
+        Session::set($filterKey, $filter);
+
+        return [$sort, $filter];
+    }
+
+    protected function logActivity(string $action, ?int $entityId = null, ?string $details = null): void {
+        $logModel = new ActivityLog($this->pdo);
+        $logModel->log(Session::get('user_id'), $action, $entityId, $details);
     }
 }

@@ -51,42 +51,34 @@ class ExerciseController extends BaseController {
             $validator->required('title');
 
             if ($validator->isValid()) {
-                $title = $_POST['title'];
-                $description = $_POST['description'] ?? '';
-                $variation = $_POST['variation'] ?? null;
-                $teamTask = $_POST['team_task'] ?? null;
-                $trainingObjective = isset($_POST['training_objective']) ? json_encode($_POST['training_objective']) : null;
-                $footballAction = isset($_POST['football_action']) ? json_encode($_POST['football_action']) : null;
-                $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
-                $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
-                $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
-                $fieldType = $_POST['field_type'] ?? 'portrait';
-                
+                $payload = $this->getExercisePayload($_POST);
                 $imagePath = null;
 
-                $drawingData = $_POST['drawing_data'] ?? null;
-                $drawingImage = $_POST['drawing_image'] ?? null;
-
-                if ($imagePath === null && !empty($drawingImage)) {
-                    if (preg_match('/^data:image\/(\w+);base64,/', $drawingImage, $type)) {
-                        $data = substr($drawingImage, strpos($drawingImage, ',') + 1);
-                        $type = strtolower($type[1]); 
-                        if (in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
-                            $data = base64_decode($data);
-                            if ($data !== false) {
-                                $filename = uniqid('drawing_') . '.' . $type;
-                                $uploadDir = __DIR__ . '/../../public/uploads/';
-                                if (file_put_contents($uploadDir . $filename, $data)) {
-                                    $imagePath = $filename;
-                                }
-                            }
-                        }
-                    }
+                if (!empty($_POST['drawing_image'])) {
+                    $imagePath = $this->handleDrawingImage($_POST['drawing_image']);
                 }
                 
                 $exerciseModel = new Exercise($this->pdo);
                 $teamId = Session::get('current_team')['id'] ?? null;
-                $exerciseModel->create($teamId, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation, $fieldType);
+                $exerciseId = $exerciseModel->create(
+                    $teamId, 
+                    $payload['title'], 
+                    $payload['description'], 
+                    $payload['team_task'], 
+                    $payload['training_objective'], 
+                    $payload['football_action'], 
+                    $payload['min_players'], 
+                    $payload['max_players'], 
+                    $payload['duration'], 
+                    $imagePath, 
+                    $payload['drawing_data'], 
+                    $payload['variation'], 
+                    $payload['field_type']
+                );
+                
+                // Log activity
+                $this->logActivity('create_exercise', $exerciseId, $payload['title']);
+
                 Session::flash('success', 'Oefening aangemaakt.');
                 $this->redirect('/exercises');
             }
@@ -109,52 +101,43 @@ class ExerciseController extends BaseController {
         }
 
         // Check permissions
-        $teamModel = new Team($this->pdo);
-        $roles = $teamModel->getMemberRoles((int)$exercise['team_id'], Session::get('user_id'));
-        if (!$roles || (!$roles['is_coach'] && !$roles['is_trainer'])) {
+        if (!$this->canEditExercise((int)$exercise['team_id'], Session::get('user_id'))) {
              $this->redirect('/exercises');
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/exercises');
-            $title = $_POST['title'] ?? '';
-            $description = $_POST['description'] ?? '';
-            $variation = $_POST['variation'] ?? null;
-            $teamTask = $_POST['team_task'] ?? null;
-            $trainingObjective = isset($_POST['training_objective']) ? json_encode($_POST['training_objective']) : null;
-            $footballAction = isset($_POST['football_action']) ? json_encode($_POST['football_action']) : null;
-            $minPlayers = !empty($_POST['min_players']) ? (int)$_POST['min_players'] : null;
-            $maxPlayers = !empty($_POST['max_players']) ? (int)$_POST['max_players'] : null;
-            $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
-            $fieldType = $_POST['field_type'] ?? 'portrait';
-            
-            $imagePath = null;
-
-            $drawingData = $_POST['drawing_data'] ?? null;
-            $drawingImage = $_POST['drawing_image'] ?? null;
-
-            if ($imagePath === null && !empty($drawingImage)) {
-                if (preg_match('/^data:image\/(\w+);base64,/', $drawingImage, $type)) {
-                    $data = substr($drawingImage, strpos($drawingImage, ',') + 1);
-                    $type = strtolower($type[1]); 
-                    if (in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
-                        $data = base64_decode($data);
-                        if ($data !== false) {
-                            $filename = uniqid('drawing_') . '.' . $type;
-                            $uploadDir = __DIR__ . '/../../public/uploads/';
-                            if (file_put_contents($uploadDir . $filename, $data)) {
-                                $imagePath = $filename;
-                            }
-                        }
-                    }
-                }
-            }
             
             $validator = new Validator($_POST);
             $validator->required('title');
 
             if ($validator->isValid()) {
-                $exerciseModel->update($id, $title, $description, $teamTask, $trainingObjective, $footballAction, $minPlayers, $maxPlayers, $duration, $imagePath, $drawingData, $variation, $fieldType);
+                $payload = $this->getExercisePayload($_POST);
+                $imagePath = null;
+
+                if (!empty($_POST['drawing_image'])) {
+                    $imagePath = $this->handleDrawingImage($_POST['drawing_image']);
+                }
+                
+                $exerciseModel->update(
+                    $id, 
+                    $payload['title'], 
+                    $payload['description'], 
+                    $payload['team_task'], 
+                    $payload['training_objective'], 
+                    $payload['football_action'], 
+                    $payload['min_players'], 
+                    $payload['max_players'], 
+                    $payload['duration'], 
+                    $imagePath, 
+                    $payload['drawing_data'], 
+                    $payload['variation'], 
+                    $payload['field_type']
+                );
+                
+                // Log activity
+                $this->logActivity('edit_exercise', $id, $payload['title']);
+
                 Session::flash('success', 'Oefening bijgewerkt.');
                 $this->redirect('/exercises');
             }
@@ -175,17 +158,13 @@ class ExerciseController extends BaseController {
             $this->redirect('/exercises');
         }
 
+        // Log view
+        $this->logActivity('view_exercise', $id, $exercise['title']);
+
         $currentTeamId = Session::has('current_team') ? (int)Session::get('current_team')['id'] : null;
         $exerciseTeamId = isset($exercise['team_id']) ? (int)$exercise['team_id'] : null;
         
-        $canEdit = false;
-        if ($exerciseTeamId !== null) {
-             $teamModel = new Team($this->pdo);
-             $roles = $teamModel->getMemberRoles($exerciseTeamId, Session::get('user_id'));
-             if ($roles && ($roles['is_coach'] || $roles['is_trainer'])) {
-                 $canEdit = true;
-             }
-        }
+        $canEdit = $this->canEditExercise($exerciseTeamId, Session::get('user_id'));
         
         View::render('exercises/view', [
             'exercise' => $exercise, 
@@ -202,14 +181,59 @@ class ExerciseController extends BaseController {
             $exercise = $exerciseModel->getById($id);
             
             if ($exercise) {
-                $teamModel = new Team($this->pdo);
-                $roles = $teamModel->getMemberRoles((int)$exercise['team_id'], Session::get('user_id'));
-                if ($roles && ($roles['is_coach'] || $roles['is_trainer'])) {
+                if ($this->canEditExercise((int)$exercise['team_id'], Session::get('user_id'))) {
                     $exerciseModel->delete($id);
+                    
+                    // Log activity
+                    $this->logActivity('delete_exercise', $id, $exercise['title']);
+
                     Session::flash('success', 'Oefening verwijderd.');
                 }
             }
         }
         $this->redirect('/exercises');
+    }
+
+    private function getExercisePayload(array $postData): array {
+        return [
+            'title' => $postData['title'] ?? '',
+            'description' => $postData['description'] ?? '',
+            'variation' => $postData['variation'] ?? null,
+            'team_task' => $postData['team_task'] ?? null,
+            'training_objective' => isset($postData['training_objective']) ? json_encode($postData['training_objective']) : null,
+            'football_action' => isset($postData['football_action']) ? json_encode($postData['football_action']) : null,
+            'min_players' => !empty($postData['min_players']) ? (int)$postData['min_players'] : null,
+            'max_players' => !empty($postData['max_players']) ? (int)$postData['max_players'] : null,
+            'duration' => !empty($postData['duration']) ? (int)$postData['duration'] : null,
+            'field_type' => $postData['field_type'] ?? 'portrait',
+            'drawing_data' => $postData['drawing_data'] ?? null,
+        ];
+    }
+
+    private function handleDrawingImage(string $drawingImage): ?string {
+        if (preg_match('/^data:image\/(\w+);base64,/', $drawingImage, $type)) {
+            $data = substr($drawingImage, strpos($drawingImage, ',') + 1);
+            $type = strtolower($type[1]); 
+            if (in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
+                $data = base64_decode($data);
+                if ($data !== false) {
+                    $filename = uniqid('drawing_') . '.' . $type;
+                    $uploadDir = __DIR__ . '/../../public/uploads/';
+                    if (file_put_contents($uploadDir . $filename, $data)) {
+                        return $filename;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private function canEditExercise(?int $teamId, int $userId): bool {
+        if ($teamId === null) {
+            return false;
+        }
+        $teamModel = new Team($this->pdo);
+        $roles = $teamModel->getMemberRoles($teamId, $userId);
+        return $roles && ($roles['is_coach'] || $roles['is_trainer']);
     }
 }

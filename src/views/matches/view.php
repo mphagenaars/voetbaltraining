@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { x: 80, y: 20, label: 'A' }
         ],
         '8-vs-8': [
-            { x: 50, y: 90, label: 'K' },  // Keeper
+            { x: 50, y: 85, label: 'K' },  // Keeper
             { x: 30, y: 75, label: 'V' },  // Linksachter
             { x: 70, y: 75, label: 'V' },  // Rechtsachter
             { x: 20, y: 50, label: 'M' },  // Linksmidden
@@ -503,10 +503,11 @@ document.addEventListener('DOMContentLoaded', () => {
         field.insertBefore(slotEl, field.firstChild);
     });
 
-    // Helper to check if a player is on the keeper slot
-    const checkGoalkeeper = (player, x, y) => {
+    // Helper to check if a player is on the keeper slot and update state
+    const checkPlayerState = (player, x, y) => {
+        // Keeper check
         const keeperSlot = slots.find(s => s.label === 'K');
-        if (keeperSlot && Math.abs(x - keeperSlot.x) < 5 && Math.abs(y - keeperSlot.y) < 5) {
+        if (keeperSlot && Math.abs(x - keeperSlot.x) < 10 && Math.abs(y - keeperSlot.y) < 15) {
             player.classList.add('is-goalkeeper');
         } else {
             player.classList.remove('is-goalkeeper');
@@ -553,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     field.querySelectorAll('.player-token').forEach(player => {
         const x = parseFloat(player.style.left);
         const y = parseFloat(player.style.top);
-        checkGoalkeeper(player, x, y);
+        checkPlayerState(player, x, y);
     });
 
     // --- MOUSE DRAG EVENTS (Desktop) ---
@@ -602,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedItem.style.left = pos.x + '%';
         draggedItem.style.top = pos.y + '%';
         
-        checkGoalkeeper(draggedItem, pos.x, pos.y);
+        checkPlayerState(draggedItem, pos.x, pos.y);
     });
 
     // Bench Drop Zone
@@ -712,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dropField.appendChild(activeTouchItem);
             activeTouchItem.style.left = pos.x + '%';
             activeTouchItem.style.top = pos.y + '%';
-            checkGoalkeeper(activeTouchItem, pos.x, pos.y);
+            checkPlayerState(activeTouchItem, pos.x, pos.y);
             
         } else if (dropBench) {
             // Logic to place on bench

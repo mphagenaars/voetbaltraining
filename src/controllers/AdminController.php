@@ -324,18 +324,34 @@ class AdminController extends BaseController {
         }
     }
 
+    public function system(): void {
+        $this->requireAdmin();
+        
+        $activityModel = new \ActivityLog($this->pdo);
+        
+        $stats = [
+            'recent_activity' => $activityModel->getRecent(50),
+            'popular_exercises' => $activityModel->getPopularExercises(10)
+        ];
+        
+        View::render('admin/system', ['stats' => $stats, 'pageTitle' => 'Systeem Logs - Trainer Bobby']);
+    }
+
     public function dashboard() {
         $this->requireAdmin();
         
-        $userModel = new \User();
-        $exerciseModel = new \Exercise();
-        $trainingModel = new \Training();
+        $userModel = new \User($this->pdo);
+        $exerciseModel = new \Exercise($this->pdo);
+        $trainingModel = new \Training($this->pdo);
+        $activityModel = new \ActivityLog($this->pdo);
 
         // Fetch counts for the dashboard
         $stats = [
             'users' => $userModel->count(),
             'exercises' => $exerciseModel->count(),
             'trainings' => $trainingModel->count(),
+            'recent_activity' => $activityModel->getRecent(10),
+            'popular_exercises' => $activityModel->getPopularExercises()
         ];
 
         View::render('admin/dashboard', ['stats' => $stats]);

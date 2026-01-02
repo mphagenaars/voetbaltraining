@@ -29,26 +29,21 @@ class Game extends Model {
     }
 
     public function savePlayers(int $matchId, array $players): void {
-        $this->pdo->beginTransaction();
-        try {
-            $stmt = $this->pdo->prepare("DELETE FROM match_players WHERE match_id = :match_id");
-            $stmt->execute([':match_id' => $matchId]);
-
-            $stmt = $this->pdo->prepare("INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute) VALUES (:match_id, :player_id, :x, :y, :sub)");
-            foreach ($players as $p) {
-                $stmt->execute([
+        $this->replaceMany(
+            "DELETE FROM match_players WHERE match_id = :match_id",
+            [':match_id' => $matchId],
+            "INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute) VALUES (:match_id, :player_id, :x, :y, :sub)",
+            $players,
+            function($p) use ($matchId) {
+                return [
                     ':match_id' => $matchId,
                     ':player_id' => $p['player_id'],
                     ':x' => $p['x'],
                     ':y' => $p['y'],
                     ':sub' => $p['is_substitute'] ?? 0
-                ]);
+                ];
             }
-            $this->pdo->commit();
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            throw $e;
-        }
+        );
     }
 
     public function getPlayers(int $matchId): array {
