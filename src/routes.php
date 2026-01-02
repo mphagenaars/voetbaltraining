@@ -64,11 +64,4 @@ return [
     '/admin/options/delete' => ['AdminController', 'deleteOption'],
     '/admin/options/reorder' => ['AdminController', 'reorderOptions'],
     '/admin/system' => ['AdminController', 'system'],
-    
-    // Lineups
-    '/lineups' => ['LineupController', 'index'],
-    '/lineups/create' => ['LineupController', 'create'],
-    '/lineups/view' => ['LineupController', 'view'],
-    '/lineups/save-positions' => ['LineupController', 'savePositions'],
-    '/lineups/delete' => ['LineupController', 'delete'],
 ];
