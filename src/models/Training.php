@@ -25,6 +25,29 @@ class Training extends Model {
         ]);
     }
 
+    public function getTrainings(int $teamId, string $orderBy, bool $hidePast): array {
+        $sql = "
+            SELECT t.*, 
+            (SELECT COUNT(*) FROM training_exercises te WHERE te.training_id = t.id) as exercise_count,
+            (SELECT SUM(COALESCE(te.duration, e.duration, 0)) 
+             FROM training_exercises te 
+             JOIN exercises e ON te.exercise_id = e.id 
+             WHERE te.training_id = t.id) as total_duration
+            FROM trainings t 
+            WHERE t.team_id = :team_id
+        ";
+        
+        if ($hidePast) {
+            $sql .= " AND t.training_date >= date('now')";
+        }
+        
+        $sql .= " ORDER BY $orderBy";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':team_id' => $teamId]);
+        return $stmt->fetchAll();
+    }
+
     public function getAllForTeam(int $teamId, string $orderBy = 'created_at DESC'): array {
         $stmt = $this->pdo->prepare("
             SELECT t.*, 

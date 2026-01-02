@@ -27,8 +27,6 @@
                 <option value="6-vs-6">6 tegen 6</option>
                 <option value="8-vs-8">8 tegen 8</option>
                 <option value="11-vs-11">11 tegen 11</option>
-                <option value="4-3-3">4-3-3</option>
-                <option value="4-4-2">4-4-2</option>
             </select>
         </div>
         

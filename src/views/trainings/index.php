@@ -1,6 +1,24 @@
 <div class="header-actions">
     <h1>Trainingen</h1>
-    <div style="display: flex; gap: 0.5rem;">
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <?php $nextFilter = ($currentFilter ?? 'all') === 'all' ? 'upcoming' : 'all'; ?>
+        <a href="/trainings?filter=<?= $nextFilter ?>" class="btn <?= ($currentFilter ?? 'all') === 'upcoming' ? 'btn-primary' : 'btn-outline' ?>" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg oude trainingen' : 'Toon alle trainingen' ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+        </a>
+        <?php $nextSort = ($currentSort ?? 'desc') === 'desc' ? 'asc' : 'desc'; ?>
+        <a href="/trainings?sort=<?= $nextSort ?>" class="btn btn-outline" title="<?= ($currentSort ?? 'desc') === 'desc' ? 'Sorteer: Oudste eerst' : 'Sorteer: Nieuwste eerst' ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <?php if (($currentSort ?? 'desc') === 'desc'): ?>
+                    <path d="M6 4v16"/><path d="M6 20l-3-3"/><path d="M6 20l3-3"/>
+                    <path d="M12 6h8"/><path d="M12 12h6"/><path d="M12 18h4"/>
+                <?php else: ?>
+                    <path d="M6 4v16"/><path d="M6 20l-3-3"/><path d="M6 20l3-3"/>
+                    <path d="M12 6h4"/><path d="M12 12h6"/><path d="M12 18h8"/>
+                <?php endif; ?>
+            </svg>
+        </a>
         <a href="/trainings/create" class="btn btn-outline">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Nieuwe Training

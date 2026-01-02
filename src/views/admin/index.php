@@ -1,5 +1,6 @@
-<div class="dashboard-header">
+<div class="header-actions">
     <h1>Gebruikersbeheer</h1>
+    <a href="/admin/options" class="btn btn-outline">Oefenstof Opties Beheren</a>
 </div>
 
 <?php if (!empty($success)): ?>

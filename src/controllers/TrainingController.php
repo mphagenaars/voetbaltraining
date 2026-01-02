@@ -17,8 +17,28 @@ class TrainingController extends BaseController {
             $this->redirect('/');
         }
 
-        $trainings = $this->trainingModel->getAllForTeam(Session::get('current_team')['id']);
-        View::render('trainings/index', ['trainings' => $trainings, 'pageTitle' => 'Trainingen - Trainer Bobby']);
+        $sort = $_GET['sort'] ?? Session::get('trainings_sort', 'desc');
+        if (!in_array($sort, ['asc', 'desc'])) {
+            $sort = 'desc';
+        }
+        Session::set('trainings_sort', $sort);
+
+        $filter = $_GET['filter'] ?? Session::get('trainings_filter', 'all');
+        if (!in_array($filter, ['all', 'upcoming'])) {
+            $filter = 'all';
+        }
+        Session::set('trainings_filter', $filter);
+
+        $orderBy = $sort === 'asc' ? 'training_date ASC' : 'training_date DESC';
+        
+        $trainings = $this->trainingModel->getTrainings(Session::get('current_team')['id'], $orderBy, $filter === 'upcoming');
+        
+        View::render('trainings/index', [
+            'trainings' => $trainings, 
+            'pageTitle' => 'Trainingen - Trainer Bobby',
+            'currentSort' => $sort,
+            'currentFilter' => $filter
+        ]);
     }
 
     public function create(): void {

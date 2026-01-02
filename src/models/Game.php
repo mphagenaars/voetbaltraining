@@ -4,6 +4,18 @@ declare(strict_types=1);
 class Game extends Model {
     protected string $table = 'matches';
 
+    public function getMatches(int $teamId, string $orderBy, bool $hidePlayed): array {
+        $sql = "SELECT * FROM matches WHERE team_id = :team_id";
+        if ($hidePlayed) {
+            $sql .= " AND date >= date('now')";
+        }
+        $sql .= " ORDER BY $orderBy";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':team_id' => $teamId]);
+        return $stmt->fetchAll();
+    }
+
     public function create(int $teamId, string $opponent, string $date, int $isHome, string $formation): int {
         $stmt = $this->pdo->prepare("INSERT INTO matches (team_id, opponent, date, is_home, formation) VALUES (:team_id, :opponent, :date, :is_home, :formation)");
         $stmt->execute([

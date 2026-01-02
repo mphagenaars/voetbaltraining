@@ -34,7 +34,7 @@ class LineupController extends BaseController {
             $validator->required('name');
 
             if ($validator->isValid()) {
-                $formation = trim($_POST['formation'] ?? '4-3-3');
+                $formation = trim($_POST['formation'] ?? '11-vs-11');
                 $lineupId = $this->lineupModel->create(Session::get('current_team')['id'], $_POST['name'], $formation);
                 Session::flash('success', 'Opstelling aangemaakt.');
                 $this->redirect('/lineups/view?id=' . $lineupId);

@@ -99,37 +99,22 @@ class Exercise extends Model {
         $stmt->execute($params);
     }
 
+    private static function getOptionsByCategory(string $category): array {
+        $db = (new Database())->getConnection();
+        $stmt = $db->prepare("SELECT name FROM exercise_options WHERE category = :category ORDER BY sort_order ASC");
+        $stmt->execute([':category' => $category]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
     public static function getTeamTasks(): array {
-        return ['Aanvallen', 'Omschakelen', 'Verdedigen', 'Neutraal'];
+        return self::getOptionsByCategory('team_task');
     }
 
     public static function getObjectives(): array {
-        return [
-            'Creëren van kansen',
-            'Dieptespel in opbouw verbeteren',
-            'Positiespel in opbouw verbeteren',
-            'Scoren verbeteren',
-            'Uitspelen van één tegen één situatie verbeteren',
-            'Omschakelen bij veroveren van de bal verbeteren',
-            'Omschakelen op moment van balverlies verbeteren',
-            'Storen en veroveren van de bal verbeteren',
-            'Verdedigen van dieptespel verbeteren',
-            'Verdedigen van één tegen één situatie verbeteren',
-            'Verdedigen wanneer de tegenstander kansen creëert verbeteren',
-            'Voorkomen van doelpunten verbeteren'
-        ];
+        return self::getOptionsByCategory('objective');
     }
 
     public static function getFootballActions(): array {
-        return [
-            'Kijken',
-            'Dribbelen',
-            'Passen',
-            'Schieten',
-            'Cheeta',
-            'Brug maken',
-            'Lijntje doorknippen',
-            'Jagen'
-        ];
+        return self::getOptionsByCategory('football_action');
     }
 }

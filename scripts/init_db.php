@@ -50,6 +50,16 @@ try {
     )");
     echo "- Tabel 'team_members' aangemaakt (of bestond al).\n";
 
+    // Exercise Options tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS exercise_options (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        name TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0
+    )");
+    echo "- Tabel 'exercise_options' aangemaakt (of bestond al).\n";
+    echo "- Tabel 'team_members' aangemaakt (of bestond al).\n";
+
     // Migratie: Voeg kolommen toe als ze niet bestaan
     $tmColumns = $db->query("PRAGMA table_info(team_members)")->fetchAll(PDO::FETCH_COLUMN, 1);
     

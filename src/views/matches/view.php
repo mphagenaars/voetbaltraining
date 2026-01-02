@@ -459,14 +459,14 @@ document.addEventListener('DOMContentLoaded', () => {
             { x: 80, y: 20, label: 'A' }
         ],
         '8-vs-8': [
-            { x: 50, y: 88, label: 'K' },
-            { x: 20, y: 70, label: 'V' },
-            { x: 50, y: 70, label: 'V' },
-            { x: 80, y: 70, label: 'V' },
-            { x: 35, y: 45, label: 'M' },
-            { x: 65, y: 45, label: 'M' },
-            { x: 35, y: 20, label: 'A' },
-            { x: 65, y: 20, label: 'A' }
+            { x: 50, y: 90, label: 'K' },  // Keeper
+            { x: 30, y: 75, label: 'V' },  // Linksachter
+            { x: 70, y: 75, label: 'V' },  // Rechtsachter
+            { x: 20, y: 50, label: 'M' },  // Linksmidden
+            { x: 50, y: 50, label: 'M' },  // Centraal midden
+            { x: 80, y: 50, label: 'M' },  // Rechtsmidden
+            { x: 35, y: 25, label: 'A' },  // Linksvoor
+            { x: 65, y: 25, label: 'A' }   // Rechtsvoor
         ],
         '4-3-3': [
             { x: 50, y: 90, label: 'K' },

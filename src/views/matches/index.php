@@ -1,6 +1,12 @@
 <div class="header-actions">
     <h1>Wedstrijden</h1>
     <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <?php $nextFilter = ($currentFilter ?? 'all') === 'all' ? 'upcoming' : 'all'; ?>
+        <a href="/matches?filter=<?= $nextFilter ?>" class="btn <?= ($currentFilter ?? 'all') === 'upcoming' ? 'btn-primary' : 'btn-outline' ?>" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg gespeelde wedstrijden' : 'Toon alle wedstrijden' ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+        </a>
         <?php $nextSort = ($currentSort ?? 'desc') === 'desc' ? 'asc' : 'desc'; ?>
         <a href="/matches?sort=<?= $nextSort ?>" class="btn btn-outline" title="<?= ($currentSort ?? 'desc') === 'desc' ? 'Sorteer: Oudste eerst' : 'Sorteer: Nieuwste eerst' ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

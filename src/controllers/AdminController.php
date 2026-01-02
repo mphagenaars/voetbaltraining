@@ -177,4 +177,142 @@ class AdminController extends BaseController {
             $this->redirect('/admin/user-teams?user_id=' . $userId);
         }
     }
+
+    public function manageOptions(): void {
+        $this->requireAdmin();
+        
+        $db = $this->pdo;
+        $stmt = $db->prepare("SELECT * FROM exercise_options ORDER BY category, sort_order ASC");
+        $stmt->execute();
+        $allOptions = $stmt->fetchAll();
+        
+        $options = [
+            'team_task' => [],
+            'objective' => [],
+            'football_action' => []
+        ];
+        
+        foreach ($allOptions as $opt) {
+            if (isset($options[$opt['category']])) {
+                $options[$opt['category']][] = $opt;
+            }
+        }
+        
+        View::render('admin/options', [
+            'options' => $options,
+            'pageTitle' => 'Oefenstof Opties Beheren'
+        ]);
+    }
+
+    public function createOption(): void {
+        $this->requireAdmin();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/admin/options');
+            
+            $category = $_POST['category'] ?? '';
+            $name = trim($_POST['name'] ?? '');
+            
+            if (empty($name) || !in_array($category, ['team_task', 'objective', 'football_action'])) {
+                Session::flash('error', 'Ongeldige invoer.');
+                $this->redirect('/admin/options');
+            }
+            
+            $db = $this->pdo;
+            
+            // Get max sort order
+            $stmt = $db->prepare("SELECT MAX(sort_order) FROM exercise_options WHERE category = :category");
+            $stmt->execute([':category' => $category]);
+            $maxSort = (int)$stmt->fetchColumn();
+            
+            $stmt = $db->prepare("INSERT INTO exercise_options (category, name, sort_order) VALUES (:category, :name, :sort_order)");
+            $stmt->execute([
+                ':category' => $category,
+                ':name' => $name,
+                ':sort_order' => $maxSort + 1
+            ]);
+            
+            Session::flash('success', 'Optie toegevoegd.');
+            $this->redirect('/admin/options');
+        }
+    }
+
+    public function updateOption(): void {
+        $this->requireAdmin();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/admin/options');
+            
+            $id = (int)($_POST['id'] ?? 0);
+            $name = trim($_POST['name'] ?? '');
+            
+            if (empty($name) || $id <= 0) {
+                Session::flash('error', 'Ongeldige invoer.');
+                $this->redirect('/admin/options');
+            }
+            
+            $db = $this->pdo;
+            $stmt = $db->prepare("UPDATE exercise_options SET name = :name WHERE id = :id");
+            $stmt->execute([
+                ':name' => $name,
+                ':id' => $id
+            ]);
+            
+            Session::flash('success', 'Optie bijgewerkt.');
+            $this->redirect('/admin/options');
+        }
+    }
+
+    public function deleteOption(): void {
+        $this->requireAdmin();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/admin/options');
+            
+            $id = (int)($_POST['id'] ?? 0);
+            
+            $db = $this->pdo;
+            $stmt = $db->prepare("DELETE FROM exercise_options WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            
+            Session::flash('success', 'Optie verwijderd.');
+            $this->redirect('/admin/options');
+        }
+    }
+
+    public function reorderOptions(): void {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/admin/options');
+
+            $ids = $_POST['ids'] ?? [];
+            if (!is_array($ids)) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Invalid data']);
+                exit;
+            }
+
+            $db = $this->pdo;
+            $stmt = $db->prepare("UPDATE exercise_options SET sort_order = :sort_order WHERE id = :id");
+
+            $db->beginTransaction();
+            try {
+                foreach ($ids as $index => $id) {
+                    $stmt->execute([
+                        ':sort_order' => $index,
+                        ':id' => (int)$id
+                    ]);
+                }
+                $db->commit();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true]);
+            } catch (Exception $e) {
+                $db->rollBack();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            }
+            exit;
+        }
+    }
 }

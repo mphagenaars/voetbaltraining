@@ -17,18 +17,27 @@ class GameController extends BaseController {
             $this->redirect('/');
         }
 
-        $sort = $_GET['sort'] ?? 'desc';
+        $sort = $_GET['sort'] ?? Session::get('matches_sort', 'desc');
         if (!in_array($sort, ['asc', 'desc'])) {
             $sort = 'desc';
         }
 
+        Session::set('matches_sort', $sort);
+
+        $filter = $_GET['filter'] ?? Session::get('matches_filter', 'all');
+        if (!in_array($filter, ['all', 'upcoming'])) {
+            $filter = 'all';
+        }
+        Session::set('matches_filter', $filter);
+
         $orderBy = $sort === 'asc' ? 'date ASC' : 'date DESC';
-        $matches = $this->gameModel->getAllForTeam(Session::get('current_team')['id'], $orderBy);
+        $matches = $this->gameModel->getMatches(Session::get('current_team')['id'], $orderBy, $filter === 'upcoming');
         
         View::render('matches/index', [
             'matches' => $matches, 
             'pageTitle' => 'Wedstrijden - Trainer Bobby',
-            'currentSort' => $sort
+            'currentSort' => $sort,
+            'currentFilter' => $filter
         ]);
     }
 
@@ -46,7 +55,7 @@ class GameController extends BaseController {
 
             if ($validator->isValid()) {
                 $isHome = (int)($_POST['is_home'] ?? 1);
-                $formation = trim($_POST['formation'] ?? '4-3-3');
+                $formation = trim($_POST['formation'] ?? '11-vs-11');
                 
                 $matchId = $this->gameModel->create(Session::get('current_team')['id'], $_POST['opponent'], $_POST['date'], $isHome, $formation);
                 Session::flash('success', 'Wedstrijd aangemaakt.');

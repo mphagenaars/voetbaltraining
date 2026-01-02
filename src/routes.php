@@ -57,6 +57,11 @@ return [
     '/admin/add-team-member' => ['AdminController', 'addTeamMember'],
     '/admin/update-team-role' => ['AdminController', 'updateTeamRole'],
     '/admin/remove-team-member' => ['AdminController', 'removeTeamMember'],
+    '/admin/options' => ['AdminController', 'manageOptions'],
+    '/admin/options/create' => ['AdminController', 'createOption'],
+    '/admin/options/update' => ['AdminController', 'updateOption'],
+    '/admin/options/delete' => ['AdminController', 'deleteOption'],
+    '/admin/options/reorder' => ['AdminController', 'reorderOptions'],
     
     // Lineups
     '/lineups' => ['LineupController', 'index'],
