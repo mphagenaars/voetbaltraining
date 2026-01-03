@@ -156,10 +156,39 @@ try {
     
     $optCount = $db->query("SELECT COUNT(*) FROM exercise_options")->fetchColumn();
     if ($optCount == 0) {
+        // Hardcoded defaults for initial seeding to avoid circular dependency
+        $defaultTeamTasks = [
+            'Opbouwen',
+            'Aanvallen',
+            'Verdedigen',
+            'Omschakelen'
+        ];
+
+        $defaultObjectives = [
+            'Passen en trappen',
+            'Dribbelen',
+            'Afwerken op doel',
+            'Positiespel',
+            'Partijspel',
+            'Techniek',
+            'Conditie',
+            'Tactiek'
+        ];
+
+        $defaultFootballActions = [
+            'Aannemen',
+            'Passen',
+            'Dribbelen',
+            'Schieten',
+            'Koppen',
+            'Verdedigen',
+            'Keepen'
+        ];
+
         $options = [
-            'team_task' => Exercise::getTeamTasks(),
-            'objective' => Exercise::getObjectives(),
-            'football_action' => Exercise::getFootballActions()
+            'team_task' => $defaultTeamTasks,
+            'objective' => $defaultObjectives,
+            'football_action' => $defaultFootballActions
         ];
 
         $stmt = $db->prepare("INSERT INTO exercise_options (category, name, sort_order) VALUES (:category, :name, :sort_order)");
