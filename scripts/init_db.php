@@ -43,21 +43,12 @@ try {
         role TEXT DEFAULT 'coach', -- Deprecated, kept for backward compatibility during migration
         is_coach INTEGER DEFAULT 0,
         is_trainer INTEGER DEFAULT 0,
+        is_hidden INTEGER DEFAULT 0,
         joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, team_id),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     )");
-    echo "- Tabel 'team_members' aangemaakt (of bestond al).\n";
-
-    // Exercise Options tabel
-    $db->exec("CREATE TABLE IF NOT EXISTS exercise_options (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        category TEXT NOT NULL,
-        name TEXT NOT NULL,
-        sort_order INTEGER DEFAULT 0
-    )");
-    echo "- Tabel 'exercise_options' aangemaakt (of bestond al).\n";
     echo "- Tabel 'team_members' aangemaakt (of bestond al).\n";
 
     // Migratie: Voeg kolommen toe als ze niet bestaan
@@ -78,6 +69,113 @@ try {
         $db->exec("UPDATE team_members SET is_trainer = 1 WHERE role = 'trainer'");
         echo "- Bestaande trainers gemigreerd.\n";
     }
+
+    if (!in_array('is_hidden', $tmColumns)) {
+        $db->exec("ALTER TABLE team_members ADD COLUMN is_hidden INTEGER DEFAULT 0");
+        echo "- Kolom 'is_hidden' toegevoegd aan 'team_members'.\n";
+    }
+
+    // Clubs tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS clubs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        logo_path TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "- Tabel 'clubs' aangemaakt (of bestond al).\n";
+
+    // Check columns for clubs
+    $clubColumns = $db->query("PRAGMA table_info(clubs)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('logo_path', $clubColumns)) {
+        $db->exec("ALTER TABLE clubs ADD COLUMN logo_path TEXT DEFAULT NULL");
+        echo "- Kolom 'logo_path' toegevoegd aan 'clubs'.\n";
+    }
+
+    // Seasons tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS seasons (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        is_current INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "- Tabel 'seasons' aangemaakt (of bestond al).\n";
+
+    // Seed initial data if empty
+    $clubCount = $db->query("SELECT COUNT(*) FROM clubs")->fetchColumn();
+    if ($clubCount == 0) {
+        $db->exec("INSERT INTO clubs (name) VALUES ('FC Bal op het Dak'), ('VV De Toekomst'), ('SV Trapvast')");
+        echo "- Voorbeeld clubs toegevoegd.\n";
+    }
+
+    $seasonCount = $db->query("SELECT COUNT(*) FROM seasons")->fetchColumn();
+    if ($seasonCount == 0) {
+        $currentYear = (int)date('Y');
+        $nextYear = $currentYear + 1;
+        $seasonName = "$currentYear-$nextYear";
+        
+        $stmt = $db->prepare("INSERT INTO seasons (name, is_current) VALUES (:name, 1)");
+        $stmt->execute([':name' => $seasonName]);
+        echo "- Huidig seizoen ($seasonName) toegevoegd.\n";
+    }
+
+    // Check columns for teams (club, season)
+    $teamColumns = $db->query("PRAGMA table_info(teams)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('club', $teamColumns)) {
+        $db->exec("ALTER TABLE teams ADD COLUMN club TEXT DEFAULT ''");
+        echo "- Kolom 'club' toegevoegd aan 'teams'.\n";
+    }
+    if (!in_array('season', $teamColumns)) {
+        $db->exec("ALTER TABLE teams ADD COLUMN season TEXT DEFAULT ''");
+        echo "- Kolom 'season' toegevoegd aan 'teams'.\n";
+    }
+
+    // Activity Logs tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS activity_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        action VARCHAR(50) NOT NULL,
+        entity_id INTEGER NULL,
+        details TEXT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )");
+    echo "- Tabel 'activity_logs' aangemaakt (of bestond al).\n";
+
+    // Exercise Options tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS exercise_options (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        name TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0
+    )");
+    echo "- Tabel 'exercise_options' aangemaakt (of bestond al).\n";
+
+    // Seed exercise options if empty
+    require_once __DIR__ . '/../src/models/Model.php';
+    require_once __DIR__ . '/../src/models/Exercise.php';
+    
+    $optCount = $db->query("SELECT COUNT(*) FROM exercise_options")->fetchColumn();
+    if ($optCount == 0) {
+        $options = [
+            'team_task' => Exercise::getTeamTasks(),
+            'objective' => Exercise::getObjectives(),
+            'football_action' => Exercise::getFootballActions()
+        ];
+
+        $stmt = $db->prepare("INSERT INTO exercise_options (category, name, sort_order) VALUES (:category, :name, :sort_order)");
+
+        foreach ($options as $category => $items) {
+            foreach ($items as $index => $name) {
+                $stmt->execute([
+                    ':category' => $category,
+                    ':name' => $name,
+                    ':sort_order' => $index
+                ]);
+            }
+        }
+        echo "- Exercise options geseed.\n";
+    }
+
 
     // Exercises tabel
     // team_id is nullable to allow global exercises

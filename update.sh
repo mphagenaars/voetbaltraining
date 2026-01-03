@@ -34,15 +34,6 @@ else
     echo "⚠️  Waarschuwing: scripts/init_db.php niet gevonden."
 fi
 
-# Run additional migrations
-echo "   - Uitvoeren van aanvullende migraties..."
-for script in scripts/init_clubs_seasons.php scripts/migrate_teams_club_season.php scripts/migrate_clubs_logo.php scripts/migrate_team_visibility.php scripts/migrate_activity_logs.php scripts/migrate_options.php; do
-    if [ -f "$script" ]; then
-        echo "   Running $script..."
-        php "$script"
-    fi
-done
-
 # 4. Rechten Herstellen
 echo ""
 echo "🔐  [3/3] Rechten herstellen..."
