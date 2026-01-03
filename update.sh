@@ -34,6 +34,15 @@ else
     echo "⚠️  Waarschuwing: scripts/init_db.php niet gevonden."
 fi
 
+# Run additional migrations
+echo "   - Uitvoeren van aanvullende migraties..."
+for script in scripts/init_clubs_seasons.php scripts/migrate_teams_club_season.php scripts/migrate_clubs_logo.php scripts/migrate_team_visibility.php; do
+    if [ -f "$script" ]; then
+        echo "   Running $script..."
+        php "$script"
+    fi
+done
+
 # 4. Rechten Herstellen
 echo ""
 echo "🔐  [3/3] Rechten herstellen..."
@@ -52,22 +61,22 @@ done
 chown -R "$OWNER:$WEB_USER" "$PROJECT_DIR"
 
 # Standaard permissies
-find "$PROJECT_DIR" -type d -exec chmod 750 {} +
-find "$PROJECT_DIR" -type f -exec chmod 640 {} +
+find "$PROJECT_DIR" -type d -exec chmod 755 {} +
+find "$PROJECT_DIR" -type f -exec chmod 644 {} +
 
 # Scripts uitvoerbaar maken
 chmod +x "$PROJECT_DIR/update.sh"
 chmod +x "$PROJECT_DIR/install.sh"
 
 # Specifieke schrijfmappen
-chmod -R 770 "$PROJECT_DIR/data"
-chmod -R 770 "$PROJECT_DIR/public/uploads"
+chmod -R 775 "$PROJECT_DIR/data"
+chmod -R 775 "$PROJECT_DIR/public/uploads"
 
 # Database file specifiek
 if [ -f "$PROJECT_DIR/data/database.sqlite" ]; then
-    chmod 660 "$PROJECT_DIR/data/database.sqlite"
+    chmod 664 "$PROJECT_DIR/data/database.sqlite"
 fi
-chmod 770 "$PROJECT_DIR/data"
+chmod 775 "$PROJECT_DIR/data"
 
 echo "    - Rechten hersteld."
 
