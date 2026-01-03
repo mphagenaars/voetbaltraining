@@ -1,5 +1,6 @@
-<div class="dashboard-header">
+<div class="header-actions">
     <h1>Mijn Account</h1>
+    <a href="/" class="btn btn-outline">Terug</a>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -51,7 +52,7 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Opslaan</button>
+                <button type="submit" class="btn btn-outline">Opslaan</button>
             </div>
         </form>
     </div>
@@ -79,7 +80,7 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Wachtwoord Wijzigen</button>
+                <button type="submit" class="btn btn-outline">Wachtwoord Wijzigen</button>
             </div>
         </form>
     </div>
