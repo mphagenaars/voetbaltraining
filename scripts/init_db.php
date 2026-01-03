@@ -154,56 +154,53 @@ try {
     require_once __DIR__ . '/../src/models/Model.php';
     require_once __DIR__ . '/../src/models/Exercise.php';
     
-    $optCount = $db->query("SELECT COUNT(*) FROM exercise_options")->fetchColumn();
-    if ($optCount == 0) {
-        // Hardcoded defaults for initial seeding to avoid circular dependency
-        $defaultTeamTasks = [
-            'Opbouwen',
+    // Hardcoded defaults for initial seeding to avoid circular dependency
+    $options = [
+        'team_task' => [
             'Aanvallen',
+            'Omschakelen',
             'Verdedigen',
-            'Omschakelen'
-        ];
-
-        $defaultObjectives = [
-            'Passen en trappen',
+            'Warming Up'
+        ],
+        'objective' => [
+            'Creëren van kansen',
+            'Scoren verbeteren',
+            'Positiespel in opbouw verbeteren',
+            'Uitspelen van één tegen één situatie verbeteren',
+            'Verdedigen van één tegen één situatie verbeteren',
+            'Omschakelen bij balverlies verbeteren',
+            'Omschakelen bij balbezit verbeteren',
+            'Storen en veroveren van de bal verbeteren'
+        ],
+        'football_action' => [
+            'Kijken',
             'Dribbelen',
-            'Afwerken op doel',
-            'Positiespel',
-            'Partijspel',
-            'Techniek',
-            'Conditie',
-            'Tactiek'
-        ];
-
-        $defaultFootballActions = [
-            'Aannemen',
             'Passen',
-            'Dribbelen',
             'Schieten',
-            'Koppen',
-            'Verdedigen',
-            'Keepen'
-        ];
+            'Cheeta',
+            'Brug maken',
+            'Lijntje doorknippen',
+            'Jagen'
+        ]
+    ];
 
-        $options = [
-            'team_task' => $defaultTeamTasks,
-            'objective' => $defaultObjectives,
-            'football_action' => $defaultFootballActions
-        ];
+    $stmtCheck = $db->prepare("SELECT 1 FROM exercise_options WHERE category = :category AND name = :name");
+    $stmtInsert = $db->prepare("INSERT INTO exercise_options (category, name, sort_order) VALUES (:category, :name, :sort_order)");
 
-        $stmt = $db->prepare("INSERT INTO exercise_options (category, name, sort_order) VALUES (:category, :name, :sort_order)");
-
-        foreach ($options as $category => $items) {
-            foreach ($items as $index => $name) {
-                $stmt->execute([
+    foreach ($options as $category => $items) {
+        foreach ($items as $index => $name) {
+            $stmtCheck->execute([':category' => $category, ':name' => $name]);
+            if (!$stmtCheck->fetch()) {
+                $stmtInsert->execute([
                     ':category' => $category,
                     ':name' => $name,
                     ':sort_order' => $index
                 ]);
+                echo "- Optie toegevoegd: [$category] $name\n";
             }
         }
-        echo "- Exercise options geseed.\n";
     }
+    echo "- Exercise options gecontroleerd/geseed.\n";
 
 
     // Exercises tabel
