@@ -2,14 +2,22 @@
 $isEdit = isset($exercise);
 ?>
 
-<h1><?= $isEdit ? 'Oefening bewerken' : 'Nieuwe oefening' ?></h1>
+<div class="header-actions">
+    <h1><?= $isEdit ? 'Oefening bewerken' : 'Nieuwe oefening' ?></h1>
+    <a href="/exercises" class="btn btn-outline">Terug</a>
+</div>
 
 <div class="card">
     <form method="POST" enctype="multipart/form-data">
         <?= Csrf::renderInput() ?>
         <div class="form-group">
             <label for="title">Titel *</label>
-            <input type="text" id="title" name="title" value="<?= e($exercise['title'] ?? '') ?>" required>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="title" name="title" value="<?= e($exercise['title'] ?? '') ?>" required>
+                <button type="submit" class="btn-icon" title="Opslaan">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                </button>
+            </div>
         </div>
 
         <div class="form-group">
@@ -216,11 +224,6 @@ $isEdit = isset($exercise);
             <input type="hidden" name="drawing_data" id="drawing_data" value="<?= e($exercise['drawing_data'] ?? '') ?>">
             <input type="hidden" name="drawing_image" id="drawing_image">
             <input type="hidden" name="field_type" id="field_type" value="<?= e($exercise['field_type'] ?? 'square') ?>">
-        </div>
-
-        <div style="margin-top: 1rem;">
-            <button type="submit" class="btn"><?= $isEdit ? 'Opslaan' : 'Aanmaken' ?></button>
-            <a href="/exercises" class="btn btn-outline">Annuleren</a>
         </div>
     </form>
 </div>

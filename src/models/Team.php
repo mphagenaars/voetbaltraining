@@ -4,11 +4,16 @@ declare(strict_types=1);
 class Team extends Model {
     protected string $table = 'teams';
 
-    public function create(string $name, int $creatorId): int {
-        $stmt = $this->pdo->prepare("INSERT INTO teams (name, invite_code) VALUES (:name, :invite_code)");
+    public function create(string $name, int $creatorId, string $club = '', string $season = ''): int {
+        $stmt = $this->pdo->prepare("INSERT INTO teams (name, invite_code, club, season) VALUES (:name, :invite_code, :club, :season)");
         // Genereer een random invite code
         $inviteCode = bin2hex(random_bytes(8));
-        $stmt->execute([':name' => $name, ':invite_code' => $inviteCode]);
+        $stmt->execute([
+            ':name' => $name, 
+            ':invite_code' => $inviteCode,
+            ':club' => $club,
+            ':season' => $season
+        ]);
         $teamId = (int)$this->pdo->lastInsertId();
 
         // Voeg maker toe als lid met rol coach en trainer
@@ -19,13 +24,23 @@ class Team extends Model {
 
     public function getTeamsForUser(int $userId): array {
         $stmt = $this->pdo->prepare("
-            SELECT t.*, tm.is_coach, tm.is_trainer 
+            SELECT t.*, tm.is_coach, tm.is_trainer, tm.is_hidden, c.logo_path 
             FROM teams t 
             JOIN team_members tm ON t.id = tm.team_id 
+            LEFT JOIN clubs c ON t.club = c.name
             WHERE tm.user_id = :user_id
         ");
         $stmt->execute([':user_id' => $userId]);
         return $stmt->fetchAll();
+    }
+
+    public function setTeamVisibility(int $teamId, int $userId, bool $hidden): void {
+        $stmt = $this->pdo->prepare("UPDATE team_members SET is_hidden = :hidden WHERE team_id = :team_id AND user_id = :user_id");
+        $stmt->execute([
+            ':hidden' => $hidden ? 1 : 0,
+            ':team_id' => $teamId,
+            ':user_id' => $userId
+        ]);
     }
 
     public function addMember(int $teamId, int $userId, bool $isCoach = true, bool $isTrainer = false): void {
@@ -57,6 +72,18 @@ class Team extends Model {
             'is_coach' => (int)$result['is_coach'],
             'is_trainer' => (int)$result['is_trainer']
         ];
+    }
+
+    public function getTeamDetails(int $teamId): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT t.*, c.logo_path 
+            FROM teams t 
+            LEFT JOIN clubs c ON t.club = c.name
+            WHERE t.id = :id
+        ");
+        $stmt->execute([':id' => $teamId]);
+        $result = $stmt->fetch();
+        return $result ?: null;
     }
 
     public function getByInviteCode(string $code): ?array {

@@ -21,6 +21,19 @@ class AccountController extends BaseController {
         ]);
     }
 
+    public function teams(): void {
+        $this->requireAuth();
+
+        $userId = Session::get('user_id');
+        $teamModel = new Team($this->pdo);
+        $teams = $teamModel->getTeamsForUser($userId);
+
+        View::render('account/teams', [
+            'teams' => $teams,
+            'pageTitle' => 'Mijn Teams - Trainer Bobby'
+        ]);
+    }
+
     public function updateProfile(): void {
         $this->requireAuth();
         
@@ -100,5 +113,34 @@ class AccountController extends BaseController {
             Session::flash('error', 'Er ging iets mis.');
             $this->redirect('/account');
         }
+    }
+
+    public function toggleTeamVisibility(): void {
+        $this->requireAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/account/teams');
+        }
+
+        $teamId = (int)($_POST['team_id'] ?? 0);
+        $isHidden = isset($_POST['is_hidden']) && $_POST['is_hidden'] == '1';
+
+        if ($teamId <= 0) {
+            $this->redirect('/account/teams');
+        }
+
+        $teamModel = new Team($this->pdo);
+        
+        // Verify membership
+        if (!$teamModel->isMember($teamId, Session::get('user_id'))) {
+            Session::flash('error', 'Je bent geen lid van dit team.');
+            $this->redirect('/account/teams');
+        }
+
+        $teamModel->setTeamVisibility($teamId, Session::get('user_id'), $isHidden);
+        
+        $message = $isHidden ? 'Team verborgen op dashboard.' : 'Team weer zichtbaar op dashboard.';
+        Session::flash('success', $message);
+        $this->redirect('/account/teams');
     }
 }

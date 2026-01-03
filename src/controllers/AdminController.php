@@ -25,6 +25,177 @@ class AdminController extends BaseController {
         ]);
     }
 
+    public function teams(): void {
+        $this->requireAdmin();
+        
+        $clubs = $this->pdo->query("SELECT * FROM clubs ORDER BY name ASC")->fetchAll();
+        $seasons = $this->pdo->query("SELECT * FROM seasons ORDER BY name DESC")->fetchAll();
+        
+        // Fetch all teams with member count
+        $teams = $this->pdo->query("
+            SELECT t.*, 
+            (SELECT COUNT(*) FROM team_members WHERE team_id = t.id) as member_count 
+            FROM teams t 
+            ORDER BY t.created_at DESC
+        ")->fetchAll();
+
+        View::render('admin/teams', [
+            'clubs' => $clubs,
+            'seasons' => $seasons,
+            'teams' => $teams,
+            'pageTitle' => 'Team Beheer - Trainer Bobby'
+        ]);
+    }
+
+    public function addClub(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf('/admin/teams');
+        
+        if (!empty($_POST['name'])) {
+            $logoPath = null;
+            
+            // Handle file upload
+            if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../../public/uploads/clubs/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                
+                $fileTmpPath = $_FILES['logo']['tmp_name'];
+                $fileName = $_FILES['logo']['name'];
+                $fileNameCmps = explode(".", $fileName);
+                $fileExtension = strtolower(end($fileNameCmps));
+                
+                $allowedfileExtensions = array('jpg', 'gif', 'png', 'jpeg', 'svg', 'webp');
+                
+                if (in_array($fileExtension, $allowedfileExtensions)) {
+                    $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+                    $dest_path = $uploadDir . $newFileName;
+                    
+                    if(move_uploaded_file($fileTmpPath, $dest_path)) {
+                        $logoPath = 'uploads/clubs/' . $newFileName;
+                    }
+                }
+            }
+
+            $stmt = $this->pdo->prepare("INSERT INTO clubs (name, logo_path) VALUES (:name, :logo_path)");
+            try {
+                $stmt->execute([
+                    ':name' => trim($_POST['name']),
+                    ':logo_path' => $logoPath
+                ]);
+                Session::flash('success', 'Club toegevoegd.');
+            } catch (PDOException $e) {
+                Session::flash('error', 'Kon club niet toevoegen (bestaat deze al?).');
+            }
+        }
+        $this->redirect('/admin/teams');
+    }
+
+    public function deleteClub(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf('/admin/teams');
+        
+        if (!empty($_POST['id'])) {
+            $stmt = $this->pdo->prepare("DELETE FROM clubs WHERE id = :id");
+            $stmt->execute([':id' => $_POST['id']]);
+            Session::flash('success', 'Club verwijderd.');
+        }
+        $this->redirect('/admin/teams');
+    }
+
+    public function addSeason(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf('/admin/teams');
+        
+        if (!empty($_POST['name'])) {
+            $stmt = $this->pdo->prepare("INSERT INTO seasons (name) VALUES (:name)");
+            try {
+                $stmt->execute([':name' => trim($_POST['name'])]);
+                Session::flash('success', 'Seizoen toegevoegd.');
+            } catch (PDOException $e) {
+                Session::flash('error', 'Kon seizoen niet toevoegen (bestaat deze al?).');
+            }
+        }
+        $this->redirect('/admin/teams');
+    }
+
+    public function deleteSeason(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf('/admin/teams');
+        
+        if (!empty($_POST['id'])) {
+            $stmt = $this->pdo->prepare("DELETE FROM seasons WHERE id = :id");
+            $stmt->execute([':id' => $_POST['id']]);
+            Session::flash('success', 'Seizoen verwijderd.');
+        }
+        $this->redirect('/admin/teams');
+    }
+
+    public function deleteTeam(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf('/admin/teams');
+        
+        if (!empty($_POST['id'])) {
+            $stmt = $this->pdo->prepare("DELETE FROM teams WHERE id = :id");
+            $stmt->execute([':id' => $_POST['id']]);
+            Session::flash('success', 'Team verwijderd.');
+        }
+        $this->redirect('/admin/teams');
+    }
+
+    public function editTeam(): void {
+        $this->requireAdmin();
+        
+        $id = (int)($_GET['id'] ?? 0);
+        $stmt = $this->pdo->prepare("SELECT * FROM teams WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $team = $stmt->fetch();
+        
+        if (!$team) {
+            Session::flash('error', 'Team niet gevonden.');
+            $this->redirect('/admin/teams');
+        }
+        
+        $clubs = $this->pdo->query("SELECT * FROM clubs ORDER BY name ASC")->fetchAll();
+        $seasons = $this->pdo->query("SELECT * FROM seasons ORDER BY name DESC")->fetchAll();
+        
+        View::render('admin/edit_team', [
+            'team' => $team,
+            'clubs' => $clubs,
+            'seasons' => $seasons,
+            'pageTitle' => 'Team Bewerken - Trainer Bobby'
+        ]);
+    }
+
+    public function updateTeam(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = (int)$_POST['id'];
+            $name = trim($_POST['name']);
+            $club = trim($_POST['club'] ?? '');
+            $season = trim($_POST['season'] ?? '');
+            
+            if (empty($name)) {
+                Session::flash('error', 'Team naam is verplicht.');
+                $this->redirect('/admin/teams/edit?id=' . $id);
+            }
+            
+            $stmt = $this->pdo->prepare("UPDATE teams SET name = :name, club = :club, season = :season WHERE id = :id");
+            $stmt->execute([
+                ':name' => $name,
+                ':club' => $club,
+                ':season' => $season,
+                ':id' => $id
+            ]);
+            
+            Session::flash('success', 'Team bijgewerkt.');
+            $this->redirect('/admin/teams');
+        }
+    }
+
     public function users(): void {
         $this->requireAdmin();
         

@@ -46,11 +46,21 @@ return [
 
     // Account
     '/account' => ['AccountController', 'index'],
+    '/account/teams' => ['AccountController', 'teams'],
+    '/account/teams/toggle-visibility' => ['AccountController', 'toggleTeamVisibility'],
     '/account/update-profile' => ['AccountController', 'updateProfile'],
     '/account/update-password' => ['AccountController', 'updatePassword'],
 
     // Admin
     '/admin' => ['AdminController', 'index'],
+    '/admin/teams' => ['AdminController', 'teams'],
+    '/admin/teams/add-club' => ['AdminController', 'addClub'],
+    '/admin/teams/delete-club' => ['AdminController', 'deleteClub'],
+    '/admin/teams/add-season' => ['AdminController', 'addSeason'],
+    '/admin/teams/delete-season' => ['AdminController', 'deleteSeason'],
+    '/admin/teams/delete-team' => ['AdminController', 'deleteTeam'],
+    '/admin/teams/edit' => ['AdminController', 'editTeam'],
+    '/admin/teams/update' => ['AdminController', 'updateTeam'],
     '/admin/users' => ['AdminController', 'users'],
     '/admin/delete-user' => ['AdminController', 'deleteUser'],
     '/admin/toggle-admin' => ['AdminController', 'toggleAdmin'],

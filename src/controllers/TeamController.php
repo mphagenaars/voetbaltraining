@@ -13,14 +13,23 @@ class TeamController extends BaseController {
 
             if ($validator->isValid()) {
                 $teamModel = new Team($this->pdo);
-                $teamModel->create($_POST['name'], Session::get('user_id'));
+                $club = $_POST['club'] ?? '';
+                $season = $_POST['season'] ?? '';
+                $teamModel->create($_POST['name'], Session::get('user_id'), $club, $season);
                 Session::flash('success', 'Team succesvol aangemaakt.');
-                $this->redirect('/');
+                $this->redirect('/account/teams');
             }
         }
 
         // GET request: show form
-        View::render('teams/create', ['pageTitle' => 'Nieuw Team - Trainer Bobby']);
+        $clubs = $this->pdo->query("SELECT * FROM clubs ORDER BY name ASC")->fetchAll();
+        $seasons = $this->pdo->query("SELECT * FROM seasons ORDER BY name DESC")->fetchAll();
+
+        View::render('teams/create', [
+            'pageTitle' => 'Nieuw Team - Trainer Bobby',
+            'clubs' => $clubs,
+            'seasons' => $seasons
+        ]);
     }
 
     public function select(): void {
@@ -35,6 +44,7 @@ class TeamController extends BaseController {
             // Verifieer dat de user lid is van dit team
             if ($teamModel->isMember($teamId, $userId)) {
                 $roles = $teamModel->getMemberRoles($teamId, $userId);
+                $teamDetails = $teamModel->getTeamDetails($teamId);
                 
                 $roleParts = [];
                 if ($roles['is_coach']) $roleParts[] = 'Coach';
@@ -43,9 +53,12 @@ class TeamController extends BaseController {
 
                 Session::set('current_team', [
                     'id' => $teamId,
-                    'name' => $_POST['team_name'],
+                    'name' => $teamDetails['name'],
                     'role' => $roleString,
-                    'invite_code' => $_POST['team_invite_code']
+                    'invite_code' => $teamDetails['invite_code'],
+                    'club' => $teamDetails['club'],
+                    'season' => $teamDetails['season'],
+                    'logo_path' => $teamDetails['logo_path']
                 ]);
             }
         }

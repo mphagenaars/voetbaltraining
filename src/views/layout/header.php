@@ -28,7 +28,7 @@
                     </a>
                     <div class="dropdown-content">
                         <a href="/account">Profiel</a>
-                        <a href="/team/create">Nieuw Team</a>
+                        <a href="/account/teams">Mijn Teams</a>
                         <a href="/logout">Uitloggen</a>
                     </div>
                 </div>

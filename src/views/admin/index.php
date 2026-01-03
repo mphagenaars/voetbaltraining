@@ -29,7 +29,7 @@
     </div>
 
     <!-- Teams Tile -->
-    <div class="card" style="cursor: not-allowed; opacity: 0.7;">
+    <div class="card" style="cursor: pointer;" onclick="window.location.href='/admin/teams'">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
             <div style="background: #fff3e0; padding: 1rem; border-radius: 50%; color: #ef6c00;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -37,7 +37,7 @@
             <h2 style="margin: 0;">Teams</h2>
         </div>
         <p style="color: #666; margin-bottom: 1.5rem;">Bekijk en beheer teams van gebruikers.</p>
-        <button class="btn btn-outline" disabled style="width: 100%; text-align: center;">Binnenkort</button>
+        <a href="/admin/teams" class="btn btn-outline" style="width: 100%; text-align: center;">Beheren</a>
     </div>
 
     <!-- System Tile -->

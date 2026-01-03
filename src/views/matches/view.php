@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { x: 80, y: 20, label: 'A' }
         ],
         '8-vs-8': [
-            { x: 50, y: 85, label: 'K' },  // Keeper
+            { x: 50, y: 88, label: 'K' },  // Keeper
             { x: 30, y: 75, label: 'V' },  // Linksachter
             { x: 70, y: 75, label: 'V' },  // Rechtsachter
             { x: 20, y: 50, label: 'M' },  // Linksmidden
