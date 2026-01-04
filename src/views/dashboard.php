@@ -1,4 +1,8 @@
-<h1>Dashboard</h1>
+<div class="app-bar">
+    <div class="app-bar-start">
+        <h1 class="app-bar-title">Dashboard</h1>
+    </div>
+</div>
 
 <h2>Oefenstof</h2>
 <a href="/exercises" class="action-card">

@@ -1,10 +1,16 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <h1><?= e($exercise['title']) ?></h1>
-    <div>
+<div class="app-bar">
+    <div class="app-bar-start">
+        <a href="/exercises" class="btn-icon-round" title="Terug">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <h1 class="app-bar-title" style="font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;"><?= e($exercise['title']) ?></h1>
+    </div>
+    <div class="app-bar-actions">
         <?php if (!empty($canEdit)): ?>
-            <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn btn-outline">Bewerken</a>
+            <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon-round" title="Bewerken">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </a>
         <?php endif; ?>
-        <a href="/exercises" class="btn btn-outline">Terug</a>
     </div>
 </div>
 

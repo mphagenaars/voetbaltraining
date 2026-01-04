@@ -1,6 +1,10 @@
-<div class="header-actions">
-    <h1>Mijn Account</h1>
-    <a href="/" class="btn btn-outline">Terug</a>
+<div class="app-bar">
+    <div class="app-bar-start">
+        <a href="/" class="btn-icon-round" title="Terug">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <h1 class="app-bar-title">Mijn Account</h1>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>

@@ -1,11 +1,9 @@
-<div class="header-actions">
-    <h1>Mijn Teams</h1>
-    <div style="display: flex; gap: 0.5rem;">
-        <a href="/team/create" class="btn btn-outline">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Nieuw Team
+<div class="app-bar">
+    <div class="app-bar-start">
+        <a href="/" class="btn-icon-round" title="Terug">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
-        <a href="/" class="btn btn-outline">Terug</a>
+        <h1 class="app-bar-title">Mijn Teams</h1>
     </div>
 </div>
 
@@ -139,3 +137,7 @@ $hiddenTeams = array_filter($teams, fn($t) => !empty($t['is_hidden']));
     <?php endif; ?>
 
 <?php endif; ?>
+
+<a href="/team/create" class="fab" title="Nieuw Team">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+</a>

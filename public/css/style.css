@@ -608,3 +608,115 @@ select:focus {
 .action-card:hover svg {
     color: var(--primary);
 }
+
+/* Mobile UX Improvements */
+
+/* App Bar */
+.app-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.app-bar-start {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.app-bar-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.app-bar-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon-round {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-icon-round:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-color: var(--border-color);
+}
+
+/* Floating Action Button (FAB) */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    z-index: 100;
+    transition: transform 0.2s, background-color 0.2s;
+    border: none;
+    text-decoration: none;
+}
+
+.fab:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.05);
+    color: white;
+}
+
+.fab svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Mobile List Actions */
+.mobile-actions-menu {
+    position: relative;
+}
+
+.btn-more {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: var(--text-muted);
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .container {
+        padding-bottom: 80px; /* Space for FAB */
+    }
+    
+    .desktop-only {
+        display: none !important;
+    }
+    
+    /* Make tables scrollable or stackable if needed */
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+    }
+}

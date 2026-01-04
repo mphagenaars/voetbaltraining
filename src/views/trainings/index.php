@@ -1,15 +1,20 @@
-<div class="header-actions">
-    <h1>Trainingen</h1>
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="app-bar">
+    <div class="app-bar-start">
+        <a href="/" class="btn-icon-round" title="Terug">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <h1 class="app-bar-title">Trainingen</h1>
+    </div>
+    <div class="app-bar-actions">
         <?php $nextFilter = ($currentFilter ?? 'all') === 'all' ? 'upcoming' : 'all'; ?>
-        <a href="/trainings?filter=<?= $nextFilter ?>" class="btn <?= ($currentFilter ?? 'all') === 'upcoming' ? 'btn-primary' : 'btn-outline' ?>" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg oude trainingen' : 'Toon alle trainingen' ?>">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a href="/trainings?filter=<?= $nextFilter ?>" class="btn-icon-round" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg oude trainingen' : 'Toon alle trainingen' ?>" style="<?= ($currentFilter ?? 'all') === 'upcoming' ? 'color: var(--primary); background-color: rgba(46, 125, 50, 0.1);' : '' ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
         </a>
         <?php $nextSort = ($currentSort ?? 'desc') === 'desc' ? 'asc' : 'desc'; ?>
-        <a href="/trainings?sort=<?= $nextSort ?>" class="btn btn-outline" title="<?= ($currentSort ?? 'desc') === 'desc' ? 'Sorteer: Oudste eerst' : 'Sorteer: Nieuwste eerst' ?>">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a href="/trainings?sort=<?= $nextSort ?>" class="btn-icon-round" title="<?= ($currentSort ?? 'desc') === 'desc' ? 'Sorteer: Oudste eerst' : 'Sorteer: Nieuwste eerst' ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <?php if (($currentSort ?? 'desc') === 'desc'): ?>
                     <path d="M6 4v16"/><path d="M6 20l-3-3"/><path d="M6 20l3-3"/>
                     <path d="M12 6h8"/><path d="M12 12h6"/><path d="M12 18h4"/>
@@ -19,11 +24,6 @@
                 <?php endif; ?>
             </svg>
         </a>
-        <a href="/trainings/create" class="btn btn-outline">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Nieuwe Training
-        </a>
-        <a href="/" class="btn btn-outline">Terug</a>
     </div>
 </div>
 
@@ -46,7 +46,7 @@
             <div class="action-card" onclick="location.href='/trainings/view?id=<?= $training['id'] ?>'" style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="flex: 1;">
                     <h3><?= $displayTitle ?></h3>
-                    <p class="text-muted" style="margin-bottom: 0.5rem;"><?= nl2br(e(substr($training['description'] ?? '', 0, 100))) ?>...</p>
+                    <p class="text-muted" style="margin-bottom: 0.5rem;"><?= nl2br(e(strlen($training['description'] ?? '') > 100 ? substr($training['description'], 0, 100) . '...' : ($training['description'] ?? ''))) ?></p>
                     
                     <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 1rem;">
                         <span>📝 <?= $training['exercise_count'] ?> oefeningen</span>
@@ -74,5 +74,9 @@
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
+
+<a href="/trainings/create" class="fab" title="Nieuwe Training">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+</a>
 
 

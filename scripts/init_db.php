@@ -150,57 +150,9 @@ try {
     )");
     echo "- Tabel 'exercise_options' aangemaakt (of bestond al).\n";
 
-    // Seed exercise options if empty
-    require_once __DIR__ . '/../src/models/Model.php';
-    require_once __DIR__ . '/../src/models/Exercise.php';
-    
-    // Hardcoded defaults for initial seeding to avoid circular dependency
-    $options = [
-        'team_task' => [
-            'Aanvallen',
-            'Omschakelen',
-            'Verdedigen',
-            'Warming Up'
-        ],
-        'objective' => [
-            'Creëren van kansen',
-            'Scoren verbeteren',
-            'Positiespel in opbouw verbeteren',
-            'Uitspelen van één tegen één situatie verbeteren',
-            'Verdedigen van één tegen één situatie verbeteren',
-            'Omschakelen bij balverlies verbeteren',
-            'Omschakelen bij balbezit verbeteren',
-            'Storen en veroveren van de bal verbeteren'
-        ],
-        'football_action' => [
-            'Kijken',
-            'Dribbelen',
-            'Passen',
-            'Schieten',
-            'Cheeta',
-            'Brug maken',
-            'Lijntje doorknippen',
-            'Jagen'
-        ]
-    ];
+    // Seeding of exercise options has been moved to scripts/seed_options.php
+    // to prevent overwriting manual changes during updates.
 
-    $stmtCheck = $db->prepare("SELECT 1 FROM exercise_options WHERE category = :category AND name = :name");
-    $stmtInsert = $db->prepare("INSERT INTO exercise_options (category, name, sort_order) VALUES (:category, :name, :sort_order)");
-
-    foreach ($options as $category => $items) {
-        foreach ($items as $index => $name) {
-            $stmtCheck->execute([':category' => $category, ':name' => $name]);
-            if (!$stmtCheck->fetch()) {
-                $stmtInsert->execute([
-                    ':category' => $category,
-                    ':name' => $name,
-                    ':sort_order' => $index
-                ]);
-                echo "- Optie toegevoegd: [$category] $name\n";
-            }
-        }
-    }
-    echo "- Exercise options gecontroleerd/geseed.\n";
 
 
     // Exercises tabel

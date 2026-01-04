@@ -1,5 +1,7 @@
-<div class="header-actions">
-    <h1>Admin Dashboard</h1>
+<div class="app-bar">
+    <div class="app-bar-start">
+        <h1 class="app-bar-title">Admin Dashboard</h1>
+    </div>
 </div>
 
 <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
@@ -13,7 +15,6 @@
             <h2 style="margin: 0;">Gebruikers</h2>
         </div>
         <p style="color: #666; margin-bottom: 1.5rem;">Beheer accounts, rechten en toegang.</p>
-        <a href="/admin/users" class="btn btn-outline" style="width: 100%; text-align: center;">Beheren</a>
     </div>
 
     <!-- Options Tile -->
@@ -25,7 +26,6 @@
             <h2 style="margin: 0;">Oefenstof Opties</h2>
         </div>
         <p style="color: #666; margin-bottom: 1.5rem;">Beheer categorieën, tags en instellingen.</p>
-        <a href="/admin/options" class="btn btn-outline" style="width: 100%; text-align: center;">Beheren</a>
     </div>
 
     <!-- Teams Tile -->
@@ -37,7 +37,6 @@
             <h2 style="margin: 0;">Teams</h2>
         </div>
         <p style="color: #666; margin-bottom: 1.5rem;">Bekijk en beheer teams van gebruikers.</p>
-        <a href="/admin/teams" class="btn btn-outline" style="width: 100%; text-align: center;">Beheren</a>
     </div>
 
     <!-- System Tile -->
@@ -49,7 +48,6 @@
             <h2 style="margin: 0;">Systeem</h2>
         </div>
         <p style="color: #666; margin-bottom: 1.5rem;">Logs, instellingen en systeemstatus.</p>
-        <a href="/admin/system" class="btn btn-outline" style="width: 100%; text-align: center;">Bekijken</a>
     </div>
 
 </div>

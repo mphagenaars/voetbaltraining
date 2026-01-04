@@ -1,11 +1,9 @@
-<div class="header-actions">
-    <h1>Oefenstof</h1>
-    <div style="display: flex; gap: 0.5rem;">
-        <a href="/exercises/create" class="btn btn-outline">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Nieuwe Oefening
+<div class="app-bar">
+    <div class="app-bar-start">
+        <a href="/" class="btn-icon-round" title="Terug">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
-        <a href="/" class="btn btn-outline">Terug</a>
+        <h1 class="app-bar-title">Oefenstof</h1>
     </div>
 </div>
 
@@ -67,14 +65,14 @@
 <?php else: ?>
     <div class="grid">
         <?php foreach ($exercises as $exercise): ?>
-            <div class="card">
+            <div class="card" onclick="location.href='/exercises/view?id=<?= $exercise['id'] ?>'" style="cursor: pointer; position: relative;">
                 <?php if (!empty($exercise['image_path'])): ?>
                     <div style="margin-bottom: 1rem; text-align: center;">
                         <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
                     </div>
                 <?php endif; ?>
                 <h3><?= e($exercise['title']) ?></h3>
-                <p><?= nl2br(e(substr($exercise['description'] ?? '', 0, 100))) ?>...</p>
+                <p><?= nl2br(e(strlen($exercise['description'] ?? '') > 100 ? substr($exercise['description'], 0, 100) . '...' : ($exercise['description'] ?? ''))) ?></p>
                 
                 <div style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
                     <?php if (!empty($exercise['min_players']) || !empty($exercise['max_players'])): ?>
@@ -128,14 +126,20 @@
                     <?php endif; ?>
                 </div>
 
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn btn-sm btn-outline">Bekijken</a>
+                <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;" onclick="event.stopPropagation();">
+                    <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bekijken">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </a>
                     <?php if (isset($editableTeamIds) && in_array((int)$exercise['team_id'], $editableTeamIds, true)): ?>
-                        <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn btn-sm btn-outline">Bewerken</a>
+                        <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bewerken">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </a>
                         <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0;">
                             <?= Csrf::renderInput() ?>
                             <input type="hidden" name="id" value="<?= $exercise['id'] ?>">
-                            <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger-color); border-color: var(--danger-color);">Verwijderen</button>
+                            <button type="submit" class="btn-icon" title="Verwijderen" style="color: var(--danger-color);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
                         </form>
                     <?php endif; ?>
                 </div>
@@ -145,3 +149,7 @@
 <?php endif; ?>
 
 
+
+<a href="/exercises/create" class="fab" title="Nieuwe Oefening">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+</a>

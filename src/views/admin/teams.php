@@ -1,6 +1,10 @@
-<div class="header-actions">
-    <h1>Team Beheer</h1>
-    <a href="/admin" class="btn btn-outline">Terug</a>
+<div class="app-bar">
+    <div class="app-bar-start">
+        <a href="/admin" class="btn-icon-round" title="Terug">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <h1 class="app-bar-title">Team Beheer</h1>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -19,9 +23,14 @@
             <?= Csrf::renderInput() ?>
             <div style="display: flex; gap: 0.5rem;">
                 <input type="text" name="name" placeholder="Nieuwe club..." required style="flex: 1;">
-                <button type="submit" class="btn">Toevoegen</button>
+                <button type="submit" class="btn-icon-round" title="Toevoegen" style="background: var(--primary); color: white; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
             </div>
-            <input type="file" name="logo" accept="image/*" style="font-size: 0.9rem;">
+            <div>
+                <label for="club_logo" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">Club logo (optioneel)</label>
+                <input type="file" id="club_logo" name="logo" accept="image/*" style="font-size: 0.9rem;">
+            </div>
         </form>
 
         <ul class="list-group">
@@ -53,7 +62,9 @@
         <form action="/admin/teams/add-season" method="POST" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
             <?= Csrf::renderInput() ?>
             <input type="text" name="name" placeholder="Nieuw seizoen (bijv. 2026-2027)..." required style="flex: 1;">
-            <button type="submit" class="btn">Toevoegen</button>
+            <button type="submit" class="btn-icon-round" title="Toevoegen" style="background: var(--primary); color: white; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
         </form>
 
         <ul class="list-group">
