@@ -32,7 +32,7 @@ class Game extends Model {
         $this->replaceMany(
             "DELETE FROM match_players WHERE match_id = :match_id",
             [':match_id' => $matchId],
-            "INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute) VALUES (:match_id, :player_id, :x, :y, :sub)",
+            "INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute, is_keeper) VALUES (:match_id, :player_id, :x, :y, :sub, :is_keeper)",
             $players,
             function($p) use ($matchId) {
                 return [
@@ -40,7 +40,8 @@ class Game extends Model {
                     ':player_id' => $p['player_id'],
                     ':x' => $p['x'],
                     ':y' => $p['y'],
-                    ':sub' => $p['is_substitute'] ?? 0
+                    ':sub' => $p['is_substitute'] ?? 0,
+                    ':is_keeper' => $p['is_keeper'] ?? 0
                 ];
             }
         );

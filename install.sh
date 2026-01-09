@@ -24,7 +24,7 @@ echo "=========================================="
 echo ""
 echo "📦  [1/7] Installeren van benodigde pakketten..."
 apt-get update -q
-apt-get install -y -q git apache2 php php-sqlite3 php-pdo libapache2-mod-php unzip
+apt-get install -y -q git apache2 php php-sqlite3 php-pdo php-xml php-mbstring libapache2-mod-php unzip sqlite3
 
 # 3. Apache Configuratie
 echo ""

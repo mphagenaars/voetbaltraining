@@ -305,11 +305,19 @@ try {
         position_x INTEGER NOT NULL,
         position_y INTEGER NOT NULL,
         is_substitute BOOLEAN DEFAULT 0,
+        is_keeper INTEGER DEFAULT 0,
         PRIMARY KEY (match_id, player_id),
         FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
         FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
     )");
     echo "- Tabel 'match_players' aangemaakt (of bestond al).\n";
+
+    // Migratie: voeg is_keeper kolom toe indien nodig
+    $mpColumns = $db->query("PRAGMA table_info(match_players)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('is_keeper', $mpColumns)) {
+        $db->exec("ALTER TABLE match_players ADD COLUMN is_keeper INTEGER DEFAULT 0");
+        echo "- Kolom 'is_keeper' toegevoegd aan 'match_players'.\n";
+    }
 
     // Match events (Scoreverloop etc)
     $db->exec("CREATE TABLE IF NOT EXISTS match_events (
