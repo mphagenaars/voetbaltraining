@@ -12,10 +12,10 @@
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
         </a>
-        <?php $nextSort = ($currentSort ?? 'desc') === 'desc' ? 'asc' : 'desc'; ?>
-        <a href="/matches?sort=<?= $nextSort ?>" class="btn-icon-round" title="<?= ($currentSort ?? 'desc') === 'desc' ? 'Sorteer: Oudste eerst' : 'Sorteer: Nieuwste eerst' ?>">
+        <?php $nextSort = ($currentSort ?? 'asc') === 'desc' ? 'asc' : 'desc'; ?>
+        <a href="/matches?sort=<?= $nextSort ?>" class="btn-icon-round" title="<?= ($currentSort ?? 'asc') === 'desc' ? 'Sorteer: Oudste eerst' : 'Sorteer: Nieuwste eerst' ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <?php if (($currentSort ?? 'desc') === 'desc'): ?>
+                <?php if (($currentSort ?? 'asc') === 'desc'): ?>
                     <path d="M6 4v16"/><path d="M6 20l-3-3"/><path d="M6 20l3-3"/>
                     <path d="M12 6h8"/><path d="M12 12h6"/><path d="M12 18h4"/>
                 <?php else: ?>

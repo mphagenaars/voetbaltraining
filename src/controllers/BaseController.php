@@ -38,20 +38,24 @@ abstract class BaseController {
         $filterKey = $prefix . '_filter';
 
         // Default values
-        $defaultSort = 'desc';
+        $defaultSort = 'asc';
         $defaultFilter = 'all';
 
-        $sort = $_GET['sort'] ?? Session::get($sortKey, $defaultSort);
+        // Sort: GET > Cookie > Session > Default
+        $sort = $_GET['sort'] ?? $_COOKIE[$sortKey] ?? Session::get($sortKey, $defaultSort);
         if (!in_array($sort, $allowedSort)) {
             $sort = $defaultSort;
         }
         Session::set($sortKey, $sort);
+        setcookie($sortKey, $sort, ['expires' => time() + 31536000, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 
-        $filter = $_GET['filter'] ?? Session::get($filterKey, $defaultFilter);
+        // Filter: GET > Cookie > Session > Default
+        $filter = $_GET['filter'] ?? $_COOKIE[$filterKey] ?? Session::get($filterKey, $defaultFilter);
         if (!in_array($filter, $allowedFilter)) {
             $filter = $defaultFilter;
         }
         Session::set($filterKey, $filter);
+        setcookie($filterKey, $filter, ['expires' => time() + 31536000, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 
         return [$sort, $filter];
     }
