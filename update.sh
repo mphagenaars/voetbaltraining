@@ -34,19 +34,6 @@ else
     echo "⚠️  Waarschuwing: scripts/init_db.php niet gevonden."
 fi
 
-# 3b. Schema fix voor exercises (nullable team_id) en foreign keys
-if [ -f "scripts/fix_exercises_schema.php" ]; then
-    echo "    - Uitvoeren van schema fixes..."
-    php scripts/fix_exercises_schema.php
-fi
-
-# 3c. Fix foreign keys (reparatie van vorige migratie fout)
-if [ -f "scripts/fix_foreign_keys.php" ]; then
-    echo "    - Uitvoeren van foreign key reparatie..."
-    php scripts/fix_foreign_keys.php
-fi
-
-
 # 4. Rechten Herstellen
 echo ""
 echo "🔐  [3/3] Rechten herstellen..."
