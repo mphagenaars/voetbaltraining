@@ -22,7 +22,7 @@ class ExerciseController extends BaseController {
 
         // Get all teams where the user has edit rights (coach or trainer)
         $teamModel = new Team($this->pdo);
-        $userTeams = $teamModel->getTeamsForUser(Session::get('user_id'));
+        $userTeams = $teamModel->getTeamsForUser((int)Session::get('user_id'));
         $editableTeamIds = [];
         foreach ($userTeams as $team) {
             if (!empty($team['is_coach']) || !empty($team['is_trainer'])) {
@@ -59,7 +59,15 @@ class ExerciseController extends BaseController {
                 }
                 
                 $exerciseModel = new Exercise($this->pdo);
-                $teamId = Session::get('current_team')['id'] ?? null;
+                
+                // Fix: Veilig ophalen van team ID. Als er geen team geselecteerd is (null), 
+                // wordt de oefening aangemaakt zonder team (globaal/persoonlijk).
+                $teamData = Session::get('current_team');
+                $teamId = isset($teamData['id']) ? (int)$teamData['id'] : null;
+
+                $userId = Session::get('user_id');
+                $createdBy = ($userId && (int)$userId > 0) ? (int)$userId : null;
+
                 $exerciseId = $exerciseModel->create(
                     $teamId, 
                     $payload['title'], 
@@ -73,7 +81,8 @@ class ExerciseController extends BaseController {
                     $imagePath, 
                     $payload['drawing_data'], 
                     $payload['variation'], 
-                    $payload['field_type']
+                    $payload['field_type'],
+                    $createdBy
                 );
                 
                 // Log activity
@@ -101,7 +110,8 @@ class ExerciseController extends BaseController {
         }
 
         // Check permissions
-        if (!$this->canEditExercise((int)$exercise['team_id'], Session::get('user_id'))) {
+        $createdBy = isset($exercise['created_by']) ? (int)$exercise['created_by'] : null;
+        if (!$this->canEditExercise($createdBy, (int)Session::get('user_id'))) {
              $this->redirect('/exercises');
         }
         
@@ -163,8 +173,9 @@ class ExerciseController extends BaseController {
 
         $currentTeamId = Session::has('current_team') ? (int)Session::get('current_team')['id'] : null;
         $exerciseTeamId = isset($exercise['team_id']) ? (int)$exercise['team_id'] : null;
+        $createdBy = isset($exercise['created_by']) ? (int)$exercise['created_by'] : null;
         
-        $canEdit = $this->canEditExercise($exerciseTeamId, Session::get('user_id'));
+        $canEdit = $this->canEditExercise($createdBy, (int)Session::get('user_id'));
         
         View::render('exercises/view', [
             'exercise' => $exercise, 
@@ -181,7 +192,8 @@ class ExerciseController extends BaseController {
             $exercise = $exerciseModel->getById($id);
             
             if ($exercise) {
-                if ($this->canEditExercise((int)$exercise['team_id'], Session::get('user_id'))) {
+                $createdBy = isset($exercise['created_by']) ? (int)$exercise['created_by'] : null;
+                if ($this->canEditExercise($createdBy, (int)Session::get('user_id'))) {
                     $exerciseModel->delete($id);
                     
                     // Log activity
@@ -200,8 +212,8 @@ class ExerciseController extends BaseController {
             'description' => $postData['description'] ?? '',
             'variation' => $postData['variation'] ?? null,
             'team_task' => $postData['team_task'] ?? null,
-            'training_objective' => isset($postData['training_objective']) ? json_encode($postData['training_objective']) : null,
-            'football_action' => isset($postData['football_action']) ? json_encode($postData['football_action']) : null,
+            'training_objective' => (isset($postData['training_objective']) && ($json = json_encode($postData['training_objective'])) !== false) ? $json : null,
+            'football_action' => (isset($postData['football_action']) && ($json = json_encode($postData['football_action'])) !== false) ? $json : null,
             'min_players' => !empty($postData['min_players']) ? (int)$postData['min_players'] : null,
             'max_players' => !empty($postData['max_players']) ? (int)$postData['max_players'] : null,
             'duration' => !empty($postData['duration']) ? (int)$postData['duration'] : null,
@@ -228,12 +240,17 @@ class ExerciseController extends BaseController {
         return null;
     }
 
-    private function canEditExercise(?int $teamId, int $userId): bool {
-        if ($teamId === null) {
-            return false;
+    private function canEditExercise(?int $createdBy, int $userId): bool {
+        // Admins mogen altijd alles bewerken
+        if (Session::get('is_admin')) {
+            return true;
         }
-        $teamModel = new Team($this->pdo);
-        $roles = $teamModel->getMemberRoles($teamId, $userId);
-        return $roles && ($roles['is_coach'] || $roles['is_trainer']);
+
+        // Alleen de maker mag bewerken
+        if ($createdBy !== null && $createdBy === $userId) {
+            return true;
+        }
+
+        return false;
     }
 }

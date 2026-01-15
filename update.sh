@@ -34,6 +34,11 @@ else
     echo "⚠️  Waarschuwing: scripts/init_db.php niet gevonden."
 fi
 
+# 3b. Schema fix voor exercises (nullable team_id)
+if [ -f "scripts/fix_exercises_schema.php" ]; then
+    php scripts/fix_exercises_schema.php
+fi
+
 # 4. Rechten Herstellen
 echo ""
 echo "🔐  [3/3] Rechten herstellen..."

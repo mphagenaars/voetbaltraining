@@ -4,10 +4,10 @@ declare(strict_types=1);
 class Exercise extends Model {
     protected string $table = 'exercises';
 
-    public function create(?int $teamId, string $title, string $description, ?string $teamTask, ?string $trainingObjective, ?string $footballAction, ?int $minPlayers, ?int $maxPlayers, ?int $duration, ?string $imagePath = null, ?string $drawingData = null, ?string $variation = null, string $fieldType = 'portrait'): int {
+    public function create(?int $teamId, string $title, string $description, ?string $teamTask, ?string $trainingObjective, ?string $footballAction, ?int $minPlayers, ?int $maxPlayers, ?int $duration, ?string $imagePath = null, ?string $drawingData = null, ?string $variation = null, string $fieldType = 'portrait', ?int $createdBy = null): int {
         $stmt = $this->pdo->prepare("
-            INSERT INTO exercises (team_id, title, description, team_task, training_objective, football_action, min_players, max_players, duration, image_path, drawing_data, variation, field_type) 
-            VALUES (:team_id, :title, :description, :team_task, :training_objective, :football_action, :min_players, :max_players, :duration, :image_path, :drawing_data, :variation, :field_type)
+            INSERT INTO exercises (team_id, title, description, team_task, training_objective, football_action, min_players, max_players, duration, image_path, drawing_data, variation, field_type, created_by) 
+            VALUES (:team_id, :title, :description, :team_task, :training_objective, :football_action, :min_players, :max_players, :duration, :image_path, :drawing_data, :variation, :field_type, :created_by)
         ");
         $stmt->execute([
             ':team_id' => $teamId,
@@ -22,16 +22,29 @@ class Exercise extends Model {
             ':image_path' => $imagePath,
             ':drawing_data' => $drawingData,
             ':variation' => $variation,
-            ':field_type' => $fieldType
+            ':field_type' => $fieldType,
+            ':created_by' => $createdBy
         ]);
         return (int)$this->pdo->lastInsertId();
     }
 
 
 
+    public function getById(int $id): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT e.*, u.name as creator_name 
+            FROM exercises e 
+            LEFT JOIN users u ON e.created_by = u.id 
+            WHERE e.id = :id
+        ");
+        $stmt->execute([':id' => $id]);
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
     public function search(?int $teamId, ?string $query = null, ?string $teamTask = null, ?string $trainingObjective = null, ?string $footballAction = null): array {
         // Show all exercises (generic)
-        $sql = "SELECT DISTINCT e.* FROM exercises e WHERE 1=1";
+        $sql = "SELECT DISTINCT e.*, u.name as creator_name FROM exercises e LEFT JOIN users u ON e.created_by = u.id WHERE 1=1";
         $params = [];
         
         if ($query) {

@@ -173,8 +173,10 @@ try {
         image_path TEXT,
         drawing_data TEXT,
         field_type TEXT DEFAULT 'portrait',
+        created_by INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
     )");
     echo "- Tabel 'exercises' aangemaakt (of bestond al).\n";
 
@@ -199,6 +201,10 @@ try {
     if (!in_array('team_task', $columns)) {
         $db->exec("ALTER TABLE exercises ADD COLUMN team_task TEXT");
         echo "- Kolom 'team_task' toegevoegd aan 'exercises'.\n";
+    }
+    if (!in_array('created_by', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN created_by INTEGER REFERENCES users(id) ON DELETE SET NULL");
+        echo "- Kolom 'created_by' toegevoegd aan 'exercises'.\n";
     }
     if (!in_array('training_objective', $columns)) {
         $db->exec("ALTER TABLE exercises ADD COLUMN training_objective TEXT");

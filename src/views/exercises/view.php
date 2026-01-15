@@ -10,6 +10,13 @@
             <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon-round" title="Bewerken">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </a>
+            <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0; display: inline-block;">
+                <?= Csrf::renderInput() ?>
+                <input type="hidden" name="id" value="<?= $exercise['id'] ?>">
+                <button type="submit" class="btn-icon-round" title="Verwijderen" style="color: var(--danger-color);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+            </form>
         <?php endif; ?>
     </div>
 </div>
@@ -103,6 +110,10 @@
                     <strong>Duur:</strong><br>
                     <?= $exercise['duration'] ? e((string)$exercise['duration']) . ' min' : '-' ?>
                 </div>
+                <div>
+                   <strong>Gemaakt door:</strong><br>
+                   <?= !empty($exercise['creator_name']) ? e($exercise['creator_name']) : '-' ?>
+               </div>
             </div>
         </div>
     </div>
