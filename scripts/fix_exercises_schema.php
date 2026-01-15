@@ -73,7 +73,34 @@ try {
     $insertSql = "INSERT INTO exercises ($colList) SELECT $colList FROM exercises_old";
     $db->exec($insertSql);
 
-    // 5. Cleanup
+    // 5. Fix Foreign Keys in other tables (training_exercises, exercise_tags)
+    // training_exercises
+    $db->exec("CREATE TABLE training_exercises_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        training_id INTEGER NOT NULL,
+        exercise_id INTEGER NOT NULL,
+        sort_order INTEGER NOT NULL,
+        duration INTEGER,
+        FOREIGN KEY (training_id) REFERENCES trainings(id) ON DELETE CASCADE,
+        FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
+    )");
+    $db->exec("INSERT INTO training_exercises_new SELECT * FROM training_exercises");
+    $db->exec("DROP TABLE training_exercises");
+    $db->exec("ALTER TABLE training_exercises_new RENAME TO training_exercises");
+
+    // exercise_tags
+    $db->exec("CREATE TABLE exercise_tags_new (
+        exercise_id INTEGER NOT NULL,
+        tag_id INTEGER NOT NULL,
+        PRIMARY KEY (exercise_id, tag_id),
+        FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    )");
+    $db->exec("INSERT INTO exercise_tags_new SELECT * FROM exercise_tags");
+    $db->exec("DROP TABLE exercise_tags");
+    $db->exec("ALTER TABLE exercise_tags_new RENAME TO exercise_tags");
+
+    // 6. Cleanup
     $db->exec("DROP TABLE exercises_old");
 
     $db->commit();

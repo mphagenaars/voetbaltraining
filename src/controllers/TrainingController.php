@@ -57,7 +57,8 @@ class TrainingController extends BaseController {
         }
 
         // Get all exercises to select from
-        $allExercises = $this->exerciseModel->getAllForTeam(Session::get('current_team')['id']);
+        //$allExercises = $this->exerciseModel->getAllForTeam(Session::get('current_team')['id']);
+        $allExercises = $this->exerciseModel->search(null); // Get ALL exercises from database
 
         View::render('trainings/form', ['allExercises' => $allExercises, 'pageTitle' => 'Nieuwe Training - Trainer Bobby']);
     }
@@ -95,7 +96,8 @@ class TrainingController extends BaseController {
             }
         }
 
-        $allExercises = $this->exerciseModel->getAllForTeam(Session::get('current_team')['id']);
+        //$allExercises = $this->exerciseModel->getAllForTeam(Session::get('current_team')['id']);
+        $allExercises = $this->exerciseModel->search(null); // Get ALL exercises from database
 
         View::render('trainings/form', [
             'allExercises' => $allExercises, 
