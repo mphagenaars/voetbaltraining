@@ -6,4 +6,5 @@
 .github/
 PRD
 COPILOT_GUIDLINES.md
-server.logpublic/uploads/*
+server.log
+public/uploads/*

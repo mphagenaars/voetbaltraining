@@ -214,6 +214,38 @@ try {
         $db->exec("ALTER TABLE exercises ADD COLUMN football_action TEXT");
         echo "- Kolom 'football_action' toegevoegd aan 'exercises'.\n";
     }
+    if (!in_array('source', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN source TEXT DEFAULT NULL");
+        echo "- Kolom 'source' toegevoegd aan 'exercises'.\n";
+    }
+    if (!in_array('coach_instructions', $columns)) {
+        $db->exec("ALTER TABLE exercises ADD COLUMN coach_instructions TEXT DEFAULT NULL");
+        echo "- Kolom 'coach_instructions' toegevoegd aan 'exercises'.\n";
+    }
+
+    // Exercise Comments tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS exercise_comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exercise_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        comment TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'exercise_comments' aangemaakt (of bestond al).\n";
+
+    // Exercise Reactions tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS exercise_reactions (
+        exercise_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        reaction_type TEXT NOT NULL, 
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (exercise_id, user_id),
+        FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'exercise_reactions' aangemaakt (of bestond al).\n";
 
     // User Tokens tabel (voor 'Remember Me' functionaliteit)
     $db->exec("CREATE TABLE IF NOT EXISTS user_tokens (

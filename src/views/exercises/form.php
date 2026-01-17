@@ -145,6 +145,17 @@ $isEdit = isset($exercise);
             <textarea id="variation" name="variation" rows="3"><?= e($exercise['variation'] ?? '') ?></textarea>
         </div>
 
+        <div class="form-group">
+            <label for="coach_instructions">Coach instructies</label>
+            <textarea id="coach_instructions" name="coach_instructions" rows="3"><?= e($exercise['coach_instructions'] ?? '') ?></textarea>
+            <small class="form-text">Aanwijzingen voor coaches om spelers optimaal te ondersteunen.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="source">Bron</label>
+            <input type="text" id="source" name="source" value="<?= e($exercise['source'] ?? '') ?>" placeholder="Bijv. YouTube link, website URL of naam van boek">
+        </div>
+
         <!-- Tekentool -->
         <div class="form-group">
             <label>Oefening tekenen</label>

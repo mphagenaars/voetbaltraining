@@ -14,6 +14,9 @@ return [
     '/exercises/edit' => ['ExerciseController', 'edit'],
     '/exercises/view' => ['ExerciseController', 'view'],
     '/exercises/delete' => ['ExerciseController', 'delete'],
+    '/exercises/comment' => ['ExerciseController', 'storeComment'],
+    '/exercises/react' => ['ExerciseController', 'toggleReaction'],
+    '/exercises/add-to-training' => ['ExerciseController', 'addToTraining'],
 
     // Trainings
     '/trainings' => ['TrainingController', 'index'],

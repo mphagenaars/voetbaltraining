@@ -82,7 +82,9 @@ class ExerciseController extends BaseController {
                     $payload['drawing_data'], 
                     $payload['variation'], 
                     $payload['field_type'],
-                    $createdBy
+                    $createdBy,
+                    $payload['source'],
+                    $payload['coach_instructions']
                 );
                 
                 // Log activity
@@ -142,7 +144,9 @@ class ExerciseController extends BaseController {
                     $imagePath, 
                     $payload['drawing_data'], 
                     $payload['variation'], 
-                    $payload['field_type']
+                    $payload['field_type'],
+                    $payload['source'],
+                    $payload['coach_instructions']
                 );
                 
                 // Log activity
@@ -176,11 +180,49 @@ class ExerciseController extends BaseController {
         $createdBy = isset($exercise['created_by']) ? (int)$exercise['created_by'] : null;
         
         $canEdit = $this->canEditExercise($createdBy, (int)Session::get('user_id'));
+
+        // Fetch Feedback
+        $commentModel = new Comment($this->pdo);
+        $comments = $commentModel->getForExercise($id);
         
+        $reactionModel = new Reaction($this->pdo);
+        $reactionCounts = $reactionModel->getCounts($id);
+        // Ensure user is logged in for userReaction check, though view expects logged in user based on strict mode? 
+        // Actually view() has `if (!Session::has('user_id')) { $this->redirect('/'); }` at top.
+        $userReaction = $reactionModel->getUserReaction($id, (int)Session::get('user_id'));
+        
+        // Fetch upcoming trainings for user's teams to populate "Add to Training" modal
+        $trainingModel = new Training($this->pdo);
+        $teamModel = new Team($this->pdo);
+        $userTeams = $teamModel->getTeamsForUser((int)Session::get('user_id'));
+        
+        $selectableTrainings = [];
+        $canAddToTraining = (bool)Session::get('is_admin');
+
+        foreach ($userTeams as $team) {
+            // Check if user is coach or trainer
+            $isStaff = !empty($team['is_coach']) || !empty($team['is_trainer']);
+            
+            if ($isStaff || $canAddToTraining) {
+                if ($isStaff) $canAddToTraining = true;
+
+                // Fetch upcoming trainings for this team
+                $upcoming = $trainingModel->getTrainings((int)$team['id'], 'training_date ASC', true);
+                if (!empty($upcoming)) {
+                    $selectableTrainings[$team['name']] = $upcoming;
+                }
+            }
+        }
+
         View::render('exercises/view', [
             'exercise' => $exercise, 
             'pageTitle' => $exercise['title'] . ' - Trainer Bobby',
-            'canEdit' => $canEdit
+            'canEdit' => $canEdit,
+            'comments' => $comments,
+            'reactionCounts' => $reactionCounts,
+            'userReaction' => $userReaction,
+            'selectableTrainings' => $selectableTrainings,
+            'canAddToTraining' => $canAddToTraining
         ]);
     }
 
@@ -211,6 +253,8 @@ class ExerciseController extends BaseController {
             'title' => $postData['title'] ?? '',
             'description' => $postData['description'] ?? '',
             'variation' => $postData['variation'] ?? null,
+            'source' => $postData['source'] ?? null,
+            'coach_instructions' => $postData['coach_instructions'] ?? null,
             'team_task' => $postData['team_task'] ?? null,
             'training_objective' => (isset($postData['training_objective']) && ($json = json_encode($postData['training_objective'])) !== false) ? $json : null,
             'football_action' => (isset($postData['football_action']) && ($json = json_encode($postData['football_action'])) !== false) ? $json : null,
@@ -252,5 +296,69 @@ class ExerciseController extends BaseController {
         }
 
         return false;
+    }
+
+    public function storeComment(): void {
+        $this->requireAuth();
+        $this->verifyCsrf();
+        
+        $exerciseId = (int)($_POST['exercise_id'] ?? 0);
+        $commentText = trim($_POST['comment'] ?? '');
+        
+        if ($exerciseId > 0 && !empty($commentText)) {
+            $commentModel = new Comment($this->pdo);
+            $commentModel->create($exerciseId, (int)Session::get('user_id'), $commentText);
+            Session::flash('success', 'Reactie geplaatst!');
+        } else {
+             Session::flash('error', 'Ongeldige reactie.');
+        }
+
+        $this->redirect('/exercises/view?id=' . $exerciseId);
+    }
+
+    public function toggleReaction(): void {
+        $this->requireAuth();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+             $this->verifyCsrf();
+             
+             $exerciseId = (int)($_POST['exercise_id'] ?? 0);
+             $type = $_POST['type'] ?? '';
+             
+             if ($exerciseId > 0 && in_array($type, ['rock', 'middle_finger'])) {
+                 $reactionModel = new Reaction($this->pdo);
+                 $reactionModel->toggle($exerciseId, (int)Session::get('user_id'), $type);
+             }
+             
+             $this->redirect('/exercises/view?id=' . $exerciseId);
+        }
+    }
+
+    public function addToTraining(): void {
+        $this->requireAuth();
+        $this->verifyCsrf();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $exerciseId = (int)$_POST['exercise_id'];
+            $trainingId = (int)$_POST['training_id'];
+            $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
+            
+            if ($exerciseId && $trainingId) {
+                $trainingModel = new Training($this->pdo);
+                
+                // Check if training belongs to a team the user can edit
+                // We trust the query fetching logic in view() to only show valid trainings, 
+                // but a deeper permission check is good practice.
+                
+                $currentExercises = $trainingModel->getExercises($trainingId);
+                $sortOrder = count($currentExercises);
+                
+                $trainingModel->addExercise($trainingId, $exerciseId, $sortOrder, $duration);
+                
+                Session::flash('success', 'Oefening toegevoegd aan training!');
+                $this->redirect('/exercises/view?id=' . $exerciseId);
+            }
+        }
+        $this->redirect('/exercises');
     }
 }
