@@ -32,7 +32,7 @@ class Game extends Model {
         $this->replaceMany(
             "DELETE FROM match_players WHERE match_id = :match_id",
             [':match_id' => $matchId],
-            "INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute, is_keeper) VALUES (:match_id, :player_id, :x, :y, :sub, :is_keeper)",
+            "INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute, is_keeper, is_absent) VALUES (:match_id, :player_id, :x, :y, :sub, :is_keeper, :is_absent)",
             $players,
             function($p) use ($matchId) {
                 return [
@@ -41,7 +41,8 @@ class Game extends Model {
                     ':x' => $p['x'],
                     ':y' => $p['y'],
                     ':sub' => $p['is_substitute'] ?? 0,
-                    ':is_keeper' => $p['is_keeper'] ?? 0
+                    ':is_keeper' => $p['is_keeper'] ?? 0,
+                    ':is_absent' => $p['is_absent'] ?? 0
                 ];
             }
         );
@@ -58,14 +59,15 @@ class Game extends Model {
         return $stmt->fetchAll();
     }
 
-    public function addEvent(int $matchId, int $minute, string $type, ?int $playerId, ?string $description): void {
-        $stmt = $this->pdo->prepare("INSERT INTO match_events (match_id, minute, type, player_id, description) VALUES (:match_id, :minute, :type, :player_id, :description)");
+    public function addEvent(int $matchId, int $minute, string $type, ?int $playerId, ?string $description, int $period = 1): void {
+        $stmt = $this->pdo->prepare("INSERT INTO match_events (match_id, minute, type, player_id, description, period) VALUES (:match_id, :minute, :type, :player_id, :description, :period)");
         $stmt->execute([
             ':match_id' => $matchId,
             ':minute' => $minute,
             ':type' => $type,
             ':player_id' => $playerId,
-            ':description' => $description
+            ':description' => $description,
+            ':period' => $period
         ]);
     }
 
@@ -75,10 +77,50 @@ class Game extends Model {
             FROM match_events me 
             LEFT JOIN players p ON me.player_id = p.id 
             WHERE me.match_id = :match_id 
-            ORDER BY me.minute ASC
+            ORDER BY me.minute ASC, me.created_at ASC
         ");
         $stmt->execute([':match_id' => $matchId]);
         return $stmt->fetchAll();
+    }
+    
+    public function getTimerState(int $matchId): array {
+        $stmt = $this->pdo->prepare("SELECT * FROM match_events WHERE match_id = :match_id AND type = 'whistle' ORDER BY created_at ASC");
+        $stmt->execute([':match_id' => $matchId]);
+        $whistles = $stmt->fetchAll();
+
+        $isPlaying = false;
+        $totalSeconds = 0;
+        $currentPeriod = 0;
+        $lastStartTime = null;
+
+        foreach ($whistles as $w) {
+            $period = (int)$w['period'];
+            $time = strtotime($w['created_at']);
+            
+            if ($w['description'] === 'start_period') {
+                $isPlaying = true;
+                $lastStartTime = $time;
+                $currentPeriod = $period;
+            } elseif ($w['description'] === 'end_period') {
+                if ($isPlaying && $lastStartTime) {
+                    $totalSeconds += ($time - $lastStartTime);
+                }
+                $isPlaying = false;
+                $lastStartTime = null;
+            }
+        }
+
+        if ($isPlaying && $lastStartTime) {
+             $totalSeconds += (time() - $lastStartTime);
+        }
+
+        return [
+            'is_playing' => $isPlaying,
+            'current_period' => $currentPeriod,
+            'total_minutes' => floor($totalSeconds / 60),
+            'total_seconds' => $totalSeconds,
+            'start_time' => $lastStartTime
+        ];
     }
     
     public function updateScore(int $matchId, int $home, int $away): void {

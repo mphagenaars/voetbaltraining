@@ -356,20 +356,32 @@ try {
         $db->exec("ALTER TABLE match_players ADD COLUMN is_keeper INTEGER DEFAULT 0");
         echo "- Kolom 'is_keeper' toegevoegd aan 'match_players'.\n";
     }
+    if (!in_array('is_absent', $mpColumns)) {
+        $db->exec("ALTER TABLE match_players ADD COLUMN is_absent INTEGER DEFAULT 0");
+        echo "- Kolom 'is_absent' toegevoegd aan 'match_players'.\n";
+    }
 
     // Match events (Scoreverloop etc)
     $db->exec("CREATE TABLE IF NOT EXISTS match_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INTEGER NOT NULL,
         minute INTEGER NOT NULL,
-        type TEXT NOT NULL, -- 'goal', 'card', 'sub'
+        type TEXT NOT NULL, -- 'goal', 'card', 'sub', 'whistle'
         player_id INTEGER, -- Nullable (bijv. goal tegenstander)
         description TEXT,
+        period INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
         FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE SET NULL
     )");
     echo "- Tabel 'match_events' aangemaakt (of bestond al).\n";
+
+    // Check columns for match_events migration
+    $meColumns = $db->query("PRAGMA table_info(match_events)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('period', $meColumns)) {
+        $db->exec("ALTER TABLE match_events ADD COLUMN period INTEGER DEFAULT 1");
+        echo "- Kolom 'period' toegevoegd aan 'match_events'.\n";
+    }
 
     // Migratie van oude lineups naar matches
     $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='lineups'")->fetchAll();

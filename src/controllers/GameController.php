@@ -108,45 +108,153 @@ class GameController extends BaseController {
         ]);
     }
 
+    public function live(): void {
+        $this->requireTeamContext();
+
+        $id = (int)($_GET['id'] ?? 0);
+        $match = $this->gameModel->getById($id);
+
+        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+            $this->redirect('/matches');
+        }
+
+        $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
+        $matchPlayers = $this->gameModel->getPlayers($id);
+        $events = $this->gameModel->getEvents($id);
+        $timerState = $this->gameModel->getTimerState($id);
+
+        View::render('matches/live', [
+            'match' => $match, 
+            'players' => $players, 
+            'matchPlayers' => $matchPlayers,
+            'events' => $events,
+            'timerState' => $timerState,
+            'pageTitle' => 'Live Wedstrijd - Trainer Bobby'
+        ]);
+    }
+
+    public function timerAction(): void {
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            http_response_code(403);
+            exit;
+        }
+        
+        $json = json_decode(file_get_contents('php://input'), true);
+        $matchId = (int)($json['match_id'] ?? 0);
+        $action = $json['action'] ?? ''; // start, stop
+        
+        $match = $this->gameModel->getById($matchId);
+        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+            http_response_code(403);
+            exit;
+        }
+
+        $timerState = $this->gameModel->getTimerState($matchId);
+        $minute = (int)$timerState['total_minutes'];
+        $currentPeriod = $timerState['current_period'];
+        
+        if ($action === 'start') {
+            // New period starts if not playing
+            $addPeriod = 0;
+            if (!$timerState['is_playing']) {
+                 $addPeriod = 1;
+            }
+            // Use currentPeriod + addPeriod. If it was 0, it becomes 1. If it was 1 and stopped, it becomes 2?
+            // Wait, if I stop period 1, currentPeriod remains 1 in my logic?
+            // "end_period" logic in GameModel: currentPeriod = $period.
+            // If I stop, isPlaying becomes false. currentPeriod remains what it was.
+            // So if I start again, I should increment period.
+            // UNLESS it's a resume? The requirement said "periodes afzonderlijk starten/stoppen" (quarters).
+            // So Start -> Period 1. Stop. Start -> Period 2.
+            $nextPeriod = $currentPeriod + $addPeriod;
+            if ($timerState['is_playing']) {
+                $nextPeriod = $currentPeriod; // Already playing
+            }
+
+            $this->gameModel->addEvent($matchId, $minute, 'whistle', null, 'start_period', $nextPeriod);
+        } elseif ($action === 'stop') {
+             $this->gameModel->addEvent($matchId, $minute, 'whistle', null, 'end_period', $currentPeriod);
+        }
+
+        $newState = $this->gameModel->getTimerState($matchId);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'timerState' => $newState]);
+    }
+
     public function addEvent(): void {
         $this->requireAuth();
         if (!Session::has('current_team')) {
+            if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+                http_response_code(403); 
+                echo json_encode(['error' => 'Auth required']);
+                exit;
+            }
             $this->redirect('/');
         }
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-             $this->verifyCsrf('/matches');
+        $input = $_POST;
+        $isJson = false;
 
-             $validator = new Validator($_POST);
-             $validator->required('match_id')->required('minute')->required('type');
-
-             if ($validator->isValid()) {
-                 $matchId = (int)$_POST['match_id'];
-                 $minute = (int)$_POST['minute'];
-                 $type = $_POST['type'];
-                 $playerId = !empty($_POST['player_id']) ? (int)$_POST['player_id'] : null;
-                 $description = $_POST['description'] ?? '';
+        if (($_SERVER['CONTENT_TYPE'] ?? '') === 'application/json') {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $isJson = true;
+        } else {
+            $this->verifyCsrf('/matches');
+        }
+        
+        $matchId = (int)($input['match_id'] ?? 0);
+        $type = $input['type'] ?? '';
+        
+        if ($matchId && $type) {
+             $match = $this->gameModel->getById($matchId);
+             if ($match && $match['team_id'] === Session::get('current_team')['id']) {
                  
-                 $match = $this->gameModel->getById($matchId);
-                 if ($match && $match['team_id'] === Session::get('current_team')['id']) {
-                     $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description);
-                     
-                     if ($type === 'goal') {
-                         if ($playerId) {
-                             // Our goal
-                             if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
-                         } else {
-                             // Opponent goal
-                             if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
-                         }
-                         $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
-                     }
-                     Session::flash('success', 'Gebeurtenis toegevoegd.');
+                 $minute = isset($input['minute']) && $input['minute'] !== '' ? (int)$input['minute'] : null;
+                 $period = (int)($input['period'] ?? 1);
+
+                 if ($minute === null) {
+                     $state = $this->gameModel->getTimerState($matchId);
+                     $minute = (int)$state['total_minutes'];
+                     // If we are live, use the period from the timer state
+                     // If playing, use current_period. If stopped, maybe use current_period (e.g. goal after whistle?)
+                     $period = $state['current_period'] > 0 ? $state['current_period'] : 1;
                  }
-                 $this->redirect('/matches/view?id=' . $matchId);
+
+                 $playerId = !empty($input['player_id']) ? (int)$input['player_id'] : null;
+                 $description = $input['description'] ?? '';
+                 
+                 $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description, $period);
+                 
+                 if ($type === 'goal') {
+                     if ($playerId) {
+                         if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
+                     } else {
+                         if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
+                     }
+                     $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
+                 }
+
+                 if ($isJson) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true, 
+                        'events' => $this->gameModel->getEvents($matchId),
+                        'score_home' => $match['score_home'],
+                        'score_away' => $match['score_away']
+                    ]);
+                    return;
+                 }
+                 
+                 Session::flash('success', 'Gebeurtenis toegevoegd.');
              }
         }
-        $this->redirect('/matches');
+        
+        if ($isJson) {
+            http_response_code(400); 
+            echo json_encode(['error' => 'Invalid request']);
+            exit;
+        }
+        $this->redirect('/matches/view?id=' . $matchId);
     }
 
     public function updateScore(): void {

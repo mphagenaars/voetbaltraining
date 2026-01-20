@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const playersList = document.getElementById('players-list');
+    const playersList = document.getElementById('players-list'); // Bench
+    const absentList = document.getElementById('absent-list'); // Absent
     const keepersList = document.getElementById('keepers-list');
     const field = document.getElementById('football-field');
     const saveBtn = document.getElementById('save-lineup');
@@ -183,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const pos = getSnappedPosition(xPercent, yPercent);
 
-        if (draggedItem.parentElement === playersList) {
+        if (draggedItem.parentElement !== field) {
             draggedItem.classList.add('on-field');
             field.appendChild(draggedItem);
         }
@@ -206,14 +207,36 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (draggedItem.dataset.source === 'keepers') return;
 
-        if (draggedItem.parentElement === field) {
+        // Move to bench (from Field OR Absent)
+        draggedItem.classList.remove('on-field');
+        draggedItem.style.left = '';
+        draggedItem.style.top = '';
+        playersList.appendChild(draggedItem);
+        
+        refreshAllColors();
+    });
+    
+    // Absent Drop Zone
+    if (absentList) {
+        absentList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        absentList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (!draggedItem) return;
+            if (draggedItem.dataset.source === 'keepers') return;
+
+            // Move to absent
             draggedItem.classList.remove('on-field');
             draggedItem.style.left = '';
             draggedItem.style.top = '';
-            playersList.appendChild(draggedItem);
-        }
-        refreshAllColors();
-    });
+            absentList.appendChild(draggedItem);
+            
+            refreshAllColors();
+        });
+    }
 
     // Keepers List Drop Zone
     keepersList.addEventListener('dragover', (e) => {
@@ -448,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const players = [];
         const fieldPlayers = field.querySelectorAll('.player-token');
         const benchPlayers = playersList.querySelectorAll('.player-token');
+        const absentPlayers = absentList ? absentList.querySelectorAll('.player-token') : [];
         const keeperTokens = keepersList.querySelectorAll('.player-token');
         
         // Get IDs of players marked as keeper
@@ -461,7 +485,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 x: parseFloat(player.style.left),
                 y: parseFloat(player.style.top),
                 is_substitute: 0,
-                is_keeper: keeperIds.includes(pid) ? 1 : 0
+                is_keeper: keeperIds.includes(pid) ? 1 : 0,
+                is_absent: 0
             });
         });
 
@@ -473,7 +498,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 x: 0,
                 y: 0,
                 is_substitute: 1,
-                is_keeper: keeperIds.includes(pid) ? 1 : 0
+                is_keeper: keeperIds.includes(pid) ? 1 : 0,
+                is_absent: 0
+            });
+        });
+
+        // Add absent players
+         absentPlayers.forEach(player => {
+            const pid = parseInt(player.dataset.id);
+            players.push({
+                player_id: pid,
+                x: 0,
+                y: 0,
+                is_substitute: 0,
+                is_keeper: 0, // Absent players can't be active keepers
+                is_absent: 1
             });
         });
 

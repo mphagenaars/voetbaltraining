@@ -60,7 +60,7 @@
         <?php if (empty($teams)): ?>
             <div class="card">
                 <p>Je bent nog geen lid van een team.</p>
-                <a href="/team/create" class="btn">Nieuw Team Maken</a>
+                <a href="/team/create" class="btn btn-primary">Nieuw Team Maken</a>
             </div>
         <?php else: ?>
             <div class="grid-2">

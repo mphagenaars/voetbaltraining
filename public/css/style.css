@@ -12,6 +12,9 @@
     --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* =========================================
+   Base Resets
+   ========================================= */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -37,7 +40,9 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Layout */
+/* =========================================
+   Global Layout
+   ========================================= */
 .container {
     width: 100%;
     max-width: 800px;
@@ -78,77 +83,9 @@ a:hover {
     border-top: 1px solid var(--border-color);
 }
 
-/* Components */
-.btn {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    text-decoration: none;
-    line-height: 1.5;
-    vertical-align: middle;
-}
-
-.btn:hover {
-    background-color: var(--primary-hover);
-    text-decoration: none;
-}
-
-.btn-outline {
-    background-color: transparent;
-    border: 1px solid var(--primary);
-    color: var(--primary);
-}
-
-.btn-outline:hover {
-    background-color: var(--primary);
-    color: white;
-}
-
-.btn-danger {
-    background-color: #c62828;
-    color: white;
-}
-
-.btn-danger:hover {
-    background-color: #b71c1c;
-}
-
-.btn-outline-danger {
-    background-color: transparent;
-    border: 1px solid #c62828;
-    color: #c62828;
-}
-
-.btn-outline-danger:hover {
-    background-color: #c62828;
-    color: white;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.btn-min-w {
-    min-width: 120px;
-    text-align: center;
-    justify-content: center;
-}
-
-.card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: var(--spacing);
-    margin-bottom: var(--spacing);
-    box-shadow: var(--shadow);
-}
-
+/* =========================================
+   Components: Alerts
+   ========================================= */
 .alert {
     padding: var(--spacing);
     border-radius: var(--radius);
@@ -164,7 +101,318 @@ a:hover {
     border-color: #bbdefb;
 }
 
-/* Forms */
+/* =========================================
+   Components: Buttons
+   ========================================= */
+/* Base Button */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: inherit;
+    text-decoration: none;
+    line-height: 1.5;
+    vertical-align: middle;
+    text-align: center;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn:hover {
+    text-decoration: none;
+}
+
+/* Primary Button (The default "Green") */
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: white;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+    color: white;
+}
+
+/* Outline Button */
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Danger Button */
+.btn-danger {
+    background-color: #c62828;
+    color: white;
+    border-color: #c62828;
+}
+
+.btn-danger:hover {
+    background-color: #b71c1c;
+    border-color: #b71c1c;
+}
+
+.btn-outline-danger {
+    background-color: transparent;
+    border: 1px solid #c62828;
+    color: #c62828;
+}
+
+.btn-outline-danger:hover {
+    background-color: #c62828;
+    color: white;
+}
+
+/* Sizes */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-min-w {
+    min-width: 120px;
+    justify-content: center;
+}
+
+/* Icon Buttons */
+.btn-icon {
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    color: var(--primary);
+    background-color: rgba(0,0,0,0.05);
+}
+
+.btn-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-icon-danger {
+    color: #c62828;
+}
+
+.btn-icon-danger:hover {
+    color: #b71c1c;
+    background-color: #ffebee;
+}
+
+.btn-icon-round {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-icon-round:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-color: var(--border-color);
+}
+
+/* Links that look like icons/actions */
+.icon-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    transition: color 0.2s;
+}
+
+.icon-link:hover {
+    color: var(--text-main);
+    text-decoration: none;
+}
+
+.icon-link svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Floating Action Button (FAB) */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    z-index: 100;
+    transition: transform 0.2s, background-color 0.2s;
+    border: none;
+    text-decoration: none;
+}
+
+.fab:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.05);
+    color: white;
+}
+
+.fab svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* =========================================
+   Components: Cards
+   ========================================= */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: var(--spacing);
+    margin-bottom: var(--spacing);
+    box-shadow: var(--shadow);
+}
+
+/* Action Card (Clickable Card) */
+.action-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: var(--spacing);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: var(--text-main);
+}
+
+.action-card h2, .action-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+}
+
+.action-card p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.action-card svg {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.action-card:hover svg {
+    color: var(--primary);
+}
+
+/* =========================================
+   Components: Dropdown
+   ========================================= */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: var(--bg-card);
+    min-width: 180px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    margin-top: 0.5rem;
+}
+
+/* Bridge the gap so menu doesn't close */
+.dropdown-content::before {
+    content: '';
+    position: absolute;
+    top: -0.5rem;
+    left: 0;
+    right: 0;
+    height: 0.5rem;
+}
+
+.dropdown-content a {
+    color: var(--text-main);
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.2s;
+}
+
+.dropdown-content a:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* =========================================
+   Components: Forms
+   ========================================= */
 form div {
     margin-bottom: 1rem;
 }
@@ -202,7 +450,123 @@ select:focus {
     border-color: transparent;
 }
 
-/* Number Stepper */
+/* Multi-select Dropdown */
+.multi-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.multi-select-trigger {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: var(--bg-card);
+    cursor: pointer;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.multi-select-trigger::after {
+    content: '';
+    width: 0; 
+    height: 0; 
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--text-muted);
+    margin-left: 0.5rem;
+}
+
+.multi-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    max-height: 250px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: var(--shadow);
+}
+
+.multi-select-options.open {
+    display: block;
+}
+
+.multi-select-option {
+    display: block;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.multi-select-option:last-child {
+    border-bottom: none;
+}
+
+.multi-select-option:hover {
+    background-color: #f8f9fa;
+}
+
+.multi-select-option input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* =========================================
+   Components: Modals & Overlays
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center; /* Center Vertically */
+    justify-content: center; /* Center Horizontally */
+    z-index: 2000;
+    padding: 1rem;
+    transition: opacity 0.3s;
+}
+
+.modal {
+    background-color: var(--bg-card);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   Components: Stepper
+   ========================================= */
 .number-stepper {
     display: flex;
     align-items: center;
@@ -244,12 +608,9 @@ select:focus {
     border-color: var(--primary);
 }
 
-/* Utilities */
-.text-center { text-align: center; }
-.mt-2 { margin-top: 1rem; }
-.mb-2 { margin-bottom: 1rem; }
-
-/* Editor Styles */
+/* =========================================
+   Module: Editor
+   ========================================= */
 .editor-toolbar div {
     margin-bottom: 0;
 }
@@ -373,245 +734,9 @@ select:focus {
     overflow: hidden;
 }
 
-/* Multi-select Dropdown */
-.multi-select-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.multi-select-trigger {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    font-size: 1rem;
-    font-family: inherit;
-    background-color: var(--bg-card);
-    cursor: pointer;
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.multi-select-trigger::after {
-    content: '';
-    width: 0; 
-    height: 0; 
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid var(--text-muted);
-    margin-left: 0.5rem;
-}
-
-.multi-select-options {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    max-height: 250px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: var(--shadow);
-}
-
-.multi-select-options.open {
-    display: block;
-}
-
-.multi-select-option {
-    display: block;
-    padding: 0.5rem;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.multi-select-option:last-child {
-    border-bottom: none;
-}
-
-.multi-select-option:hover {
-    background-color: #f8f9fa;
-}
-
-.multi-select-option input[type="checkbox"] {
-    margin-right: 0.5rem;
-}
-
-/* List Group Alignment Fix */
-.list-group {
-    padding-left: 1.2rem;
-    margin-top: 0.5rem;
-}
-
-/* Utility classes */
-.header-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing);
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* Icon Link (Cleaner secondary action) */
-.icon-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.5rem 0;
-    transition: color 0.2s;
-}
-
-.icon-link:hover {
-    color: var(--text-main);
-    text-decoration: none;
-}
-
-.icon-link svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* Icon Button (Minimalist action button) */
-.btn-icon {
-    background: none;
-    border: 1px solid transparent;
-    cursor: pointer;
-    color: var(--text-muted);
-    padding: 0.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius);
-    transition: all 0.2s;
-}
-
-.btn-icon:hover {
-    color: var(--primary);
-    background-color: rgba(0,0,0,0.05);
-}
-
-.btn-icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* Dropdown Menu */
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    background-color: var(--bg-card);
-    min-width: 180px;
-    box-shadow: var(--shadow);
-    z-index: 100;
-    border-radius: var(--radius);
-    border: 1px solid var(--border-color);
-    margin-top: 0.5rem;
-}
-
-/* Bridge the gap so menu doesn't close */
-.dropdown-content::before {
-    content: '';
-    position: absolute;
-    top: -0.5rem;
-    left: 0;
-    right: 0;
-    height: 0.5rem;
-}
-
-.dropdown-content a {
-    color: var(--text-main);
-    padding: 0.75rem 1rem;
-    text-decoration: none;
-    display: block;
-    transition: background-color 0.2s;
-}
-
-.dropdown-content a:hover {
-    background-color: #f8f9fa;
-}
-
-.dropdown:hover .dropdown-content {
-    display: block;
-}
-
-.text-success {
-    color: var(--primary);
-}
-
-/* Action Card (Clickable Card) */
-.action-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    text-align: left;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: var(--spacing);
-    margin-bottom: 1rem;
-    box-shadow: var(--shadow);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    text-decoration: none;
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: inherit;
-}
-
-.action-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    text-decoration: none;
-    color: var(--text-main);
-}
-
-.action-card h2, .action-card h3 {
-    margin-top: 0;
-    margin-bottom: 0.25rem;
-    font-size: 1.25rem;
-}
-
-.action-card p {
-    margin: 0;
-    color: var(--text-muted);
-}
-
-.action-card svg {
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-
-.action-card:hover svg {
-    color: var(--primary);
-}
-
-/* Mobile UX Improvements */
-
-/* App Bar */
+/* =========================================
+   Module: Mobile / App Bar
+   ========================================= */
 .app-bar {
     display: flex;
     align-items: center;
@@ -638,58 +763,6 @@ select:focus {
     gap: 0.5rem;
 }
 
-.btn-icon-round {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-main);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-}
-
-.btn-icon-round:hover {
-    background-color: rgba(0,0,0,0.05);
-    border-color: var(--border-color);
-}
-
-/* Floating Action Button (FAB) */
-.fab {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background-color: var(--primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    cursor: pointer;
-    z-index: 100;
-    transition: transform 0.2s, background-color 0.2s;
-    border: none;
-    text-decoration: none;
-}
-
-.fab:hover {
-    background-color: var(--primary-hover);
-    transform: scale(1.05);
-    color: white;
-}
-
-.fab svg {
-    width: 24px;
-    height: 24px;
-}
-
 /* Mobile List Actions */
 .mobile-actions-menu {
     position: relative;
@@ -703,7 +776,31 @@ select:focus {
     color: var(--text-muted);
 }
 
-/* Responsive Tweaks */
+/* =========================================
+   Utilities
+   ========================================= */
+.text-center { text-align: center; }
+.mt-2 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 1rem; }
+
+/* Text Utilities */
+.text-success { color: var(--primary); }
+
+/* List Groups */
+.list-group {
+    padding-left: 1.2rem;
+    margin-top: 0.5rem;
+}
+
+/* Header Utilities */
+.header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing);
+}
+
+/* Responsive Utilities */
 @media (max-width: 768px) {
     .container {
         padding-bottom: 80px; /* Space for FAB */
@@ -721,43 +818,4 @@ select:focus {
     }
 }
 
-/* Modal System */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    padding: 1rem;
-}
 
-.modal {
-    background-color: var(--bg-card);
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    position: relative;
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}

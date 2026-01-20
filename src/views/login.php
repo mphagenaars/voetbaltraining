@@ -20,7 +20,7 @@
                 <input type="checkbox" name="remember_me" value="1"> Onthoud mij
             </label>
         </div>
-        <button type="submit" class="btn" style="width: 100%;">Inloggen</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Inloggen</button>
     </form>
 
     <div class="text-center mt-2">

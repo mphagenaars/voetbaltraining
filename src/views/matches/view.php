@@ -24,6 +24,12 @@
             </a>
             <h1 class="app-bar-title"><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h1>
         </div>
+        <div class="app-bar-end">
+            <a href="/matches/live?id=<?= $match['id'] ?>" class="btn btn-primary" style="background-color: #2e7d32; color: white; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                LIVE MODE
+            </a>
+        </div>
     </div>
     
     <div class="card" style="margin-bottom: 1rem;">
@@ -104,28 +110,53 @@
                     </div>
                 </div>
 
-                <div class="bench-container">
-                    <h4>Wissels / Selectie</h4>
-                    <div id="players-list" class="players-list">
-                        <?php 
-                        // Only exclude players who are actually ON THE FIELD (not substitutes)
-                        $placedPlayerIds = array_column(array_filter($matchPlayers, function($p) {
-                            return empty($p['is_substitute']);
-                        }), 'player_id');
-                        ?>
-                        <?php foreach ($players as $player): ?>
-                            <?php if (!in_array($player['id'], $placedPlayerIds)): ?>
-                                <div class="player-token" draggable="true" data-id="<?= $player['id'] ?>">
-                                    <div class="player-jersey">
-                                        <svg viewBox="0 0 100 100" width="50" height="50">
-                                            <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="url(#striped-jersey)" stroke="white" stroke-width="2"/>
-                                            <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($player['name'], 0, 1)) ?></text>
-                                        </svg>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div class="bench-container" style="flex: 1; min-width: 200px;">
+                        <h4>Wissels / Selectie</h4>
+                        <div id="players-list" class="players-list">
+                            <?php 
+                            // Exclude players on field OR absent
+                            $placedOnFieldIds = array_column(array_filter($matchPlayers, function($p) {
+                                return empty($p['is_substitute']);
+                            }), 'player_id');
+
+                            $absentIds = array_column(array_filter($matchPlayers, function($p) {
+                                return !empty($p['is_absent']);
+                            }), 'player_id');
+                            ?>
+                            <?php foreach ($players as $player): ?>
+                                <?php if (!in_array($player['id'], $placedOnFieldIds) && !in_array($player['id'], $absentIds)): ?>
+                                    <div class="player-token" draggable="true" data-id="<?= $player['id'] ?>">
+                                        <div class="player-jersey">
+                                            <svg viewBox="0 0 100 100" width="50" height="50">
+                                                <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="url(#striped-jersey)" stroke="white" stroke-width="2"/>
+                                                <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($player['name'], 0, 1)) ?></text>
+                                            </svg>
+                                        </div>
+                                        <div class="player-name"><?= e($player['name']) ?></div>
                                     </div>
-                                    <div class="player-name"><?= e($player['name']) ?></div>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="bench-container" style="flex: 1; min-width: 200px; background-color: #f5f5f5; border-color: #ddd;">
+                        <h4 style="color: #666;">Afwezig / Ziek</h4>
+                        <div id="absent-list" class="players-list" style="background-color: #f0f0f0;">
+                             <?php foreach ($players as $player): ?>
+                                <?php if (in_array($player['id'], $absentIds)): ?>
+                                    <div class="player-token" draggable="true" data-id="<?= $player['id'] ?>">
+                                        <div class="player-jersey">
+                                            <svg viewBox="0 0 100 100" width="50" height="50">
+                                                <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="#999" stroke="white" stroke-width="2"/>
+                                                <text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold"><?= strtoupper(substr($player['name'], 0, 1)) ?></text>
+                                            </svg>
+                                        </div>
+                                        <div class="player-name"><?= e($player['name']) ?></div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             </div>

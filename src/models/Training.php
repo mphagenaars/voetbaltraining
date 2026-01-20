@@ -64,6 +64,18 @@ class Training extends Model {
         return $stmt->fetchAll();
     }
 
+    public function getExercises(int $trainingId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT e.*, te.sort_order, te.duration as training_duration 
+            FROM exercises e
+            JOIN training_exercises te ON e.id = te.exercise_id
+            WHERE te.training_id = :id
+            ORDER BY te.sort_order ASC
+        ");
+        $stmt->execute([':id' => $trainingId]);
+        return $stmt->fetchAll();
+    }
+
     public function getById(int $id): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM trainings WHERE id = :id");
         $stmt->execute([':id' => $id]);

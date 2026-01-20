@@ -42,7 +42,7 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn">Opslaan</button>
+            <button type="submit" class="btn btn-primary">Opslaan</button>
         </div>
     </form>
 </div>

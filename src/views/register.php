@@ -24,7 +24,7 @@
             <label for="password">Wachtwoord</label>
             <input type="password" id="password" name="password" required>
         </div>
-        <button type="submit" class="btn" style="width: 100%;">Registreren</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Registreren</button>
     </form>
 
     <div class="text-center mt-2">
