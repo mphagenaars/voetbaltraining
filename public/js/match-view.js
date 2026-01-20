@@ -369,22 +369,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const x = touch.clientX;
         const y = touch.clientY;
         
-        // Check what is underneath the finger
-        // We temporarily hid pointer events on the item so this works
-        const elementBelow = document.elementFromPoint(x, y);
+        // Use elementsFromPoint to identify targets through the dragged item
+        const elements = document.elementsFromPoint(x, y);
+
+        // Find potential drop zones
+        // We look for the main containers in the list of elements under the finger
+        const dropField = elements.find(el => el.id === 'football-field' || el === field);
+        const dropBench = elements.find(el => el.id === 'players-list' || el === playersList);
+        const dropKeepers = elements.find(el => el.id === 'keepers-list' || el === keepersList);
+        const dropAbsent = (typeof absentList !== 'undefined' && absentList) ? elements.find(el => el.id === 'absent-list' || el === absentList) : null;
         
-        // Reset styles
+        // Reset styles for the dragged item
         activeTouchItem.style.position = '';
         activeTouchItem.style.zIndex = '';
         activeTouchItem.style.width = '';
         activeTouchItem.style.transform = '';
         activeTouchItem.style.opacity = '';
         activeTouchItem.style.pointerEvents = '';
-        
-        // Check drop zone
-        const dropField = elementBelow ? elementBelow.closest('#football-field') : null;
-        const dropBench = elementBelow ? elementBelow.closest('#players-list') : null;
-        const dropKeepers = elementBelow ? elementBelow.closest('#keepers-list') : null;
         
         if (dropKeepers) {
              // Logic for dropping on keepers list (Create clone)
@@ -393,10 +394,12 @@ document.addEventListener('DOMContentLoaded', () => {
                  const playerId = activeTouchItem.dataset.id;
                  const exists = keepersList.querySelector(`.player-token[data-id="${playerId}"]`);
                  
+                 // Don't add if already there or if dragging FROM keepers
                  if (!exists && activeTouchItem.dataset.source !== 'keepers') {
                      const clone = activeTouchItem.cloneNode(true);
                      clone.classList.remove('on-field');
                      clone.classList.add('is-goalkeeper');
+                     // Reset clone styles
                      clone.style.left = '';
                      clone.style.top = '';
                      clone.style.position = '';
@@ -417,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
              }
              
-             // Return original to where it was (it was just a copy action essentially)
+             // Return original to where it was
              if (originalParent) {
                  originalParent.appendChild(activeTouchItem);
                  activeTouchItem.style.left = originalLeft;
@@ -425,23 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
              }
 
         } else if (dropField) {
-            if (activeTouchItem.dataset.source === 'keepers') {
-                 // Deleting keeper by dragging to field? No, just return. Use click to delete.
-                 return;
-            }
-
-            // Logic to place on field
-            const rect = dropField.getBoundingClientRect();
-            let xPercent = ((x - rect.left) / rect.width) * 100;
-            let yPercent = ((y - rect.top) / rect.height) * 100;
-            
-            const pos = getSnappedPosition(xPercent, yPercent);
-        const elements = document.elementsFromPoint(x, y);
-        const dropField = elements.find(el => el === field);
-        const dropBench = elements.find(el => el === playersList);
-        const dropAbsent = absentList ? elements.find(el => el === absentList) : null;
-        
-        if (dropField) {
             if (activeTouchItem.dataset.source === 'keepers') {
                  // Deleting keeper by dragging to field? No, just return. Use click to delete.
                  return;
@@ -469,7 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Logic to place on bench
             activeTouchItem.classList.remove('on-field');
-            // activeTouchItem.classList.remove('is-goalkeeper'); // Keep intent
             activeTouchItem.style.left = '';
             activeTouchItem.style.top = '';
             dropBench.appendChild(activeTouchItem);
