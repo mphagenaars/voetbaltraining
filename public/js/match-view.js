@@ -432,6 +432,23 @@ document.addEventListener('DOMContentLoaded', () => {
             let yPercent = ((y - rect.top) / rect.height) * 100;
             
             const pos = getSnappedPosition(xPercent, yPercent);
+        const elements = document.elementsFromPoint(x, y);
+        const dropField = elements.find(el => el === field);
+        const dropBench = elements.find(el => el === playersList);
+        const dropAbsent = absentList ? elements.find(el => el === absentList) : null;
+        
+        if (dropField) {
+            if (activeTouchItem.dataset.source === 'keepers') {
+                 // Deleting keeper by dragging to field? No, just return. Use click to delete.
+                 return;
+            }
+
+            // Logic to place on field
+            const rect = dropField.getBoundingClientRect();
+            let xPercent = ((x - rect.left) / rect.width) * 100;
+            let yPercent = ((y - rect.top) / rect.height) * 100;
+            
+            const pos = getSnappedPosition(xPercent, yPercent);
             
             activeTouchItem.classList.add('on-field');
             dropField.appendChild(activeTouchItem);
@@ -452,6 +469,18 @@ document.addEventListener('DOMContentLoaded', () => {
             activeTouchItem.style.left = '';
             activeTouchItem.style.top = '';
             dropBench.appendChild(activeTouchItem);
+            
+        } else if (dropAbsent) {
+             if (activeTouchItem.dataset.source === 'keepers') {
+                 return;
+            }
+
+            // Logic to place on absent
+            activeTouchItem.classList.remove('on-field');
+            activeTouchItem.style.left = '';
+            activeTouchItem.style.top = '';
+            dropAbsent.appendChild(activeTouchItem);
+            
         } else {
             // Dropped nowhere valid
             if (originalParent) {

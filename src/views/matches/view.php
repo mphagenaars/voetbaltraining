@@ -140,9 +140,9 @@
                         </div>
                     </div>
 
-                    <div class="bench-container" style="flex: 1; min-width: 200px; background-color: #f5f5f5; border-color: #ddd;">
-                        <h4 style="color: #666;">Afwezig / Ziek</h4>
-                        <div id="absent-list" class="players-list" style="background-color: #f0f0f0;">
+                    <div class="bench-container" style="flex: 1; min-width: 200px;">
+                        <h4>Afwezig / Ziek</h4>
+                        <div id="absent-list" class="players-list">
                              <?php foreach ($players as $player): ?>
                                 <?php if (in_array($player['id'], $absentIds)): ?>
                                     <div class="player-token" draggable="true" data-id="<?= $player['id'] ?>">
