@@ -216,6 +216,21 @@
     background: rgba(255,255,255,0.5);
 }
 
+.drop-placeholder {
+    width: 60px;
+    height: 60px;
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #888;
+    text-align: center;
+    background: rgba(255,255,255,0.5);
+    flex-shrink: 0;
+}
+
 .players-list .player-token {
     position: relative;
     left: auto !important;

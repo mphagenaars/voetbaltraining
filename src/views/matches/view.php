@@ -156,6 +156,10 @@
                                     </div>
                                 <?php endif; ?>
                             <?php endforeach; ?>
+                            
+                            <?php if (count($absentIds) === 0): ?>
+                                <div class="drop-placeholder">Sleep<br>hier</div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

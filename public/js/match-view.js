@@ -234,6 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
             draggedItem.style.top = '';
             absentList.appendChild(draggedItem);
             
+            // Remove placeholder if present
+            const placeholder = absentList.querySelector('.drop-placeholder');
+            if (placeholder) placeholder.remove();
+            
             refreshAllColors();
         });
     }
@@ -481,6 +485,10 @@ document.addEventListener('DOMContentLoaded', () => {
             activeTouchItem.style.top = '';
             dropAbsent.appendChild(activeTouchItem);
             
+             // Remove placeholder
+             const placeholder = dropAbsent.querySelector('.drop-placeholder');
+             if (placeholder) placeholder.remove();
+
         } else {
             // Dropped nowhere valid
             if (originalParent) {
