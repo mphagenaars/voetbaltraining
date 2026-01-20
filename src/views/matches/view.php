@@ -1,5 +1,5 @@
 <div class="container">
-    <link rel="stylesheet" href="/css/match-view.css">
+    <link rel="stylesheet" href="/css/match-view.css?v=<?= time() ?>">
     
     <svg width="0" height="0" style="position: absolute;">
       <defs>
@@ -273,4 +273,4 @@
     </div>
 </div>
 
-<script src="/js/match-view.js"></script>
+<script src="/js/match-view.js?v=<?= time() ?>"></script>
