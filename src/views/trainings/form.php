@@ -6,6 +6,34 @@ $descValue = $isEdit ? $training['description'] : '';
 $dateValue = $isEdit ? ($training['training_date'] ?? '') : date('Y-m-d');
 $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
 ?>
+<style>
+    .selected-item {
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .selected-item.dragging {
+        opacity: 0.5;
+        background: #f8f9fa;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 10;
+    }
+    .drag-handle {
+        cursor: grab;
+        touch-action: none;
+        color: #adb5bd;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .drag-handle:active {
+        cursor: grabbing;
+        color: var(--primary);
+    }
+    .drag-handle:hover {
+        color: var(--text-main);
+    }
+</style>
 <div class="app-bar">
     <div class="app-bar-start">
         <a href="/trainings" class="btn-icon-round" title="Terug">
@@ -55,7 +83,10 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
             <div class="card" id="selected-list" style="min-height: 200px;">
                 <p class="text-muted" id="empty-msg" style="<?= !empty($currentExercises) ? 'display: none;' : '' ?>">Klik op een oefening om toe te voegen.</p>
                 <?php foreach ($currentExercises as $ex): ?>
-                    <div class="selected-item" style="padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <div class="selected-item" style="padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #fff;">
+                        <div class="drag-handle" title="Sleep om te sorteren">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </div>
                         <span style="flex-grow: 1;"><?= e($ex['title']) ?></span>
                         <input type="hidden" name="exercises[]" value="<?= $ex['id'] ?>">
                         <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min">
@@ -97,27 +128,94 @@ document.addEventListener('DOMContentLoaded', function() {
         addExerciseToTraining(id, title, defaultDuration);
     });
 
-    // Remove exercise
+    // Handle clicks for remove
     selectedList.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-btn')) {
-            e.target.closest('.selected-item').remove();
+        const target = e.target;
+        const item = target.closest('.selected-item');
+        if (!item) return;
+
+        if (target.classList.contains('remove-btn') || target.closest('.remove-btn')) {
+            item.remove();
             checkEmpty();
         }
     });
+
+    /* --- Drag and Drop Logic (Mouse & Touch) --- */
+    let dragSrc = null;
+
+    // Start handlers
+    selectedList.addEventListener('mousedown', handleDragStart);
+    selectedList.addEventListener('touchstart', handleDragStart, {passive: false});
+
+    function handleDragStart(e) {
+        const handle = e.target.closest('.drag-handle');
+        if (!handle) return;
+        
+        const item = handle.closest('.selected-item');
+        if (!item) return;
+
+        // Prevent default touch actions (scrolling) only when touching the handle
+        if (e.type === 'touchstart') e.preventDefault();
+
+        dragSrc = item;
+        item.classList.add('dragging');
+
+        // Add global move/end listeners
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('touchmove', handleDragMove, {passive: false});
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchend', handleDragEnd);
+    }
+
+    function handleDragMove(e) {
+        if (!dragSrc) return;
+        
+        // Prevent accidental scrolling/refresh
+        e.preventDefault();
+
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        
+        // Get all items except the one being dragged
+        const siblings = [...selectedList.querySelectorAll('.selected-item:not(.dragging)')];
+        
+        // Find the sibling halfway point that we are crossing
+        const nextSibling = siblings.find(sibling => {
+            const box = sibling.getBoundingClientRect();
+            // If cursor is above the vertical center of this sibling, insert before it
+            return clientY <= box.top + box.height / 2;
+        });
+
+        // DOM operation: moving the element automatically reorders it in the document flow
+        if (nextSibling) {
+            selectedList.insertBefore(dragSrc, nextSibling);
+        } else {
+            selectedList.appendChild(dragSrc);
+        }
+    }
+
+    function handleDragEnd(e) {
+        if (dragSrc) {
+            dragSrc.classList.remove('dragging');
+            dragSrc = null;
+        }
+        // Clean up
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('touchmove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+        document.removeEventListener('touchend', handleDragEnd);
+    }
 
     function addExerciseToTraining(id, title, duration) {
         if (emptyMsg) emptyMsg.style.display = 'none';
 
         const div = document.createElement('div');
         div.className = 'selected-item';
-        div.style.padding = '0.5rem';
-        div.style.borderBottom = '1px solid #eee';
-        div.style.display = 'flex';
-        div.style.justifyContent = 'space-between';
-        div.style.alignItems = 'center';
-        div.style.gap = '1rem';
+        div.style.cssText = 'padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #fff;';
 
         div.innerHTML = `
+            <div class="drag-handle" title="Sleep om te sorteren">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </div>
             <span style="flex-grow: 1;">${title}</span>
             <input type="hidden" name="exercises[]" value="${id}">
             <input type="number" name="durations[]" value="${duration}" style="width: 60px; padding: 0.25rem;" placeholder="min">
