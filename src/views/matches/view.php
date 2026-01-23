@@ -44,9 +44,9 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3>Startopstelling</h3>
-                <button id="save-lineup" class="btn-icon" title="Opslaan">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                </button>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="save-status" style="font-size: 0.85rem; color: #666; transition: all 0.3s ease; font-weight: bold;"></span>
+                </div>
                 <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
             </div>
 
@@ -69,7 +69,7 @@
 
                         <!-- Placed players -->
                         <?php foreach ($matchPlayers as $pos): ?>
-                            <?php if (!empty($pos['is_substitute'])) continue; ?>
+                            <?php if (!empty($pos['is_substitute']) || !empty($pos['is_absent'])) continue; ?>
                             <div class="player-token on-field <?= !empty($pos['is_keeper']) ? 'is-goalkeeper' : '' ?>" draggable="true" data-id="<?= $pos['player_id'] ?>" style="left: <?= $pos['position_x'] ?>%; top: <?= $pos['position_y'] ?>%;">
                                 <div class="player-jersey">
                                     <svg viewBox="0 0 100 100" width="50" height="50">
@@ -117,7 +117,7 @@
                             <?php 
                             // Exclude players on field OR absent
                             $placedOnFieldIds = array_column(array_filter($matchPlayers, function($p) {
-                                return empty($p['is_substitute']);
+                                return empty($p['is_substitute']) && empty($p['is_absent']);
                             }), 'player_id');
 
                             $absentIds = array_column(array_filter($matchPlayers, function($p) {
@@ -144,7 +144,7 @@
                         <h4>Afwezig / Ziek</h4>
                         <div id="absent-list" class="players-list">
                              <?php foreach ($players as $player): ?>
-                                <?php if (in_array($player['id'], $absentIds)): ?>
+                                <?php if (in_array($player['id'], $absentIds) && !in_array($player['id'], $placedOnFieldIds)): ?>
                                     <div class="player-token" draggable="true" data-id="<?= $player['id'] ?>">
                                         <div class="player-jersey">
                                             <svg viewBox="0 0 100 100" width="50" height="50">

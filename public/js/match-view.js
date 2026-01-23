@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const absentList = document.getElementById('absent-list'); // Absent
     const keepersList = document.getElementById('keepers-list');
     const field = document.getElementById('football-field');
-    const saveBtn = document.getElementById('save-lineup');
+    // const saveBtn = document.getElementById('save-lineup'); // Removed
     let draggedItem = null;
 
     // Define formations and their slot coordinates (in percentages)
@@ -65,22 +65,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkPlayerState = (player, x, y) => {
         // Keeper check
         // Player gets blue shirt if:
-        // 1. Is an assigned keeper (present in keepers-list)
-        // 2. OR is standing on the keeper position in the pitch
+        // 1. Is an assigned keeper AND (is strictly on keeper position OR NOT on field)
+        // 2. Used to be: Is an assigned keeper
 
         const pid = player.dataset.id;
         const isAssigned = keepersList.querySelector(`.player-token[data-id="${pid}"]`);
         
+        // Check if player is on the field (either by class or context)
+        // Note: x, y are passed for field players. For bench players, checkPlayerState isn't usually called with coords.
+        const isOnField = player.classList.contains('on-field');
+        
         let isPositionally = false;
-        const keeperSlot = slots.find(s => s.label === 'K');
-        if (keeperSlot && Math.abs(x - keeperSlot.x) < 10 && Math.abs(y - keeperSlot.y) < 15) {
-            isPositionally = true;
+        
+        if (isOnField) {
+            const keeperSlot = slots.find(s => s.label === 'K');
+            if (keeperSlot && Math.abs(x - keeperSlot.x) < 10 && Math.abs(y - keeperSlot.y) < 15) {
+                isPositionally = true;
+            }
         }
 
-        if (isAssigned || isPositionally) {
+        const jerseyPath = player.querySelector('.player-jersey path');
+        
+        let shouldBeBlue = false;
+        if (isPositionally) {
+            shouldBeBlue = true;
+        } else if (isAssigned && !isOnField) {
+            shouldBeBlue = true;
+        } 
+        
+        if (shouldBeBlue) {
             player.classList.add('is-goalkeeper');
+            if (jerseyPath) jerseyPath.setAttribute('fill', 'url(#blue-jersey)');
         } else {
             player.classList.remove('is-goalkeeper');
+            if (jerseyPath) jerseyPath.setAttribute('fill', 'url(#striped-jersey)');
         }
     };
 
@@ -128,13 +146,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = parseFloat(player.style.top);
             checkPlayerState(player, x, y);
         });
+
         // Bench players
-        playersList.querySelectorAll('.player-token').forEach(player => {
-            const pid = player.dataset.id;
-            const isAssigned = keepersList ? keepersList.querySelector(`.player-token[data-id="${pid}"]`) : false;
-            if (isAssigned) player.classList.add('is-goalkeeper');
-            else player.classList.remove('is-goalkeeper');
-        });
+        if (playersList) {
+            playersList.querySelectorAll('.player-token').forEach(player => {
+                const pid = player.dataset.id;
+                const isAssigned = keepersList ? keepersList.querySelector(`.player-token[data-id="${pid}"]`) : false;
+                const jerseyPath = player.querySelector('.player-jersey path');
+                
+                if (isAssigned) {
+                    player.classList.add('is-goalkeeper');
+                    if (jerseyPath) jerseyPath.setAttribute('fill', 'url(#blue-jersey)');
+                } else {
+                    player.classList.remove('is-goalkeeper');
+                    if (jerseyPath) jerseyPath.setAttribute('fill', 'url(#striped-jersey)');
+                }
+            });
+        }
+
+        // Absent players
+        if (absentList) {
+            absentList.querySelectorAll('.player-token').forEach(player => {
+                 const jerseyPath = player.querySelector('.player-jersey path');
+                 player.classList.remove('is-goalkeeper');
+                 if (jerseyPath) jerseyPath.setAttribute('fill', '#999');
+            });
+        }
     };
 
     // Initial check
@@ -193,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedItem.style.top = pos.y + '%';
         
         refreshAllColors();
+        debouncedSave();
     });
 
     // Bench Drop Zone
@@ -205,7 +243,22 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (!draggedItem) return;
         
-        if (draggedItem.dataset.source === 'keepers') return;
+        // Allow removing keeper by dragging back to bench
+        if (draggedItem.dataset.source === 'keepers') {
+             draggedItem.remove();
+             
+             // Add empty slot back if needed
+             if (keepersList.querySelectorAll('.player-token').length < 2) {
+                const slot = document.createElement('div');
+                slot.className = 'keeper-slot-empty';
+                slot.innerText = 'Sleep speler';
+                keepersList.appendChild(slot);
+            }
+             
+             refreshAllColors();
+             debouncedSave();
+             return;
+        }
 
         // Move to bench (from Field OR Absent)
         draggedItem.classList.remove('on-field');
@@ -214,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playersList.appendChild(draggedItem);
         
         refreshAllColors();
+        debouncedSave();
     });
     
     // Absent Drop Zone
@@ -238,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const placeholder = absentList.querySelector('.drop-placeholder');
             if (placeholder) placeholder.remove();
             
+            debouncedSave();
             refreshAllColors();
         });
     }
@@ -253,25 +308,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!draggedItem) return;
         
         const currentKeepers = keepersList.querySelectorAll('.player-token').length;
+        
+        // Prevent adding duplicate of SAME player
+        const pid = draggedItem.dataset.id;
+        const exists = keepersList.querySelector(`.player-token[data-id="${pid}"]`);
+        if (exists) return; 
+
+        // If dragging FROM keepers list (reordering/self-drop), ignore
+        if (draggedItem.dataset.source === 'keepers') return;
+
         if (currentKeepers >= 2) {
-            // Check if we are dragging one of the existing keepers?
-            // If dragging from self to self, ignore
-            if (draggedItem.parentElement === keepersList) return;
+            // Determine which keeper to replace
+            // Check if dropped ON TOP of a specific keeper
+            const targetKeeper = e.target.closest('.player-token');
             
-            // If adding new one, block
-            const pid = draggedItem.dataset.id;
-            const exists = keepersList.querySelector(`.player-token[data-id="${pid}"]`);
-            if (!exists) {
-                alert('Maximaal 2 keepers toegestaan.');
-                return;
+            if (targetKeeper && targetKeeper.parentElement === keepersList) {
+                // Remove the specific keeper we dropped onto
+                targetKeeper.remove();
+            } else {
+                // Otherwise remove the first one to make room
+                const firstKeeper = keepersList.querySelector('.player-token');
+                if (firstKeeper) firstKeeper.remove();
             }
         }
-
-        if (draggedItem.dataset.source === 'keepers') return;
-        
-        const playerId = draggedItem.dataset.id;
-        const exists = keepersList.querySelector(`.player-token[data-id="${playerId}"]`);
-        if (exists) return;
 
         // Create Clone
         const clone = draggedItem.cloneNode(true);
@@ -282,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clone.style.position = 'relative'; 
         clone.style.transform = 'none';
         clone.style.opacity = '1';
-        clone.dataset.source = 'keepers';
+        clone.setAttribute('data-source', 'keepers'); 
         
         const emptySlot = keepersList.querySelector('.keeper-slot-empty');
         if (emptySlot) emptySlot.remove();
@@ -290,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         keepersList.appendChild(clone);
         
         refreshAllColors();
+        debouncedSave();
     });
 
     // Removing from Keepers List
@@ -305,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 keepersList.appendChild(slot);
             }
             refreshAllColors();
+            debouncedSave();
         }
     });
 
@@ -408,15 +469,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      clone.style.pointerEvents = '';
                      clone.style.transform = '';
                      clone.style.zIndex = '';
-                     clone.dataset.source = 'keepers';
+                     clone.setAttribute('data-source', 'keepers');
                      
                      const emptySlot = keepersList.querySelector('.keeper-slot-empty');
                      if (emptySlot) emptySlot.remove();
                      
                      keepersList.insertBefore(clone, keepersList.firstChild);
                      
-                     // Update original
-                     activeTouchItem.classList.add('is-goalkeeper');
+                     refreshAllColors(); // Update original immediately
                  }
              }
              
@@ -433,8 +493,19 @@ document.addEventListener('DOMContentLoaded', () => {
                  return;
             }
 
-            // Logic to place on field
-            const rect = dropField.getBoundingClientRect();
+            // LogicRemoving keeper by dragging to bench
+                 activeTouchItem.remove();
+                 
+                  // Add empty slot back if needed
+                 if (keepersList.querySelectorAll('.player-token').length < 2) {
+                    const slot = document.createElement('div');
+                    slot.className = 'keeper-slot-empty';
+                    slot.innerText = 'Sleep speler';
+                    keepersList.appendChild(slot);
+                }
+                 refreshAllColors();
+                 debouncedSave();
+                 activeTouchItem = null;
             let xPercent = ((x - rect.left) / rect.width) * 100;
             let yPercent = ((y - rect.top) / rect.height) * 100;
             
@@ -484,13 +555,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         refreshAllColors();
+        debouncedSave();
         activeTouchItem = null;
         originalParent = null;
     });
 
-    // Save Functionality
-    saveBtn.addEventListener('click', () => {
+
+    // --- AUTOSAVE LOGIC ---
+    let saveTimeout = null;
+    const saveStatusEl = document.getElementById('save-status');
+
+    const updateSaveStatus = (status, message = '') => {
+        if (!saveStatusEl) return;
+        
+        switch(status) {
+            case 'saving':
+                saveStatusEl.textContent = 'Opslaan...';
+                saveStatusEl.style.color = '#666';
+                break;
+            case 'saved':
+                saveStatusEl.textContent = 'Opgeslagen';
+                saveStatusEl.style.color = '#2e7d32';
+                setTimeout(() => {
+                    if (saveStatusEl.textContent === 'Opgeslagen') saveStatusEl.textContent = '';
+                }, 2000);
+                break;
+            case 'error':
+                saveStatusEl.textContent = message || 'Fout bij opslaan';
+                saveStatusEl.style.color = '#d32f2f';
+                break;
+            default:
+                saveStatusEl.textContent = '';
+        }
+    };
+
+    const saveLineup = async (manual = false) => {
+        if (!manual) updateSaveStatus('saving');
+        
         const players = [];
+        const seenIds = new Set();
+        
         const fieldPlayers = field.querySelectorAll('.player-token');
         const benchPlayers = playersList.querySelectorAll('.player-token');
         const absentPlayers = absentList ? absentList.querySelectorAll('.player-token') : [];
@@ -502,6 +606,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add players on field
         fieldPlayers.forEach(player => {
             const pid = parseInt(player.dataset.id);
+            if (seenIds.has(pid)) return;
+            seenIds.add(pid);
+            
             players.push({
                 player_id: pid,
                 x: parseFloat(player.style.left),
@@ -515,6 +622,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add players on bench (to save their keeper status if assigned but on bench)
          benchPlayers.forEach(player => {
             const pid = parseInt(player.dataset.id);
+            if (seenIds.has(pid)) return;
+            seenIds.add(pid);
+
             players.push({
                 player_id: pid,
                 x: 0,
@@ -528,6 +638,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add absent players
          absentPlayers.forEach(player => {
             const pid = parseInt(player.dataset.id);
+            if (seenIds.has(pid)) return;
+            seenIds.add(pid);
+
             players.push({
                 player_id: pid,
                 x: 0,
@@ -538,29 +651,42 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        fetch('/matches/save-lineup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': document.getElementById('csrf_token').value
-            },
-            body: JSON.stringify({
-                match_id: document.getElementById('match_id').value,
-                players: players,
-                csrf_token: document.getElementById('csrf_token').value
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            const response = await fetch('/matches/save-lineup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.getElementById('csrf_token').value
+                },
+                body: JSON.stringify({
+                    match_id: document.getElementById('match_id').value,
+                    players: players,
+                    csrf_token: document.getElementById('csrf_token').value
+                })
+            });
+            
+            const data = await response.json();
+            
             if (data.success) {
-                alert('Opstelling opgeslagen!');
+                if (manual) alert('Opstelling opgeslagen!');
+                else updateSaveStatus('saved');
             } else {
-                alert('Fout bij opslaan: ' + (data.error || 'Onbekend'));
+                if (manual) alert('Fout bij opslaan: ' + (data.error || 'Onbekend'));
+                else updateSaveStatus('error', 'Opslaan mislukt');
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Er is een fout opgetreden.');
-        });
-    });
+            if (manual) alert('Er is een fout opgetreden.');
+            else updateSaveStatus('error', 'Verbindingsfout');
+        }
+    };
+
+    const debouncedSave = () => {
+        clearTimeout(saveTimeout);
+        updateSaveStatus('saving'); // Show saving immediately so user knows something is happening
+        saveTimeout = setTimeout(() => {
+            saveLineup(false);
+        }, 1000); // 1 second debounce
+    };
+
 });
