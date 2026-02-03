@@ -61,7 +61,8 @@
                     <li style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
                         <strong><?= $event['minute'] ?>'</strong> 
                         <?= match($event['type']) {
-                            'goal' => '⚽ Doelpunt',
+                            'goal' => $event['player_id'] ? '⚽ Doelpunt' : '⚽ Tegendoelpunt',
+                            'goal_unknown' => '⚽ Doelpunt (Overig)',
                             'card_yellow' => '🟨 Gele kaart',
                             'card_red' => '🟥 Rode kaart',
                             'sub' => '🔄 Wissel',
@@ -96,6 +97,8 @@
                     <?php foreach ($players as $player): ?>
                         <option value="<?= $player['id'] ?>"><?= e($player['name']) ?></option>
                     <?php endforeach; ?>
+                    <option value="unknown">Overig (Eigen doelpunt tegenstander)</option>
+                    <option value="opponent">Tegendoelpunt</option>
                 </select>
             </div>
 

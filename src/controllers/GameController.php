@@ -220,7 +220,10 @@ class GameController extends BaseController {
                      $period = $state['current_period'] > 0 ? $state['current_period'] : 1;
                  }
 
-                 $playerId = !empty($input['player_id']) ? (int)$input['player_id'] : null;
+                 // Sanitation: Ensure playerId is a positive integer or null
+                 $rawPlayerId = $input['player_id'] ?? '';
+                 $playerId = (is_numeric($rawPlayerId) && (int)$rawPlayerId > 0) ? (int)$rawPlayerId : null;
+
                  $description = $input['description'] ?? '';
                  
                  $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description, $period);
@@ -231,6 +234,11 @@ class GameController extends BaseController {
                      } else {
                          if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
                      }
+                     $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
+                 } elseif ($type === 'goal_unknown') {
+                     // Goal for us, but no specific player (Overig)
+                     // Treat as own team goal
+                     if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
                      $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
                  }
 

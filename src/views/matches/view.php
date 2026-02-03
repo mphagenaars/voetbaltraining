@@ -221,7 +221,8 @@
                         
                         <?php 
                         $typeLabel = match($event['type']) {
-                            'goal' => '⚽ Doelpunt',
+                            'goal' => $event['player_id'] ? '⚽ Doelpunt' : '⚽ Tegendoelpunt',
+                            'goal_unknown' => '⚽ Doelpunt (Overig)',
                             'card_yellow' => '🟨 Gele kaart',
                             'card_red' => '🟥 Rode kaart',
                             'sub' => '🔄 Wissel',

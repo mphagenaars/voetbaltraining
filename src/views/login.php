@@ -5,7 +5,8 @@
         <div class="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
-    <form method="POST" action="/login">
+    <?php $action = '/login' . (isset($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''); ?>
+    <form method="POST" action="<?= $action ?>">
         <?= Csrf::renderInput() ?>
         <div>
             <label for="username">Gebruikersnaam</label>

@@ -50,7 +50,14 @@ class AuthController extends BaseController {
                                 ]);
                             }
 
-                            $this->redirect('/');
+                            // Check for redirect param
+                            $redirect = $_GET['redirect'] ?? '/';
+                            // Basic security check: ensure it starts with / and not // (to prevent open redirects)
+                            if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+                                $redirect = '/';
+                            }
+
+                            $this->redirect($redirect);
                         } else {
                             $error = "Ongeldige gebruikersnaam of wachtwoord.";
                         }

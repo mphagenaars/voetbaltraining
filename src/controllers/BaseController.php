@@ -6,7 +6,8 @@ abstract class BaseController {
 
     protected function requireAuth(): void {
         if (!Session::has('user_id')) {
-            $this->redirect('/login');
+            $currentUrl = urlencode($_SERVER['REQUEST_URI']);
+            $this->redirect('/login?redirect=' . $currentUrl);
         }
     }
 

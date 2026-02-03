@@ -142,6 +142,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(actionForm);
         const data = Object.fromEntries(formData.entries());
         
+        // Handle special player values for Goal
+        if (data.type === 'goal') {
+             const playerSelect = actionForm.querySelector('select[name="player_id"]');
+             if (playerSelect) {
+                 if (playerSelect.value === 'unknown') {
+                     data.type = 'goal_unknown';
+                     data.player_id = ''; 
+                 } else if (playerSelect.value === 'opponent') {
+                     data.type = 'goal'; 
+                     data.player_id = '';
+                 }
+             }
+        }
+
         // Handle 'card' generic type -> prompt or default to yellow?
         // Ideally I should have added buttons for Yellow/Red.
         // Let's rely on description for now or hardcode specific logic not implemented completely.
@@ -205,7 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
             li.style.padding = '0.5rem 0';
             
             let icon = '🔹';
-            if(event.type === 'goal') icon = '⚽ Doelpunt';
+            if(event.type === 'goal') {
+                icon = event.player_id ? '⚽ Doelpunt' : '⚽ Tegendoelpunt';
+            }
+            if(event.type === 'goal_unknown') icon = '⚽ Doelpunt (Overig)';
             if(event.type === 'card_yellow') icon = '🟨 Gele kaart';
             if(event.type === 'card_red') icon = '🟥 Rode kaart';
             if(event.type === 'sub') icon = '🔄 Wissel';
