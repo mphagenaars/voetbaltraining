@@ -5,6 +5,10 @@ class AuthController extends BaseController {
 
     public function login(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // DEBUGGING LOGIN REDIRECT
+            error_log("Login POST request received.");
+            error_log("GET params: " . print_r($_GET, true));
+
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
                 $error = "Ongeldige sessie. Probeer het opnieuw.";
             } else {
@@ -26,6 +30,9 @@ class AuthController extends BaseController {
                             Session::set('user_id', $user['id']);
                             Session::set('user_name', $user['name']);
                             Session::set('is_admin', (bool)($user['is_admin'] ?? false));
+                            
+                            // Debug logging
+                            error_log("Login successful. GET params: " . print_r($_GET, true));
 
                             // Log login
                             $logModel = new ActivityLog($this->pdo);
@@ -52,9 +59,14 @@ class AuthController extends BaseController {
 
                             // Check for redirect param
                             $redirect = $_GET['redirect'] ?? '/';
+                            error_log("Raw redirect param: " . $redirect);
+                            
                             // Basic security check: ensure it starts with / and not // (to prevent open redirects)
                             if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+                                error_log("Redirect validation failed or default used. Redirecting to /");
                                 $redirect = '/';
+                            } else {
+                                error_log("Redirect validation passed. Redirecting to: " . $redirect);
                             }
 
                             $this->redirect($redirect);
