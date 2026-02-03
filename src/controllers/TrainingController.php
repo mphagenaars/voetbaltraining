@@ -108,6 +108,35 @@ class TrainingController extends BaseController {
 
     public function view(): void {
         $this->requireAuth();
+        
+        // Handle team context switch via query param
+        if (isset($_GET['team_id']) && is_numeric($_GET['team_id'])) {
+            $requestedTeamId = (int)$_GET['team_id'];
+            $currentTeam = Session::get('current_team');
+            
+            // Only switch if we are not already in this team's context
+            if (!$currentTeam || $currentTeam['id'] !== $requestedTeamId) {
+                $teamModel = new Team($this->pdo);
+                $teams = $teamModel->getTeamsForUser((int)Session::get('user_id'));
+                
+                foreach ($teams as $team) {
+                    if ($team['id'] === $requestedTeamId) {
+                        $role = 'player';
+                        if ($team['is_coach']) $role = 'coach';
+                        elseif ($team['is_trainer']) $role = 'trainer';
+
+                        Session::set('current_team', [
+                            'id' => $team['id'],
+                            'name' => $team['name'],
+                            'role' => $role,
+                            'invite_code' => $team['invite_code'] ?? ''
+                        ]);
+                        break;
+                    }
+                }
+            }
+        }
+
         if (!Session::has('current_team')) {
             $this->redirect('/');
         }

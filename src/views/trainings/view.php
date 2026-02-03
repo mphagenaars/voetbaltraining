@@ -80,17 +80,21 @@ if (!empty($training['training_date'])) {
 
 <script>
 function shareTraining() {
+    // Add team_id to url
+    const url = new URL(window.location.href);
+    url.searchParams.set('team_id', "<?= $training['team_id'] ?>");
+
     const shareData = {
         title: <?= json_encode($displayTitle) ?>,
         text: 'Bekijk deze training op Voetbaltraining',
-        url: window.location.href,
+        url: url.toString(),
     };
 
     if (navigator.share) {
         navigator.share(shareData)
             .catch((err) => console.log('Error sharing:', err));
     } else {
-        navigator.clipboard.writeText(window.location.href).then(() => {
+        navigator.clipboard.writeText(url.toString()).then(() => {
             alert('Link gekopieerd naar klembord!');
         });
     }

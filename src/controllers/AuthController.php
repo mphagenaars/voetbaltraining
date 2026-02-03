@@ -30,6 +30,27 @@ class AuthController extends BaseController {
                             Session::set('user_id', $user['id']);
                             Session::set('user_name', $user['name']);
                             Session::set('is_admin', (bool)($user['is_admin'] ?? false));
+
+                            // Auto-select team
+                            $teamModel = new Team($this->pdo);
+                            $teams = $teamModel->getTeamsForUser((int)$user['id']);
+
+                            if (!empty($teams)) {
+                                $team = $teams[0];
+                                $role = 'player';
+                                if ($team['is_coach']) {
+                                    $role = 'coach';
+                                } elseif ($team['is_trainer']) {
+                                    $role = 'trainer';
+                                }
+
+                                Session::set('current_team', [
+                                    'id' => $team['id'],
+                                    'name' => $team['name'],
+                                    'role' => $role,
+                                    'invite_code' => $team['invite_code']
+                                ]);
+                            }
                             
                             // Debug logging
                             error_log("Login successful. GET params: " . print_r($_GET, true));
