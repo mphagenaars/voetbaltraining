@@ -377,6 +377,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let originalLeft = '';
     let originalTop = '';
 
+    const restoreTouchItem = () => {
+        if (!activeTouchItem || !originalParent) return;
+        originalParent.appendChild(activeTouchItem);
+        activeTouchItem.style.left = originalLeft;
+        activeTouchItem.style.top = originalTop;
+    };
+
+    const ensureKeeperPlaceholder = () => {
+        if (keepersList.querySelectorAll('.player-token').length < 2 && !keepersList.querySelector('.keeper-slot-empty')) {
+            const slot = document.createElement('div');
+            slot.className = 'keeper-slot-empty';
+            slot.innerText = 'Sleep speler';
+            keepersList.appendChild(slot);
+        }
+    };
+
     document.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.player-token');
         if (!target) return;
@@ -481,83 +497,64 @@ document.addEventListener('DOMContentLoaded', () => {
              }
              
              // Return original to where it was
-             if (originalParent) {
-                 originalParent.appendChild(activeTouchItem);
-                 activeTouchItem.style.left = originalLeft;
-                 activeTouchItem.style.top = originalTop;
-             }
+             restoreTouchItem();
 
         } else if (dropField) {
             if (activeTouchItem.dataset.source === 'keepers') {
                  // Deleting keeper by dragging to field? No, just return. Use click to delete.
-                 return;
+                 restoreTouchItem();
+            } else {
+                const fieldRect = field.getBoundingClientRect();
+                let xPercent = ((x - fieldRect.left) / fieldRect.width) * 100;
+                let yPercent = ((y - fieldRect.top) / fieldRect.height) * 100;
+                
+                const pos = getSnappedPosition(xPercent, yPercent);
+                
+                activeTouchItem.classList.add('on-field');
+                field.appendChild(activeTouchItem);
+                activeTouchItem.style.left = pos.x + '%';
+                activeTouchItem.style.top = pos.y + '%';
+                checkPlayerState(activeTouchItem, pos.x, pos.y);
             }
-
-            // LogicRemoving keeper by dragging to bench
-                 activeTouchItem.remove();
-                 
-                  // Add empty slot back if needed
-                 if (keepersList.querySelectorAll('.player-token').length < 2) {
-                    const slot = document.createElement('div');
-                    slot.className = 'keeper-slot-empty';
-                    slot.innerText = 'Sleep speler';
-                    keepersList.appendChild(slot);
-                }
-                 refreshAllColors();
-                 debouncedSave();
-                 activeTouchItem = null;
-            let xPercent = ((x - rect.left) / rect.width) * 100;
-            let yPercent = ((y - rect.top) / rect.height) * 100;
-            
-            const pos = getSnappedPosition(xPercent, yPercent);
-            
-            activeTouchItem.classList.add('on-field');
-            dropField.appendChild(activeTouchItem);
-            activeTouchItem.style.left = pos.x + '%';
-            activeTouchItem.style.top = pos.y + '%';
-            checkPlayerState(activeTouchItem, pos.x, pos.y);
             
         } else if (dropBench) {
             if (activeTouchItem.dataset.source === 'keepers') {
-                 // Deleting keeper by dragging to bench?
-                 activeTouchItem.click(); // Trigger removal logic
-                 return;
+                 activeTouchItem.remove();
+                 ensureKeeperPlaceholder();
+            } else {
+                // Logic to place on bench
+                activeTouchItem.classList.remove('on-field');
+                activeTouchItem.style.left = '';
+                activeTouchItem.style.top = '';
+                dropBench.appendChild(activeTouchItem);
             }
 
-            // Logic to place on bench
-            activeTouchItem.classList.remove('on-field');
-            activeTouchItem.style.left = '';
-            activeTouchItem.style.top = '';
-            dropBench.appendChild(activeTouchItem);
-            
         } else if (dropAbsent) {
              if (activeTouchItem.dataset.source === 'keepers') {
-                 return;
+                 restoreTouchItem();
+            } else {
+                // Logic to place on absent
+                activeTouchItem.classList.remove('on-field');
+                activeTouchItem.style.left = '';
+                activeTouchItem.style.top = '';
+                dropAbsent.appendChild(activeTouchItem);
+                
+                 // Remove placeholder
+                 const placeholder = dropAbsent.querySelector('.drop-placeholder');
+                 if (placeholder) placeholder.remove();
             }
-
-            // Logic to place on absent
-            activeTouchItem.classList.remove('on-field');
-            activeTouchItem.style.left = '';
-            activeTouchItem.style.top = '';
-            dropAbsent.appendChild(activeTouchItem);
-            
-             // Remove placeholder
-             const placeholder = dropAbsent.querySelector('.drop-placeholder');
-             if (placeholder) placeholder.remove();
 
         } else {
             // Dropped nowhere valid
-            if (originalParent) {
-                 originalParent.appendChild(activeTouchItem);
-                 activeTouchItem.style.left = originalLeft;
-                 activeTouchItem.style.top = originalTop;
-            }
+            restoreTouchItem();
         }
         
         refreshAllColors();
         debouncedSave();
         activeTouchItem = null;
         originalParent = null;
+        originalLeft = '';
+        originalTop = '';
     });
 
 
