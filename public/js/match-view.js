@@ -382,6 +382,23 @@ document.addEventListener('DOMContentLoaded', () => {
         activeTouchItem.style.top = originalTop;
     };
 
+    const resetActiveTouchItemStyles = () => {
+        if (!activeTouchItem) return;
+        activeTouchItem.style.position = '';
+        activeTouchItem.style.zIndex = '';
+        activeTouchItem.style.width = '';
+        activeTouchItem.style.transform = '';
+        activeTouchItem.style.opacity = '';
+        activeTouchItem.style.pointerEvents = '';
+    };
+
+    const clearTouchState = () => {
+        activeTouchItem = null;
+        originalParent = null;
+        originalLeft = '';
+        originalTop = '';
+    };
+
     document.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.player-token');
         if (!target) return;
@@ -446,12 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dropAbsent = (typeof absentList !== 'undefined' && absentList) ? elements.find(el => el.id === 'absent-list' || el === absentList) : null;
         
         // Reset styles for the dragged item
-        activeTouchItem.style.position = '';
-        activeTouchItem.style.zIndex = '';
-        activeTouchItem.style.width = '';
-        activeTouchItem.style.transform = '';
-        activeTouchItem.style.opacity = '';
-        activeTouchItem.style.pointerEvents = '';
+        resetActiveTouchItemStyles();
         
         if (dropKeepers) {
              // Keep touch behavior aligned with desktop:
@@ -550,11 +562,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         refreshAllColors();
         debouncedSave();
-        activeTouchItem = null;
-        originalParent = null;
-        originalLeft = '';
-        originalTop = '';
+        clearTouchState();
     });
+
+    document.addEventListener('touchcancel', () => {
+        if (!activeTouchItem) return;
+
+        // Drag was interrupted by the OS/browser: restore safely, do not save.
+        resetActiveTouchItemStyles();
+        restoreTouchItem();
+        refreshAllColors();
+        clearTouchState();
+    }, { passive: false });
 
 
     // --- AUTOSAVE LOGIC ---
