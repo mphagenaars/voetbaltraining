@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const absentList = document.getElementById('absent-list'); // Absent
     const keepersList = document.getElementById('keepers-list');
     const field = document.getElementById('football-field');
+    const MAX_KEEPERS = 2;
     // const saveBtn = document.getElementById('save-lineup'); // Removed
     let draggedItem = null;
 
@@ -138,6 +139,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return { x: finalX, y: finalY };
     };
 
+    const syncKeeperPlaceholders = () => {
+        const keeperCount = keepersList.querySelectorAll('.player-token').length;
+        const placeholdersNeeded = Math.max(0, MAX_KEEPERS - keeperCount);
+
+        keepersList.querySelectorAll('.keeper-slot-empty').forEach(slot => slot.remove());
+        for (let i = 0; i < placeholdersNeeded; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'keeper-slot-empty';
+            slot.innerText = 'Sleep speler';
+            keepersList.appendChild(slot);
+        }
+    };
+
     // Check initial positions and set colors
     const refreshAllColors = () => {
         // Field players
@@ -172,6 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (jerseyPath) jerseyPath.setAttribute('fill', '#999');
             });
         }
+
+        syncKeeperPlaceholders();
     };
 
     // Initial check
@@ -246,15 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Allow removing keeper by dragging back to bench
         if (draggedItem.dataset.source === 'keepers') {
              draggedItem.remove();
-             
-             // Add empty slot back if needed
-             if (keepersList.querySelectorAll('.player-token').length < 2) {
-                const slot = document.createElement('div');
-                slot.className = 'keeper-slot-empty';
-                slot.innerText = 'Sleep speler';
-                keepersList.appendChild(slot);
-            }
-             
+
              refreshAllColors();
              debouncedSave();
              return;
@@ -342,10 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clone.style.transform = 'none';
         clone.style.opacity = '1';
         clone.setAttribute('data-source', 'keepers'); 
-        
-        const emptySlot = keepersList.querySelector('.keeper-slot-empty');
-        if (emptySlot) emptySlot.remove();
-        
+
         keepersList.appendChild(clone);
         
         refreshAllColors();
@@ -357,13 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const token = e.target.closest('.player-token');
         if (token && token.dataset.source === 'keepers') {
             token.remove();
-            
-            if (keepersList.querySelectorAll('.player-token').length < 2) {
-                const slot = document.createElement('div');
-                slot.className = 'keeper-slot-empty';
-                slot.innerText = 'Sleep speler';
-                keepersList.appendChild(slot);
-            }
             refreshAllColors();
             debouncedSave();
         }
@@ -382,15 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
         originalParent.appendChild(activeTouchItem);
         activeTouchItem.style.left = originalLeft;
         activeTouchItem.style.top = originalTop;
-    };
-
-    const ensureKeeperPlaceholder = () => {
-        if (keepersList.querySelectorAll('.player-token').length < 2 && !keepersList.querySelector('.keeper-slot-empty')) {
-            const slot = document.createElement('div');
-            slot.className = 'keeper-slot-empty';
-            slot.innerText = 'Sleep speler';
-            keepersList.appendChild(slot);
-        }
     };
 
     document.addEventListener('touchstart', (e) => {
@@ -465,35 +454,46 @@ document.addEventListener('DOMContentLoaded', () => {
         activeTouchItem.style.pointerEvents = '';
         
         if (dropKeepers) {
-             // Logic for dropping on keepers list (Create clone)
+             // Keep touch behavior aligned with desktop:
+             // allow replacing a keeper when list is full (max 2).
              const currentKeepers = keepersList.querySelectorAll('.player-token').length;
-             if (currentKeepers < 2) {
-                 const playerId = activeTouchItem.dataset.id;
-                 const exists = keepersList.querySelector(`.player-token[data-id="${playerId}"]`);
-                 
-                 // Don't add if already there or if dragging FROM keepers
-                 if (!exists && activeTouchItem.dataset.source !== 'keepers') {
-                     const clone = activeTouchItem.cloneNode(true);
-                     clone.classList.remove('on-field');
-                     clone.classList.add('is-goalkeeper');
-                     // Reset clone styles
-                     clone.style.left = '';
-                     clone.style.top = '';
-                     clone.style.position = '';
-                     clone.style.width = '';
-                     clone.style.opacity = '';
-                     clone.style.pointerEvents = '';
-                     clone.style.transform = '';
-                     clone.style.zIndex = '';
-                     clone.setAttribute('data-source', 'keepers');
+             const playerId = activeTouchItem.dataset.id;
+             const exists = keepersList.querySelector(`.player-token[data-id="${playerId}"]`);
+             
+             // Don't add if already there or if dragging FROM keepers
+             if (!exists && activeTouchItem.dataset.source !== 'keepers') {
+                 if (currentKeepers >= MAX_KEEPERS) {
+                     const targetKeeper = elements.find(el =>
+                         el.classList &&
+                         el.classList.contains('player-token') &&
+                         el.dataset &&
+                         el.dataset.source === 'keepers' &&
+                         el.parentElement === keepersList
+                     );
                      
-                     const emptySlot = keepersList.querySelector('.keeper-slot-empty');
-                     if (emptySlot) emptySlot.remove();
-                     
-                     keepersList.insertBefore(clone, keepersList.firstChild);
-                     
-                     refreshAllColors(); // Update original immediately
+                     if (targetKeeper) {
+                         targetKeeper.remove();
+                     } else {
+                         const firstKeeper = keepersList.querySelector('.player-token');
+                         if (firstKeeper) firstKeeper.remove();
+                     }
                  }
+ 
+                 const clone = activeTouchItem.cloneNode(true);
+                 clone.classList.remove('on-field');
+                 clone.classList.add('is-goalkeeper');
+                 // Reset clone styles
+                 clone.style.left = '';
+                 clone.style.top = '';
+                 clone.style.position = '';
+                 clone.style.width = '';
+                 clone.style.opacity = '';
+                 clone.style.pointerEvents = '';
+                 clone.style.transform = '';
+                 clone.style.zIndex = '';
+                 clone.setAttribute('data-source', 'keepers');
+                 
+                 keepersList.appendChild(clone);
              }
              
              // Return original to where it was
@@ -520,7 +520,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (dropBench) {
             if (activeTouchItem.dataset.source === 'keepers') {
                  activeTouchItem.remove();
-                 ensureKeeperPlaceholder();
             } else {
                 // Logic to place on bench
                 activeTouchItem.classList.remove('on-field');
