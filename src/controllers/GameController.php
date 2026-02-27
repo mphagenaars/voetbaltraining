@@ -314,14 +314,25 @@ class GameController extends BaseController {
     }
 
     public function saveLineup(): void {
+        header('Content-Type: application/json');
+
         if (!Session::has('user_id') || !Session::has('current_team')) {
             http_response_code(403);
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
             exit;
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!$data || !isset($data['match_id']) || !isset($data['players'])) {
+        if (!is_array($data) || !isset($data['match_id']) || !isset($data['players']) || !is_array($data['players'])) {
             http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige requestdata.']);
+            exit;
+        }
+
+        $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
             exit;
         }
 
@@ -330,11 +341,45 @@ class GameController extends BaseController {
 
         if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
             http_response_code(403);
+            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            exit;
+        }
+
+        $players = [];
+        $playerIds = [];
+        foreach ($data['players'] as $player) {
+            if (!is_array($player) || !isset($player['player_id'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Ongeldige spelerdata.']);
+                exit;
+            }
+
+            $playerId = (int)$player['player_id'];
+            if ($playerId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Ongeldige speler-ID.']);
+                exit;
+            }
+
+            $playerIds[] = $playerId;
+            $players[] = [
+                'player_id' => $playerId,
+                'x' => isset($player['x']) ? (float)$player['x'] : 0,
+                'y' => isset($player['y']) ? (float)$player['y'] : 0,
+                'is_substitute' => !empty($player['is_substitute']) ? 1 : 0,
+                'is_keeper' => !empty($player['is_keeper']) ? 1 : 0,
+                'is_absent' => !empty($player['is_absent']) ? 1 : 0,
+            ];
+        }
+
+        if (!$this->gameModel->allPlayersBelongToTeam($playerIds, (int)$match['team_id'])) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Een of meer spelers horen niet bij dit team.']);
             exit;
         }
 
         try {
-            $this->gameModel->savePlayers($matchId, $data['players']);
+            $this->gameModel->savePlayers($matchId, $players);
             
             // Log activity
             $logModel = new ActivityLog($this->pdo);

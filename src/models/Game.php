@@ -48,6 +48,30 @@ class Game extends Model {
         );
     }
 
+    public function allPlayersBelongToTeam(array $playerIds, int $teamId): bool {
+        $uniqueIds = array_values(array_unique(array_map('intval', $playerIds)));
+        $uniqueIds = array_values(array_filter($uniqueIds, static fn(int $id): bool => $id > 0));
+
+        if (empty($uniqueIds)) {
+            return true;
+        }
+
+        $placeholders = [];
+        $params = [':team_id' => $teamId];
+
+        foreach ($uniqueIds as $i => $playerId) {
+            $key = ':pid' . $i;
+            $placeholders[] = $key;
+            $params[$key] = $playerId;
+        }
+
+        $sql = "SELECT COUNT(*) FROM players WHERE team_id = :team_id AND id IN (" . implode(', ', $placeholders) . ")";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int)$stmt->fetchColumn() === count($uniqueIds);
+    }
+
     public function getPlayers(int $matchId): array {
         $stmt = $this->pdo->prepare("
             SELECT mp.*, p.name as player_name, p.number
