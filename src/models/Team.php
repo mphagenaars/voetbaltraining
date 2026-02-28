@@ -4,8 +4,37 @@ declare(strict_types=1);
 class Team extends Model {
     protected string $table = 'teams';
 
+    public static function resolveMemberRole(array $team): string {
+        if (!empty($team['is_coach'])) {
+            return 'coach';
+        }
+        if (!empty($team['is_trainer'])) {
+            return 'trainer';
+        }
+        return 'player';
+    }
+
+    public static function roleLabelFromRoles(array $roles): string {
+        $roleParts = [];
+        if (!empty($roles['is_coach'])) {
+            $roleParts[] = 'Coach';
+        }
+        if (!empty($roles['is_trainer'])) {
+            $roleParts[] = 'Trainer';
+        }
+        return implode(' & ', $roleParts);
+    }
+
     public static function hasStaffPrivileges(array $roles): bool {
         return !empty($roles['is_coach']) || !empty($roles['is_trainer']);
+    }
+
+    public function canAccessTeam(int $teamId, int $userId, bool $isAdmin = false): bool {
+        if ($isAdmin) {
+            return true;
+        }
+
+        return $this->isMember($teamId, $userId);
     }
 
     public function canManageTeam(int $teamId, int $userId, bool $isAdmin = false): bool {

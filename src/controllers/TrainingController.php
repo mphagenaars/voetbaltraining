@@ -121,9 +121,7 @@ class TrainingController extends BaseController {
                 
                 foreach ($teams as $team) {
                     if ($team['id'] === $requestedTeamId) {
-                        $role = 'player';
-                        if ($team['is_coach']) $role = 'coach';
-                        elseif ($team['is_trainer']) $role = 'trainer';
+                        $role = Team::resolveMemberRole($team);
 
                         Session::set('current_team', [
                             'id' => $team['id'],

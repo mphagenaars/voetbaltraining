@@ -192,10 +192,8 @@ class ExerciseController extends BaseController {
         $teamModel = new Team($this->pdo);
         $trainingModel = new Training($this->pdo);
         $userTeams = $teamModel->getTeamsForUser((int)Session::get('user_id'));
-        $userTeamIds = [];
-        foreach ($userTeams as $team) {
-            $userTeamIds[] = (int)$team['id'];
-        }
+        $userId = (int)Session::get('user_id');
+        $isAdmin = (bool)Session::get('is_admin');
 
         $requestedFromTrainingId = (int)($_GET['from_training'] ?? 0);
         $fromTrainingId = 0;
@@ -203,7 +201,7 @@ class ExerciseController extends BaseController {
         if ($requestedFromTrainingId > 0) {
             $fromTrainingTeamId = $trainingModel->getTeamId($requestedFromTrainingId);
             if ($fromTrainingTeamId !== null) {
-                if ((bool)Session::get('is_admin') || in_array($fromTrainingTeamId, $userTeamIds, true)) {
+                if ($teamModel->canAccessTeam($fromTrainingTeamId, $userId, $isAdmin)) {
                     if ($trainingModel->hasExercise($requestedFromTrainingId, $id)) {
                         $fromTrainingId = $requestedFromTrainingId;
                         $backUrl = '/trainings/view?id=' . $fromTrainingId . '&team_id=' . $fromTrainingTeamId;

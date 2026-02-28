@@ -42,14 +42,11 @@ class TeamController extends BaseController {
             
             $userId = Session::get('user_id');
             // Verifieer dat de user lid is van dit team
-            if ($teamModel->isMember($teamId, $userId)) {
+            if ($teamModel->canAccessTeam($teamId, (int)$userId)) {
                 $roles = $teamModel->getMemberRoles($teamId, $userId);
                 $teamDetails = $teamModel->getTeamDetails($teamId);
                 
-                $roleParts = [];
-                if ($roles['is_coach']) $roleParts[] = 'Coach';
-                if ($roles['is_trainer']) $roleParts[] = 'Trainer';
-                $roleString = implode(' & ', $roleParts);
+                $roleString = Team::roleLabelFromRoles($roles);
 
                 Session::set('current_team', [
                     'id' => $teamId,

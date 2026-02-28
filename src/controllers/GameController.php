@@ -55,9 +55,10 @@ class GameController extends BaseController {
 
     public function delete(): void {
         $this->requireAuth();
+        $isAdmin = (bool)Session::get('is_admin');
         
         // Only admins can delete matches
-        if (!Session::get('is_admin')) {
+        if (!$isAdmin) {
             http_response_code(403);
             die('Geen toegang');
         }
@@ -69,6 +70,12 @@ class GameController extends BaseController {
             if ($id > 0) {
                 $match = $this->gameModel->getById($id);
                 if ($match) {
+                    $teamModel = new Team($this->pdo);
+                    if (!$teamModel->canManageTeam((int)$match['team_id'], (int)Session::get('user_id'), $isAdmin)) {
+                        http_response_code(403);
+                        die('Geen toegang');
+                    }
+
                     $this->gameModel->delete($id);
                     
                     // Log activity
@@ -88,7 +95,7 @@ class GameController extends BaseController {
         $id = (int)($_GET['id'] ?? 0);
         $match = $this->gameModel->getById($id);
 
-        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
             $this->redirect('/matches');
         }
 
@@ -114,7 +121,7 @@ class GameController extends BaseController {
         $id = (int)($_GET['id'] ?? 0);
         $match = $this->gameModel->getById($id);
 
-        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
             $this->redirect('/matches');
         }
 
@@ -144,7 +151,7 @@ class GameController extends BaseController {
         $action = $json['action'] ?? ''; // start, stop
         
         $match = $this->gameModel->getById($matchId);
-        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
             http_response_code(403);
             exit;
         }
@@ -207,7 +214,7 @@ class GameController extends BaseController {
         
         if ($matchId && $type) {
              $match = $this->gameModel->getById($matchId);
-             if ($match && $match['team_id'] === Session::get('current_team')['id']) {
+             if ($this->canAccessMatchInCurrentTeam($match)) {
                  
                  $minute = isset($input['minute']) && $input['minute'] !== '' ? (int)$input['minute'] : null;
                  $period = (int)($input['period'] ?? 1);
@@ -279,7 +286,7 @@ class GameController extends BaseController {
             $scoreAway = (int)$_POST['score_away'];
 
             $match = $this->gameModel->getById($matchId);
-            if ($match && $match['team_id'] === Session::get('current_team')['id']) {
+            if ($this->canAccessMatchInCurrentTeam($match)) {
                 $this->gameModel->updateScore($matchId, $scoreHome, $scoreAway);
                 Session::flash('success', 'Score bijgewerkt.');
             }
@@ -303,7 +310,7 @@ class GameController extends BaseController {
             $evaluation = $_POST['evaluation'] ?? '';
 
             $match = $this->gameModel->getById($matchId);
-            if ($match && $match['team_id'] === Session::get('current_team')['id']) {
+            if ($this->canAccessMatchInCurrentTeam($match)) {
                 $this->gameModel->updateScore($matchId, $scoreHome, $scoreAway);
                 $this->gameModel->updateEvaluation($matchId, $evaluation);
                 Session::flash('success', 'Wedstrijd details bijgewerkt.');
@@ -339,7 +346,7 @@ class GameController extends BaseController {
         $matchId = (int)$data['match_id'];
         $match = $this->gameModel->getById($matchId);
 
-        if (!$match || $match['team_id'] !== Session::get('current_team')['id']) {
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
             http_response_code(403);
             echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
             exit;
@@ -390,5 +397,24 @@ class GameController extends BaseController {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
+    }
+
+    private function canAccessMatchInCurrentTeam(?array $match): bool {
+        if (!$match || !Session::has('user_id') || !Session::has('current_team')) {
+            return false;
+        }
+
+        $teamId = (int)($match['team_id'] ?? 0);
+        $currentTeamId = (int)(Session::get('current_team')['id'] ?? 0);
+        if ($teamId <= 0 || $teamId !== $currentTeamId) {
+            return false;
+        }
+
+        $teamModel = new Team($this->pdo);
+        return $teamModel->canAccessTeam(
+            $teamId,
+            (int)Session::get('user_id'),
+            (bool)Session::get('is_admin')
+        );
     }
 }

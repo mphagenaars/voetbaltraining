@@ -37,12 +37,7 @@ class AuthController extends BaseController {
 
                             if (!empty($teams)) {
                                 $team = $teams[0];
-                                $role = 'player';
-                                if ($team['is_coach']) {
-                                    $role = 'coach';
-                                } elseif ($team['is_trainer']) {
-                                    $role = 'trainer';
-                                }
+                                $role = Team::resolveMemberRole($team);
 
                                 Session::set('current_team', [
                                     'id' => $team['id'],
