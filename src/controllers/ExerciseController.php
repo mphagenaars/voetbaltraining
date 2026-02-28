@@ -25,7 +25,7 @@ class ExerciseController extends BaseController {
         $userTeams = $teamModel->getTeamsForUser((int)Session::get('user_id'));
         $editableTeamIds = [];
         foreach ($userTeams as $team) {
-            if (!empty($team['is_coach']) || !empty($team['is_trainer'])) {
+            if (Team::hasStaffPrivileges($team)) {
                 $editableTeamIds[] = (int)$team['id'];
             }
         }
@@ -175,8 +175,6 @@ class ExerciseController extends BaseController {
         // Log view
         $this->logActivity('view_exercise', $id, $exercise['title']);
 
-        $currentTeamId = Session::has('current_team') ? (int)Session::get('current_team')['id'] : null;
-        $exerciseTeamId = isset($exercise['team_id']) ? (int)$exercise['team_id'] : null;
         $createdBy = isset($exercise['created_by']) ? (int)$exercise['created_by'] : null;
         
         $canEdit = $this->canEditExercise($createdBy, (int)Session::get('user_id'));
@@ -203,19 +201,10 @@ class ExerciseController extends BaseController {
         $fromTrainingId = 0;
         $backUrl = '/exercises';
         if ($requestedFromTrainingId > 0) {
-            $fromTraining = $trainingModel->getById($requestedFromTrainingId);
-            if ($fromTraining) {
-                $fromTrainingTeamId = (int)($fromTraining['team_id'] ?? 0);
+            $fromTrainingTeamId = $trainingModel->getTeamId($requestedFromTrainingId);
+            if ($fromTrainingTeamId !== null) {
                 if ((bool)Session::get('is_admin') || in_array($fromTrainingTeamId, $userTeamIds, true)) {
-                    $exerciseIsInTraining = false;
-                    foreach (($fromTraining['exercises'] ?? []) as $trainingExercise) {
-                        if ((int)($trainingExercise['id'] ?? 0) === $id) {
-                            $exerciseIsInTraining = true;
-                            break;
-                        }
-                    }
-
-                    if ($exerciseIsInTraining) {
+                    if ($trainingModel->hasExercise($requestedFromTrainingId, $id)) {
                         $fromTrainingId = $requestedFromTrainingId;
                         $backUrl = '/trainings/view?id=' . $fromTrainingId . '&team_id=' . $fromTrainingTeamId;
                     }
@@ -228,7 +217,7 @@ class ExerciseController extends BaseController {
 
         foreach ($userTeams as $team) {
             // Check if user is coach or trainer
-            $isStaff = !empty($team['is_coach']) || !empty($team['is_trainer']);
+            $isStaff = Team::hasStaffPrivileges($team);
             
             if ($isStaff || $canAddToTraining) {
                 if ($isStaff) $canAddToTraining = true;
@@ -400,11 +389,11 @@ class ExerciseController extends BaseController {
                     $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
                 }
 
-                $canEditTraining = (bool)Session::get('is_admin');
-                if (!$canEditTraining) {
-                    $roles = $teamModel->getMemberRoles((int)$training['team_id'], (int)Session::get('user_id'));
-                    $canEditTraining = !empty($roles['is_coach']) || !empty($roles['is_trainer']);
-                }
+                $canEditTraining = $teamModel->canManageTeam(
+                    (int)$training['team_id'],
+                    (int)Session::get('user_id'),
+                    (bool)Session::get('is_admin')
+                );
 
                 if (!$canEditTraining) {
                     Session::flash('error', 'Je hebt geen rechten om oefeningen aan deze training toe te voegen.');

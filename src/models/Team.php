@@ -4,6 +4,19 @@ declare(strict_types=1);
 class Team extends Model {
     protected string $table = 'teams';
 
+    public static function hasStaffPrivileges(array $roles): bool {
+        return !empty($roles['is_coach']) || !empty($roles['is_trainer']);
+    }
+
+    public function canManageTeam(int $teamId, int $userId, bool $isAdmin = false): bool {
+        if ($isAdmin) {
+            return true;
+        }
+
+        $roles = $this->getMemberRoles($teamId, $userId);
+        return self::hasStaffPrivileges($roles);
+    }
+
     public function create(string $name, int $creatorId, string $club = '', string $season = ''): int {
         $stmt = $this->pdo->prepare("INSERT INTO teams (name, invite_code, club, season) VALUES (:name, :invite_code, :club, :season)");
         // Genereer een random invite code

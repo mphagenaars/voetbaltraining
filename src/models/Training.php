@@ -104,6 +104,27 @@ class Training extends Model {
         return $stmt->fetchAll();
     }
 
+    public function getTeamId(int $trainingId): ?int {
+        $stmt = $this->pdo->prepare("SELECT team_id FROM trainings WHERE id = :id");
+        $stmt->execute([':id' => $trainingId]);
+        $teamId = $stmt->fetchColumn();
+        return $teamId !== false ? (int)$teamId : null;
+    }
+
+    public function hasExercise(int $trainingId, int $exerciseId): bool {
+        $stmt = $this->pdo->prepare("
+            SELECT 1
+            FROM training_exercises
+            WHERE training_id = :training_id AND exercise_id = :exercise_id
+            LIMIT 1
+        ");
+        $stmt->execute([
+            ':training_id' => $trainingId,
+            ':exercise_id' => $exerciseId
+        ]);
+        return (bool)$stmt->fetchColumn();
+    }
+
     public function getById(int $id): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM trainings WHERE id = :id");
         $stmt->execute([':id' => $id]);
