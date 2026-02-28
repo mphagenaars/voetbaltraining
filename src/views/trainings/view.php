@@ -40,11 +40,14 @@ if (!empty($training['training_date'])) {
 
 <div class="training-timeline">
     <?php foreach ($training['exercises'] as $index => $exercise): ?>
+        <?php $exerciseDetailUrl = '/exercises/view?id=' . (int)$exercise['id'] . '&from_training=' . (int)$training['id']; ?>
         <div class="card" style="margin-bottom: 1rem; border-left: 5px solid var(--primary-color);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <h3 style="margin-top: 0;">
                     <span style="color: var(--primary-color); margin-right: 0.5rem;">#<?= $index + 1 ?></span>
-                    <?= e($exercise['title']) ?>
+                    <a href="<?= e($exerciseDetailUrl) ?>" style="color: inherit; text-decoration: none;">
+                        <?= e($exercise['title']) ?>
+                    </a>
                 </h3>
                 <span style="background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold;">
                     <?= $exercise['training_duration'] ?: $exercise['duration'] ?: '?' ?> min
@@ -66,6 +69,10 @@ if (!empty($training['training_date'])) {
                     <strong>Benodigdheden:</strong> <?= e($exercise['requirements']) ?>
                 </div>
             <?php endif; ?>
+
+            <div style="margin-top: 1rem;">
+                <a href="<?= e($exerciseDetailUrl) ?>" class="btn btn-outline">Bekijk volledige details</a>
+            </div>
         </div>
     <?php endforeach; ?>
 </div>
@@ -100,5 +107,4 @@ function shareTraining() {
     }
 }
 </script>
-
 

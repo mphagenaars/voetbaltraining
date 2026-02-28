@@ -190,11 +190,38 @@ class ExerciseController extends BaseController {
         // Ensure user is logged in for userReaction check, though view expects logged in user based on strict mode? 
         // Actually view() has `if (!Session::has('user_id')) { $this->redirect('/'); }` at top.
         $userReaction = $reactionModel->getUserReaction($id, (int)Session::get('user_id'));
-        
-        // Fetch upcoming trainings for user's teams to populate "Add to Training" modal
-        $trainingModel = new Training($this->pdo);
+
         $teamModel = new Team($this->pdo);
+        $trainingModel = new Training($this->pdo);
         $userTeams = $teamModel->getTeamsForUser((int)Session::get('user_id'));
+        $userTeamIds = [];
+        foreach ($userTeams as $team) {
+            $userTeamIds[] = (int)$team['id'];
+        }
+
+        $requestedFromTrainingId = (int)($_GET['from_training'] ?? 0);
+        $fromTrainingId = 0;
+        $backUrl = '/exercises';
+        if ($requestedFromTrainingId > 0) {
+            $fromTraining = $trainingModel->getById($requestedFromTrainingId);
+            if ($fromTraining) {
+                $fromTrainingTeamId = (int)($fromTraining['team_id'] ?? 0);
+                if ((bool)Session::get('is_admin') || in_array($fromTrainingTeamId, $userTeamIds, true)) {
+                    $exerciseIsInTraining = false;
+                    foreach (($fromTraining['exercises'] ?? []) as $trainingExercise) {
+                        if ((int)($trainingExercise['id'] ?? 0) === $id) {
+                            $exerciseIsInTraining = true;
+                            break;
+                        }
+                    }
+
+                    if ($exerciseIsInTraining) {
+                        $fromTrainingId = $requestedFromTrainingId;
+                        $backUrl = '/trainings/view?id=' . $fromTrainingId . '&team_id=' . $fromTrainingTeamId;
+                    }
+                }
+            }
+        }
         
         $selectableTrainings = [];
         $canAddToTraining = (bool)Session::get('is_admin');
@@ -222,7 +249,9 @@ class ExerciseController extends BaseController {
             'reactionCounts' => $reactionCounts,
             'userReaction' => $userReaction,
             'selectableTrainings' => $selectableTrainings,
-            'canAddToTraining' => $canAddToTraining
+            'canAddToTraining' => $canAddToTraining,
+            'backUrl' => $backUrl,
+            'fromTrainingId' => $fromTrainingId
         ]);
     }
 
@@ -303,6 +332,7 @@ class ExerciseController extends BaseController {
         $this->verifyCsrf();
         
         $exerciseId = (int)($_POST['exercise_id'] ?? 0);
+        $fromTrainingId = (int)($_POST['from_training'] ?? 0);
         $commentText = trim($_POST['comment'] ?? '');
         
         if ($exerciseId > 0 && !empty($commentText)) {
@@ -313,7 +343,7 @@ class ExerciseController extends BaseController {
              Session::flash('error', 'Ongeldige reactie.');
         }
 
-        $this->redirect('/exercises/view?id=' . $exerciseId);
+        $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
     }
 
     public function toggleReaction(): void {
@@ -323,6 +353,7 @@ class ExerciseController extends BaseController {
              $this->verifyCsrf();
              
              $exerciseId = (int)($_POST['exercise_id'] ?? 0);
+             $fromTrainingId = (int)($_POST['from_training'] ?? 0);
              $type = $_POST['type'] ?? '';
              
              if ($exerciseId > 0 && in_array($type, ['rock', 'middle_finger'])) {
@@ -330,8 +361,16 @@ class ExerciseController extends BaseController {
                  $reactionModel->toggle($exerciseId, (int)Session::get('user_id'), $type);
              }
              
-             $this->redirect('/exercises/view?id=' . $exerciseId);
+             $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
         }
+
+        $exerciseId = (int)($_GET['id'] ?? 0);
+        $fromTrainingId = (int)($_GET['from_training'] ?? 0);
+        if ($exerciseId > 0) {
+            $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+        }
+
+        $this->redirect('/exercises');
     }
 
     public function addToTraining(): void {
@@ -341,24 +380,58 @@ class ExerciseController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $exerciseId = (int)$_POST['exercise_id'];
             $trainingId = (int)$_POST['training_id'];
+            $fromTrainingId = (int)($_POST['from_training'] ?? 0);
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
             
             if ($exerciseId && $trainingId) {
+                $exerciseModel = new Exercise($this->pdo);
                 $trainingModel = new Training($this->pdo);
+                $teamModel = new Team($this->pdo);
+
+                $exercise = $exerciseModel->getById($exerciseId);
+                if (!$exercise) {
+                    Session::flash('error', 'Oefening niet gevonden.');
+                    $this->redirect('/exercises');
+                }
+
+                $training = $trainingModel->getById($trainingId);
+                if (!$training) {
+                    Session::flash('error', 'Training niet gevonden.');
+                    $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                }
+
+                $canEditTraining = (bool)Session::get('is_admin');
+                if (!$canEditTraining) {
+                    $roles = $teamModel->getMemberRoles((int)$training['team_id'], (int)Session::get('user_id'));
+                    $canEditTraining = !empty($roles['is_coach']) || !empty($roles['is_trainer']);
+                }
+
+                if (!$canEditTraining) {
+                    Session::flash('error', 'Je hebt geen rechten om oefeningen aan deze training toe te voegen.');
+                    $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                }
                 
-                // Check if training belongs to a team the user can edit
-                // We trust the query fetching logic in view() to only show valid trainings, 
-                // but a deeper permission check is good practice.
-                
-                $currentExercises = $trainingModel->getExercises($trainingId);
-                $sortOrder = count($currentExercises);
-                
-                $trainingModel->addExercise($trainingId, $exerciseId, $sortOrder, $duration);
+                try {
+                    $trainingModel->addExerciseAtEnd($trainingId, $exerciseId, $duration);
+                } catch (PDOException $e) {
+                    Session::flash('error', 'Oefening kon niet worden toegevoegd. Probeer het opnieuw.');
+                    $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                }
                 
                 Session::flash('success', 'Oefening toegevoegd aan training!');
-                $this->redirect('/exercises/view?id=' . $exerciseId);
+                $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
             }
+
+            Session::flash('error', 'Ongeldige oefening of training.');
         }
         $this->redirect('/exercises');
+    }
+
+    private function buildExerciseViewUrl(int $exerciseId, int $fromTrainingId = 0): string {
+        $url = '/exercises/view?id=' . $exerciseId;
+        if ($fromTrainingId > 0) {
+            $url .= '&from_training=' . $fromTrainingId;
+        }
+        return $url;
     }
 }

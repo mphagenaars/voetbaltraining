@@ -290,6 +290,10 @@ try {
     )");
     echo "- Tabel 'training_exercises' aangemaakt (of bestond al).\n";
 
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_training_exercises_training_sort ON training_exercises (training_id, sort_order)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_training_exercises_training_exercise ON training_exercises (training_id, exercise_id)");
+    echo "- Indexen voor 'training_exercises' gecontroleerd/aangemaakt.\n";
+
     // Players tabel
     $db->exec("CREATE TABLE IF NOT EXISTS players (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,6 +1,12 @@
+<?php
+$backUrl = $backUrl ?? '/exercises';
+$backTitle = $backUrl === '/exercises' ? 'Terug' : 'Terug naar training';
+$fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
+?>
+
 <div class="app-bar">
     <div class="app-bar-start">
-        <a href="/exercises" class="btn-icon-round" title="Terug">
+        <a href="<?= e($backUrl) ?>" class="btn-icon-round" title="<?= e($backTitle) ?>">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
         <h1 class="app-bar-title" style="font-size: 1.25rem;"><?= e($exercise['title']) ?></h1>
@@ -146,6 +152,9 @@
         <form method="POST" action="/exercises/react" style="margin: 0;">
             <?= Csrf::renderInput() ?>
             <input type="hidden" name="exercise_id" value="<?= $exercise['id'] ?>">
+            <?php if ($fromTrainingId > 0): ?>
+                <input type="hidden" name="from_training" value="<?= $fromTrainingId ?>">
+            <?php endif; ?>
             <input type="hidden" name="type" value="rock">
             <button type="submit" class="reaction-btn <?= ($userReaction === 'rock') ? 'active' : '' ?>" title="Rock on!">
                 🤘 <span class="count"><?= $reactionCounts['rock'] ?? 0 ?></span>
@@ -155,6 +164,9 @@
         <form method="POST" action="/exercises/react" style="margin: 0;">
             <?= Csrf::renderInput() ?>
             <input type="hidden" name="exercise_id" value="<?= $exercise['id'] ?>">
+            <?php if ($fromTrainingId > 0): ?>
+                <input type="hidden" name="from_training" value="<?= $fromTrainingId ?>">
+            <?php endif; ?>
             <input type="hidden" name="type" value="middle_finger">
             <button type="submit" class="reaction-btn <?= ($userReaction === 'middle_finger') ? 'active' : '' ?>" title="Niks aan">
                 🖕 <span class="count"><?= $reactionCounts['middle_finger'] ?? 0 ?></span>
@@ -185,6 +197,9 @@
         <form method="POST" action="/exercises/comment">
             <?= Csrf::renderInput() ?>
             <input type="hidden" name="exercise_id" value="<?= $exercise['id'] ?>">
+            <?php if ($fromTrainingId > 0): ?>
+                <input type="hidden" name="from_training" value="<?= $fromTrainingId ?>">
+            <?php endif; ?>
             <div class="form-group">
                 <textarea name="comment" rows="3" placeholder="Wat vind je van deze oefening?" required style="width: 100%;"></textarea>
             </div>
@@ -238,6 +253,9 @@
             <form method="POST" action="/exercises/add-to-training">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="exercise_id" value="<?= $exercise['id'] ?>">
+                <?php if ($fromTrainingId > 0): ?>
+                    <input type="hidden" name="from_training" value="<?= $fromTrainingId ?>">
+                <?php endif; ?>
                 
                 <div class="form-group">
                     <label for="training_id">Kies training</label>

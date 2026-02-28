@@ -3,7 +3,9 @@
 /vendor/
 .DS_Store
 .copilot/
-.github/
+.github/*
+!.github/workflows/
+!.github/workflows/**
 PRD
 COPILOT_GUIDLINES.md
 server.log

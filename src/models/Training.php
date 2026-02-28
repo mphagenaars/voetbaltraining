@@ -25,6 +25,34 @@ class Training extends Model {
         ]);
     }
 
+    public function addExerciseAtEnd(int $trainingId, int $exerciseId, ?int $duration = null): void {
+        // Use an immediate transaction so concurrent writers cannot calculate the same sort_order.
+        $startedTransaction = false;
+        if (!$this->pdo->inTransaction()) {
+            $this->pdo->exec('BEGIN IMMEDIATE');
+            $startedTransaction = true;
+        }
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(MAX(sort_order), -1) + 1
+                FROM training_exercises
+                WHERE training_id = :training_id
+            ");
+            $stmt->execute([':training_id' => $trainingId]);
+            $nextSortOrder = (int)$stmt->fetchColumn();
+
+            $this->addExercise($trainingId, $exerciseId, $nextSortOrder, $duration);
+            if ($startedTransaction) {
+                $this->pdo->commit();
+            }
+        } catch (Throwable $e) {
+            if ($startedTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     public function getTrainings(int $teamId, string $orderBy, bool $hidePast): array {
         $sql = "
             SELECT t.*, 
