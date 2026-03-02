@@ -823,24 +823,6 @@ body.page-match-live.live-landscape-blocked {
     margin: 0;
 }
 
-@media (orientation: landscape) and (pointer: coarse) {
-    body.page-match-live .main-header,
-    body.page-match-live .main-footer,
-    body.page-match-live #live-match-root,
-    body.page-match-live #action-modal {
-        display: none !important;
-    }
-
-    body.page-match-live .orientation-lock-overlay {
-        display: flex !important;
-    }
-
-    body.page-match-live main.container {
-        max-width: none;
-        padding: 0;
-    }
-}
-
 /* =========================================
    Utilities
    ========================================= */
@@ -882,3 +864,4 @@ body.page-match-live.live-landscape-blocked {
         overflow-x: auto;
     }
 }
+

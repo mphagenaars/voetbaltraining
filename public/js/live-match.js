@@ -31,15 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return window.innerWidth > window.innerHeight;
     }
 
-    function isTouchDevice() {
-        if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    function shouldEnforcePortraitMode() {
+        if (window.matchMedia && window.matchMedia('(pointer: coarse) and (max-width: 1024px)').matches) {
             return true;
         }
-        return Number(navigator.maxTouchPoints || 0) > 0;
-    }
-
-    function shouldEnforcePortraitMode() {
-        return isTouchDevice();
+        return window.innerWidth <= 1024 && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     }
 
     function updateOrientationOverlay() {
@@ -75,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(orientationRefreshTimeout);
         }
         orientationRefreshTimeout = setTimeout(() => {
-            document.body.classList.toggle('live-touch-device', shouldEnforcePortraitMode());
             enforceLiveViewport();
             updateOrientationOverlay();
             lockPortraitOrientation();
@@ -118,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     enforceLiveViewport();
-    document.body.classList.toggle('live-touch-device', shouldEnforcePortraitMode());
     updateOrientationOverlay();
     lockPortraitOrientation();
     window.addEventListener('orientationchange', refreshViewportAndOrientation);
