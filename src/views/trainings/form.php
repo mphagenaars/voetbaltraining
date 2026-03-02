@@ -62,74 +62,39 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
-        <div>
-            <h3>Bibliotheek</h3>
-            <div class="card" style="max-height: 600px; overflow-y: auto;">
-                <input type="text" id="search-exercises" placeholder="Zoek oefening..." style="margin-bottom: 1rem; width: 100%;">
-                <div id="library-list">
-                    <?php foreach ($allExercises as $exercise): ?>
-                        <div class="exercise-item" data-id="<?= $exercise['id'] ?>" data-title="<?= e($exercise['title']) ?>" data-duration="<?= $exercise['duration'] ?? 0 ?>" style="padding: 0.5rem; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                            <span><?= e($exercise['title']) ?></span>
-                            <span class="btn btn-sm btn-outline">+</span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+    <div style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+            <h3 style="margin: 0;">Geselecteerde Oefeningen</h3>
+            <?php if ($isEdit): ?>
+                <a href="/exercises?select_for_training=<?= (int)$training['id'] ?>" class="btn btn-outline">Kies oefeningen in bibliotheek</a>
+            <?php else: ?>
+                <span class="text-muted" style="font-size: 0.95rem;">Sla eerst de training op om oefeningen via de bibliotheek te kiezen.</span>
+            <?php endif; ?>
         </div>
-
-        <div>
-            <h3>Geselecteerde Oefeningen</h3>
-            <div class="card" id="selected-list" style="min-height: 200px;">
-                <p class="text-muted" id="empty-msg" style="<?= !empty($currentExercises) ? 'display: none;' : '' ?>">Klik op een oefening om toe te voegen.</p>
-                <?php foreach ($currentExercises as $ex): ?>
-                    <div class="selected-item" style="padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #fff;">
-                        <div class="drag-handle" title="Sleep om te sorteren">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                        </div>
-                        <div style="flex-grow: 1;">
-                            <div style="font-weight: 600; margin-bottom: 0.35rem;"><?= e($ex['title']) ?></div>
-                            <textarea name="goals[]" rows="2" placeholder="Doel van deze oefening binnen deze training" style="width: 100%; resize: vertical;"><?= e($ex['training_goal'] ?? '') ?></textarea>
-                        </div>
-                        <input type="hidden" name="exercises[]" value="<?= $ex['id'] ?>">
-                        <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min" title="Duur in minuten">
-                        <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
+        <div class="card" id="selected-list" style="min-height: 200px;">
+            <p class="text-muted" id="empty-msg" style="<?= !empty($currentExercises) ? 'display: none;' : '' ?>">Nog geen oefeningen gekozen.</p>
+            <?php foreach ($currentExercises as $ex): ?>
+                <div class="selected-item" style="padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #fff;">
+                    <div class="drag-handle" title="Sleep om te sorteren">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                     </div>
-                <?php endforeach; ?>
-            </div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: 600; margin-bottom: 0.35rem;"><?= e($ex['title']) ?></div>
+                        <textarea name="goals[]" rows="2" placeholder="Doel van deze oefening binnen deze training" style="width: 100%; resize: vertical;"><?= e($ex['training_goal'] ?? '') ?></textarea>
+                    </div>
+                    <input type="hidden" name="exercises[]" value="<?= $ex['id'] ?>">
+                    <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min" title="Duur in minuten">
+                    <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
+                </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </form>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const libraryList = document.getElementById('library-list');
     const selectedList = document.getElementById('selected-list');
     const emptyMsg = document.getElementById('empty-msg');
-    const searchInput = document.getElementById('search-exercises');
-    const form = document.getElementById('training-form');
-
-    // Search functionality
-    searchInput.addEventListener('input', function(e) {
-        const term = e.target.value.toLowerCase();
-        const items = libraryList.querySelectorAll('.exercise-item');
-        items.forEach(item => {
-            const title = item.dataset.title.toLowerCase();
-            item.style.display = title.includes(term) ? 'flex' : 'none';
-        });
-    });
-
-    // Add exercise
-    libraryList.addEventListener('click', function(e) {
-        const item = e.target.closest('.exercise-item');
-        if (!item) return;
-
-        const id = item.dataset.id;
-        const title = item.dataset.title;
-        const defaultDuration = item.dataset.duration;
-
-        addExerciseToTraining(id, title, defaultDuration);
-    });
 
     // Handle clicks for remove
     selectedList.addEventListener('click', function(e) {
@@ -208,32 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.removeEventListener('touchend', handleDragEnd);
     }
 
-    function addExerciseToTraining(id, title, duration) {
-        if (emptyMsg) emptyMsg.style.display = 'none';
-
-        const div = document.createElement('div');
-        div.className = 'selected-item';
-        div.style.cssText = 'padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #fff;';
-
-        div.innerHTML = `
-            <div class="drag-handle" title="Sleep om te sorteren">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </div>
-            <div style="flex-grow: 1;">
-                <div style="font-weight: 600; margin-bottom: 0.35rem;">${title}</div>
-                <textarea name="goals[]" rows="2" placeholder="Doel van deze oefening binnen deze training" style="width: 100%; resize: vertical;"></textarea>
-            </div>
-            <input type="hidden" name="exercises[]" value="${id}">
-            <input type="number" name="durations[]" value="${duration}" style="width: 60px; padding: 0.25rem;" placeholder="min" title="Duur in minuten">
-            <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
-        `;
-
-        selectedList.appendChild(div);
-    }
-
     function checkEmpty() {
-        if (selectedList.children.length === 0 || (selectedList.children.length === 1 && selectedList.children[0].id === 'empty-msg')) {
+        const hasItems = selectedList.querySelectorAll('.selected-item').length > 0;
+        if (!hasItems) {
             if (emptyMsg) emptyMsg.style.display = 'block';
+        } else if (emptyMsg) {
+            emptyMsg.style.display = 'none';
         }
     }
 });

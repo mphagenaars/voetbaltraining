@@ -1,11 +1,23 @@
 <div class="app-bar">
     <div class="app-bar-start">
-        <a href="/" class="btn-icon-round" title="Terug">
+        <a href="<?= !empty($selectForTrainingId) ? '/trainings/edit?id=' . (int)$selectForTrainingId : '/' ?>" class="btn-icon-round" title="Terug">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
         <h1 class="app-bar-title">Oefenstof</h1>
     </div>
 </div>
+
+<?php if (!empty($selectForTraining)): ?>
+    <div class="card" style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div>
+                <strong>Selecteer oefeningen voor training:</strong>
+                <?= e($selectForTraining['title'] ?? '') ?>
+            </div>
+            <a href="/trainings/edit?id=<?= (int)$selectForTrainingId ?>" class="btn btn-outline">Terug naar training</a>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="card" style="margin-bottom: 1rem;">
     <?php
@@ -127,6 +139,17 @@
                 </div>
 
                 <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;" onclick="event.stopPropagation();">
+                    <?php if (!empty($selectForTrainingId)): ?>
+                        <form method="POST" action="/exercises/add-to-training" style="margin: 0;">
+                            <?= Csrf::renderInput() ?>
+                            <input type="hidden" name="exercise_id" value="<?= (int)$exercise['id'] ?>">
+                            <input type="hidden" name="training_id" value="<?= (int)$selectForTrainingId ?>">
+                            <input type="hidden" name="from_training" value="<?= (int)$selectForTrainingId ?>">
+                            <input type="hidden" name="duration" value="<?= !empty($exercise['duration']) ? (int)$exercise['duration'] : '' ?>">
+                            <input type="hidden" name="return_to" value="<?= e($currentUrl ?? '/exercises') ?>">
+                            <button type="submit" class="btn btn-outline">Toevoegen</button>
+                        </form>
+                    <?php endif; ?>
                     <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bekijken">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </a>

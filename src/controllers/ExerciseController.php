@@ -10,6 +10,7 @@ class ExerciseController extends BaseController {
         $teamTask = $_GET['team_task'] ?? null;
         $trainingObjective = $_GET['training_objective'] ?? null;
         $footballAction = $_GET['football_action'] ?? null;
+        $requestedTrainingId = (int)($_GET['select_for_training'] ?? 0);
 
         if ($teamTask === '') $teamTask = null;
         if ($trainingObjective === '') $trainingObjective = null;
@@ -30,6 +31,20 @@ class ExerciseController extends BaseController {
             }
         }
 
+        $selectForTrainingId = 0;
+        $selectForTraining = null;
+        if ($requestedTrainingId > 0) {
+            $trainingModel = new Training($this->pdo);
+            $training = $trainingModel->getById($requestedTrainingId);
+
+            if ($training && $teamModel->canManageTeam((int)$training['team_id'], (int)Session::get('user_id'), (bool)Session::get('is_admin'))) {
+                $selectForTrainingId = $requestedTrainingId;
+                $selectForTraining = $training;
+            } else {
+                Session::flash('error', 'Je kunt geen oefeningen toevoegen aan deze training.');
+            }
+        }
+
         View::render('exercises/index', [
             'exercises' => $exercises, 
             'query' => $query, 
@@ -38,6 +53,9 @@ class ExerciseController extends BaseController {
             'footballAction' => $footballAction,
             'currentTeamId' => $currentTeamId,
             'editableTeamIds' => $editableTeamIds,
+            'selectForTrainingId' => $selectForTrainingId,
+            'selectForTraining' => $selectForTraining,
+            'currentUrl' => $_SERVER['REQUEST_URI'] ?? '/exercises',
             'pageTitle' => 'Oefenstof - Trainer Bobby'
         ]);
     }
@@ -368,6 +386,7 @@ class ExerciseController extends BaseController {
             $exerciseId = (int)$_POST['exercise_id'];
             $trainingId = (int)$_POST['training_id'];
             $fromTrainingId = (int)($_POST['from_training'] ?? 0);
+            $returnTo = $this->sanitizeReturnTo((string)($_POST['return_to'] ?? ''));
             $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
             
             if ($exerciseId && $trainingId) {
@@ -378,13 +397,13 @@ class ExerciseController extends BaseController {
                 $exercise = $exerciseModel->getById($exerciseId);
                 if (!$exercise) {
                     Session::flash('error', 'Oefening niet gevonden.');
-                    $this->redirect('/exercises');
+                    $this->redirect($returnTo ?? '/exercises');
                 }
 
                 $training = $trainingModel->getById($trainingId);
                 if (!$training) {
                     Session::flash('error', 'Training niet gevonden.');
-                    $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                    $this->redirect($returnTo ?? $this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
                 }
 
                 $canEditTraining = $teamModel->canManageTeam(
@@ -395,23 +414,34 @@ class ExerciseController extends BaseController {
 
                 if (!$canEditTraining) {
                     Session::flash('error', 'Je hebt geen rechten om oefeningen aan deze training toe te voegen.');
-                    $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                    $this->redirect($returnTo ?? $this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
                 }
                 
                 try {
                     $trainingModel->addExerciseAtEnd($trainingId, $exerciseId, $duration);
                 } catch (PDOException $e) {
                     Session::flash('error', 'Oefening kon niet worden toegevoegd. Probeer het opnieuw.');
-                    $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                    $this->redirect($returnTo ?? $this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
                 }
                 
                 Session::flash('success', 'Oefening toegevoegd aan training!');
-                $this->redirect($this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
+                $this->redirect($returnTo ?? $this->buildExerciseViewUrl($exerciseId, $fromTrainingId));
             }
 
             Session::flash('error', 'Ongeldige oefening of training.');
         }
         $this->redirect('/exercises');
+    }
+
+    private function sanitizeReturnTo(string $returnTo): ?string {
+        $trimmed = trim($returnTo);
+        if ($trimmed === '') {
+            return null;
+        }
+        if (str_starts_with($trimmed, '/') && !str_starts_with($trimmed, '//')) {
+            return $trimmed;
+        }
+        return null;
     }
 
     private function buildExerciseViewUrl(int $exerciseId, int $fromTrainingId = 0): string {
