@@ -56,7 +56,7 @@
             Wedstrijden per speler = totaal teamwedstrijden - aantal keer afwezig.
         </p>
         <div class="table-responsive">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem; table-layout: fixed;">
+            <table class="report-table" style="width: 100%; border-collapse: collapse; font-size: 0.95rem; table-layout: fixed;">
                 <colgroup>
                     <col style="width: 44%;">
                     <col style="width: 14%;">
@@ -67,19 +67,29 @@
                 <thead>
                     <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
                         <th style="padding: 0.6rem 0.4rem;">
-                            <a href="<?= e($buildSortUrl('name')) ?>" style="color: inherit; text-decoration: none;">Speler<?= $sortIndicator('name') ?></a>
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('name')) ?>" title="Speler" style="color: inherit; text-decoration: none;">
+                                <span>Speler</span><?= $sortIndicator('name') ?>
+                            </a>
                         </th>
                         <th style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a href="<?= e($buildSortUrl('matches')) ?>" style="color: inherit; text-decoration: none;">Wedstrijden<?= $sortIndicator('matches') ?></a>
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('matches')) ?>" title="Wedstrijden" style="color: inherit; text-decoration: none;">
+                                <span class="report-label-full">Wedstrijden</span><span class="report-label-short">Weds.</span><?= $sortIndicator('matches') ?>
+                            </a>
                         </th>
                         <th style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a href="<?= e($buildSortUrl('absent')) ?>" style="color: inherit; text-decoration: none;">Afwezig<?= $sortIndicator('absent') ?></a>
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('absent')) ?>" title="Afwezig" style="color: inherit; text-decoration: none;">
+                                <span class="report-label-full">Afwezig</span><span class="report-label-short">Afw.</span><?= $sortIndicator('absent') ?>
+                            </a>
                         </th>
                         <th style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a href="<?= e($buildSortUrl('starts')) ?>" style="color: inherit; text-decoration: none;">Basis<?= $sortIndicator('starts') ?></a>
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('starts')) ?>" title="Basis" style="color: inherit; text-decoration: none;">
+                                <span class="report-label-full">Basis</span><span class="report-label-short">Bas.</span><?= $sortIndicator('starts') ?>
+                            </a>
                         </th>
                         <th style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a href="<?= e($buildSortUrl('goals')) ?>" style="color: inherit; text-decoration: none;">Goals<?= $sortIndicator('goals') ?></a>
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('goals')) ?>" title="Goals" style="color: inherit; text-decoration: none;">
+                                <span class="report-label-full">Goals</span><span class="report-label-short">Gls.</span><?= $sortIndicator('goals') ?>
+                            </a>
                         </th>
                     </tr>
                 </thead>
