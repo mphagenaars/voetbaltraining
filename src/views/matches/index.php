@@ -6,6 +6,13 @@
         <h1 class="app-bar-title">Wedstrijden</h1>
     </div>
     <div class="app-bar-actions">
+        <a href="/matches/reports" class="btn-icon-round" title="Rapportage">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+        </a>
         <?php $nextFilter = ($currentFilter ?? 'all') === 'all' ? 'upcoming' : 'all'; ?>
         <a href="/matches?filter=<?= $nextFilter ?>" class="btn-icon-round" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg gespeelde wedstrijden' : 'Toon alle wedstrijden' ?>" style="<?= ($currentFilter ?? 'all') === 'upcoming' ? 'color: var(--primary); background-color: rgba(46, 125, 50, 0.1);' : '' ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

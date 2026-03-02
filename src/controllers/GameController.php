@@ -53,6 +53,33 @@ class GameController extends BaseController {
         View::render('matches/create', ['pageTitle' => 'Nieuwe Wedstrijd - Trainer Bobby']);
     }
 
+    public function reports(): void {
+        $this->requireTeamContext();
+
+        $teamId = (int)Session::get('current_team')['id'];
+        $allowedSort = ['name', 'matches', 'absent', 'starts', 'goals'];
+        $sort = strtolower((string)($_GET['sort'] ?? 'matches'));
+        $dir = strtolower((string)($_GET['dir'] ?? 'desc'));
+
+        if (!in_array($sort, $allowedSort, true)) {
+            $sort = 'matches';
+        }
+        if (!in_array($dir, ['asc', 'desc'], true)) {
+            $dir = 'desc';
+        }
+
+        $playerStats = $this->gameModel->getPlayerReportStats($teamId, $sort, $dir);
+        $summary = $this->gameModel->getReportSummary($teamId);
+
+        View::render('matches/reports', [
+            'playerStats' => $playerStats,
+            'summary' => $summary,
+            'currentSort' => $sort,
+            'currentDir' => $dir,
+            'pageTitle' => 'Wedstrijd Rapportage - Trainer Bobby'
+        ]);
+    }
+
     public function delete(): void {
         $this->requireAuth();
         $isAdmin = (bool)Session::get('is_admin');

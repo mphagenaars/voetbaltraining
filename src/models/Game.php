@@ -106,6 +106,98 @@ class Game extends Model {
         $stmt->execute([':match_id' => $matchId]);
         return $stmt->fetchAll();
     }
+
+    public function getPlayerReportStats(int $teamId, string $sortBy = 'matches', string $sortDir = 'desc'): array {
+        $sortMap = [
+            'name' => 'p.name',
+            'matches' => 'matches_played',
+            'absent' => 'absent_matches',
+            'starts' => 'starts',
+            'goals' => 'goals',
+        ];
+
+        $sortColumn = $sortMap[$sortBy] ?? 'matches_played';
+        $direction = strtolower($sortDir) === 'asc' ? 'ASC' : 'DESC';
+        $orderBy = $sortColumn . ' ' . $direction;
+        if ($sortColumn !== 'p.name') {
+            $orderBy .= ', p.name ASC';
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT
+                p.id,
+                p.name,
+                COALESCE(start_stats.starts, 0) AS starts,
+                COALESCE(goal_stats.goals, 0) AS goals,
+                COALESCE(absent_stats.absent_matches, 0) AS absent_matches,
+                MAX(
+                    (SELECT COUNT(*) FROM matches WHERE team_id = :team_id_total_matches) - COALESCE(absent_stats.absent_matches, 0),
+                    0
+                ) AS matches_played
+            FROM players p
+            LEFT JOIN (
+                SELECT mp.player_id, COUNT(*) AS starts
+                FROM match_players mp
+                JOIN matches m ON m.id = mp.match_id
+                WHERE m.team_id = :team_id_start
+                  AND mp.is_substitute = 0
+                  AND mp.is_absent = 0
+                GROUP BY mp.player_id
+            ) start_stats ON start_stats.player_id = p.id
+            LEFT JOIN (
+                SELECT me.player_id, COUNT(*) AS goals
+                FROM match_events me
+                JOIN matches m ON m.id = me.match_id
+                WHERE m.team_id = :team_id_goal
+                  AND me.type = 'goal'
+                  AND me.player_id IS NOT NULL
+                GROUP BY me.player_id
+            ) goal_stats ON goal_stats.player_id = p.id
+            LEFT JOIN (
+                SELECT mp.player_id, COUNT(*) AS absent_matches
+                FROM match_players mp
+                JOIN matches m ON m.id = mp.match_id
+                WHERE m.team_id = :team_id_absent
+                  AND mp.is_absent = 1
+                GROUP BY mp.player_id
+            ) absent_stats ON absent_stats.player_id = p.id
+            WHERE p.team_id = :team_id_player
+            ORDER BY {$orderBy}
+        ");
+
+        $stmt->execute([
+            ':team_id_start' => $teamId,
+            ':team_id_goal' => $teamId,
+            ':team_id_absent' => $teamId,
+            ':team_id_total_matches' => $teamId,
+            ':team_id_player' => $teamId
+        ]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function getReportSummary(int $teamId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                (SELECT COUNT(*) FROM matches WHERE team_id = :team_id_matches) AS total_matches,
+                (
+                    SELECT COUNT(*)
+                    FROM match_events me
+                    JOIN matches m ON m.id = me.match_id
+                    WHERE m.team_id = :team_id_goals
+                      AND me.type = 'goal'
+                      AND me.player_id IS NOT NULL
+                ) AS total_goals
+        ");
+
+        $stmt->execute([
+            ':team_id_matches' => $teamId,
+            ':team_id_goals' => $teamId
+        ]);
+
+        $summary = $stmt->fetch();
+        return $summary ?: ['total_matches' => 0, 'total_goals' => 0];
+    }
     
     public function getTimerState(int $matchId): array {
         $stmt = $this->pdo->prepare("SELECT * FROM match_events WHERE match_id = :match_id AND type = 'whistle' ORDER BY created_at ASC");
