@@ -1,4 +1,4 @@
-<div class="container" style="max-width: 600px; margin: 0 auto; padding-top: 1rem;">
+<div id="live-match-root" class="container" style="max-width: 600px; margin: 0 auto; padding-top: 1rem;">
     <!-- Data for JS -->
     <input type="hidden" id="match_id" value="<?= $match['id'] ?>">
     <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
@@ -133,6 +133,13 @@
                 <button type="submit" class="btn btn-primary" style="flex: 1;">Opslaan</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="orientation-overlay" class="orientation-lock-overlay" aria-hidden="true">
+    <div class="orientation-lock-overlay-card">
+        <h2>Live modus in portret</h2>
+        <p>Draai je telefoon terug naar portretstand om verder te gaan.</p>
     </div>
 </div>
 

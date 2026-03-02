@@ -136,6 +136,8 @@ class GameController extends BaseController {
             'matchPlayers' => $matchPlayers,
             'events' => $events,
             'timerState' => $timerState,
+            'bodyClass' => 'page-match-live',
+            'viewportContent' => 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
             'pageTitle' => 'Live Wedstrijd - Trainer Bobby'
         ]);
     }

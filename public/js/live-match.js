@@ -7,10 +7,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('action-modal');
     const actionForm = document.getElementById('action-form');
     const timelineList = document.getElementById('timeline-list');
+    const orientationOverlay = document.getElementById('orientation-overlay');
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
     
     // Initial State
     let state = JSON.parse(document.getElementById('initial_timer_state').value);
     let timerInterval = null;
+    let orientationRefreshTimeout = null;
+
+    const liveViewportContent = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+
+    function enforceLiveViewport() {
+        if (!viewportMeta) return;
+        if (viewportMeta.getAttribute('content') !== liveViewportContent) {
+            viewportMeta.setAttribute('content', liveViewportContent);
+        }
+    }
+
+    function isLandscapeMode() {
+        if (window.matchMedia) {
+            return window.matchMedia('(orientation: landscape)').matches;
+        }
+        return window.innerWidth > window.innerHeight;
+    }
+
+    function shouldEnforcePortraitMode() {
+        if (window.matchMedia && window.matchMedia('(pointer: coarse) and (max-width: 1024px)').matches) {
+            return true;
+        }
+        return window.innerWidth <= 1024 && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    }
+
+    function updateOrientationOverlay() {
+        if (!orientationOverlay) return;
+        if (!shouldEnforcePortraitMode()) {
+            orientationOverlay.classList.remove('is-visible');
+            orientationOverlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('live-landscape-blocked');
+            return;
+        }
+        const landscape = isLandscapeMode();
+        orientationOverlay.classList.toggle('is-visible', landscape);
+        orientationOverlay.setAttribute('aria-hidden', landscape ? 'false' : 'true');
+        document.body.classList.toggle('live-landscape-blocked', landscape);
+    }
+
+    async function lockPortraitOrientation() {
+        if (!shouldEnforcePortraitMode()) {
+            return;
+        }
+        if (!screen.orientation || typeof screen.orientation.lock !== 'function') {
+            return;
+        }
+        try {
+            await screen.orientation.lock('portrait');
+        } catch (error) {
+            // Some browsers only allow this in fullscreen/PWA mode.
+        }
+    }
+
+    function refreshViewportAndOrientation() {
+        if (orientationRefreshTimeout) {
+            clearTimeout(orientationRefreshTimeout);
+        }
+        orientationRefreshTimeout = setTimeout(() => {
+            enforceLiveViewport();
+            updateOrientationOverlay();
+            lockPortraitOrientation();
+        }, 120);
+    }
 
     function formatTime(seconds) {
         const m = Math.floor(seconds / 60);
@@ -47,8 +112,22 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTimerUI();
     }
 
+    enforceLiveViewport();
+    updateOrientationOverlay();
+    lockPortraitOrientation();
+    window.addEventListener('orientationchange', refreshViewportAndOrientation);
+    window.addEventListener('resize', refreshViewportAndOrientation);
+    window.addEventListener('pageshow', refreshViewportAndOrientation);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', refreshViewportAndOrientation);
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            refreshViewportAndOrientation();
+        }
+    });
+
     timerBtn.addEventListener('click', () => {
-        const text = timerBtn.textContent;
         // Optimization: immediately toggle UI state for responsiveness? 
         // Better wait for server confirmation to avoid de-sync.
         

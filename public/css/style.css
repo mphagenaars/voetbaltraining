@@ -777,6 +777,53 @@ select:focus {
 }
 
 /* =========================================
+   Module: Live Match
+   ========================================= */
+body.page-match-live {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body.page-match-live.live-landscape-blocked {
+    overflow: hidden;
+}
+
+.orientation-lock-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(20, 20, 20, 0.92);
+    color: #ffffff;
+}
+
+.orientation-lock-overlay.is-visible {
+    display: flex;
+}
+
+.orientation-lock-overlay-card {
+    width: 100%;
+    max-width: 22rem;
+    padding: 1.25rem;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.orientation-lock-overlay-card h2 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.orientation-lock-overlay-card p {
+    margin: 0;
+}
+
+/* =========================================
    Utilities
    ========================================= */
 .text-center { text-align: center; }
@@ -817,5 +864,4 @@ select:focus {
         overflow-x: auto;
     }
 }
-
 
