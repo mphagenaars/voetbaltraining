@@ -138,6 +138,7 @@ function createSchema(PDO $pdo): void {
             exercise_id INTEGER NOT NULL,
             sort_order INTEGER NOT NULL,
             duration INTEGER,
+            goal TEXT,
             FOREIGN KEY (training_id) REFERENCES trainings(id) ON DELETE CASCADE,
             FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
         )

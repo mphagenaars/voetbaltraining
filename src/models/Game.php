@@ -114,6 +114,7 @@ class Game extends Model {
             'absent' => 'absent_matches',
             'starts' => 'starts',
             'goals' => 'goals',
+            'keepers' => 'keeper_selections',
         ];
 
         $sortColumn = $sortMap[$sortBy] ?? 'matches_played';
@@ -130,6 +131,7 @@ class Game extends Model {
                 COALESCE(start_stats.starts, 0) AS starts,
                 COALESCE(goal_stats.goals, 0) AS goals,
                 COALESCE(absent_stats.absent_matches, 0) AS absent_matches,
+                COALESCE(keeper_stats.keeper_selections, 0) AS keeper_selections,
                 MAX(
                     (SELECT COUNT(*) FROM matches WHERE team_id = :team_id_total_matches) - COALESCE(absent_stats.absent_matches, 0),
                     0
@@ -161,6 +163,14 @@ class Game extends Model {
                   AND mp.is_absent = 1
                 GROUP BY mp.player_id
             ) absent_stats ON absent_stats.player_id = p.id
+            LEFT JOIN (
+                SELECT mp.player_id, COUNT(*) AS keeper_selections
+                FROM match_players mp
+                JOIN matches m ON m.id = mp.match_id
+                WHERE m.team_id = :team_id_keeper
+                  AND mp.is_keeper = 1
+                GROUP BY mp.player_id
+            ) keeper_stats ON keeper_stats.player_id = p.id
             WHERE p.team_id = :team_id_player
             ORDER BY {$orderBy}
         ");
@@ -169,6 +179,7 @@ class Game extends Model {
             ':team_id_start' => $teamId,
             ':team_id_goal' => $teamId,
             ':team_id_absent' => $teamId,
+            ':team_id_keeper' => $teamId,
             ':team_id_total_matches' => $teamId,
             ':team_id_player' => $teamId
         ]);

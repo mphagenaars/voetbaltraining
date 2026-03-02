@@ -40,12 +40,13 @@ class TrainingController extends BaseController {
             $description = $_POST['description'] ?? '';
             $selectedExercises = $_POST['exercises'] ?? []; // Array of exercise IDs
             $durations = $_POST['durations'] ?? []; // Array of durations keyed by exercise ID (or index)
+            $goals = $_POST['goals'] ?? []; // Array of goals keyed by selected exercise index
 
             if (!empty($trainingDate)) {
                 $trainingId = $this->trainingModel->create(Session::get('current_team')['id'], $title, $description, $trainingDate);
 
                 // Add exercises
-                $exercisesData = $this->mapExercisesWithDuration($selectedExercises, $durations);
+                $exercisesData = $this->mapExercisesWithDuration($selectedExercises, $durations, $goals);
                 $this->trainingModel->updateExercises($trainingId, $exercisesData);
 
                 // Log activity
@@ -81,11 +82,12 @@ class TrainingController extends BaseController {
             $description = $_POST['description'] ?? '';
             $selectedExercises = $_POST['exercises'] ?? [];
             $durations = $_POST['durations'] ?? [];
+            $goals = $_POST['goals'] ?? [];
 
             if (!empty($trainingDate)) {
                 $this->trainingModel->update($id, $title, $description, $trainingDate);
                 
-                $exercisesData = $this->mapExercisesWithDuration($selectedExercises, $durations);
+                $exercisesData = $this->mapExercisesWithDuration($selectedExercises, $durations, $goals);
                 $this->trainingModel->updateExercises($id, $exercisesData);
                 
                 // Log activity
@@ -176,13 +178,15 @@ class TrainingController extends BaseController {
         $this->redirect('/trainings');
     }
 
-    private function mapExercisesWithDuration(array $selectedExercises, array $durations): array {
+    private function mapExercisesWithDuration(array $selectedExercises, array $durations, array $goals = []): array {
         $exercisesData = [];
         if (is_array($selectedExercises)) {
             foreach ($selectedExercises as $index => $exerciseId) {
+                $goal = trim((string)($goals[$index] ?? ''));
                 $exercisesData[] = [
                     'id' => (int)$exerciseId,
-                    'duration' => !empty($durations[$index]) ? (int)$durations[$index] : null
+                    'duration' => !empty($durations[$index]) ? (int)$durations[$index] : null,
+                    'goal' => $goal !== '' ? $goal : null
                 ];
             }
         }

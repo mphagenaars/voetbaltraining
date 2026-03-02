@@ -36,6 +36,7 @@
                 'absent' => 'desc',
                 'starts' => 'desc',
                 'goals' => 'desc',
+                'keepers' => 'desc',
             ];
 
             $buildSortUrl = static function(string $column) use ($currentSort, $currentDir, $defaultDirs): string {
@@ -58,11 +59,12 @@
         <div class="table-responsive">
             <table class="report-table" style="width: 100%; border-collapse: collapse; font-size: 0.95rem; table-layout: fixed;">
                 <colgroup>
-                    <col style="width: 44%;">
-                    <col style="width: 14%;">
-                    <col style="width: 14%;">
-                    <col style="width: 14%;">
-                    <col style="width: 14%;">
+                    <col style="width: 40%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
                 </colgroup>
                 <thead>
                     <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
@@ -91,6 +93,11 @@
                                 <span class="report-label-full">Goals</span><span class="report-label-short">Gls.</span><?= $sortIndicator('goals') ?>
                             </a>
                         </th>
+                        <th style="padding: 0.6rem 0.4rem; text-align: right;">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('keepers')) ?>" title="Aangewezen keeper" style="color: inherit; text-decoration: none;">
+                                <span class="report-label-full">Keeper</span><span class="report-label-short">gk</span><?= $sortIndicator('keepers') ?>
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,6 +110,7 @@
                             <td style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['absent_matches'] ?></td>
                             <td style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['starts'] ?></td>
                             <td style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['goals'] ?></td>
+                            <td style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['keeper_selections'] ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

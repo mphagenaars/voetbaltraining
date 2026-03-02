@@ -15,13 +15,14 @@ class Training extends Model {
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function addExercise(int $trainingId, int $exerciseId, int $sortOrder, ?int $duration = null): void {
-        $stmt = $this->pdo->prepare("INSERT INTO training_exercises (training_id, exercise_id, sort_order, duration) VALUES (:training_id, :exercise_id, :sort_order, :duration)");
+    public function addExercise(int $trainingId, int $exerciseId, int $sortOrder, ?int $duration = null, ?string $goal = null): void {
+        $stmt = $this->pdo->prepare("INSERT INTO training_exercises (training_id, exercise_id, sort_order, duration, goal) VALUES (:training_id, :exercise_id, :sort_order, :duration, :goal)");
         $stmt->execute([
             ':training_id' => $trainingId,
             ':exercise_id' => $exerciseId,
             ':sort_order' => $sortOrder,
-            ':duration' => $duration
+            ':duration' => $duration,
+            ':goal' => $goal
         ]);
     }
 
@@ -41,7 +42,7 @@ class Training extends Model {
             $stmt->execute([':training_id' => $trainingId]);
             $nextSortOrder = (int)$stmt->fetchColumn();
 
-            $this->addExercise($trainingId, $exerciseId, $nextSortOrder, $duration);
+            $this->addExercise($trainingId, $exerciseId, $nextSortOrder, $duration, null);
             if ($startedTransaction) {
                 $this->pdo->commit();
             }
@@ -94,7 +95,7 @@ class Training extends Model {
 
     public function getExercises(int $trainingId): array {
         $stmt = $this->pdo->prepare("
-            SELECT e.*, te.sort_order, te.duration as training_duration 
+            SELECT e.*, te.sort_order, te.duration as training_duration, te.goal as training_goal
             FROM exercises e
             JOIN training_exercises te ON e.id = te.exercise_id
             WHERE te.training_id = :id
@@ -136,7 +137,7 @@ class Training extends Model {
 
         // Get exercises
         $stmt = $this->pdo->prepare("
-            SELECT e.*, te.sort_order, te.duration as training_duration 
+            SELECT e.*, te.sort_order, te.duration as training_duration, te.goal as training_goal
             FROM exercises e
             JOIN training_exercises te ON e.id = te.exercise_id
             WHERE te.training_id = :id
@@ -159,19 +160,20 @@ class Training extends Model {
     }
 
     public function updateExercises(int $trainingId, array $exercises): void {
-        // $exercises is array of ['id' => exercise_id, 'duration' => duration]
+        // $exercises is array of ['id' => exercise_id, 'duration' => duration, 'goal' => goal]
         
         $this->replaceMany(
             "DELETE FROM training_exercises WHERE training_id = :training_id",
             [':training_id' => $trainingId],
-            "INSERT INTO training_exercises (training_id, exercise_id, sort_order, duration) VALUES (:training_id, :exercise_id, :sort_order, :duration)",
+            "INSERT INTO training_exercises (training_id, exercise_id, sort_order, duration, goal) VALUES (:training_id, :exercise_id, :sort_order, :duration, :goal)",
             $exercises,
             function($ex, $index) use ($trainingId) {
                 return [
                     ':training_id' => $trainingId,
                     ':exercise_id' => $ex['id'],
                     ':sort_order' => $index,
-                    ':duration' => !empty($ex['duration']) ? $ex['duration'] : null
+                    ':duration' => !empty($ex['duration']) ? $ex['duration'] : null,
+                    ':goal' => !empty($ex['goal']) ? $ex['goal'] : null
                 ];
             }
         );

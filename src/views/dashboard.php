@@ -4,13 +4,15 @@
     </div>
 </div>
 
+<?php $actionCardChevron = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>'; ?>
+
 <h2>Oefenstof</h2>
 <a href="/exercises" class="action-card">
     <div>
         <h3>Database</h3>
         <p>Toegang tot de centrale database met oefenstof.</p>
     </div>
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    <?= $actionCardChevron ?>
 </a>
 
 <?php if (isset($_SESSION['current_team'])): ?>
@@ -36,32 +38,28 @@
                     <h3>Spelers</h3>
                     <p>Beheer de spelerslijst en gegevens.</p>
                 </div>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <?= $actionCardChevron ?>
             </a>
             <a href="/trainings" class="action-card" style="margin-bottom: 0;">
                 <div>
                     <h3>Trainingen</h3>
                     <p>Plan en bekijk trainingen.</p>
                 </div>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <?= $actionCardChevron ?>
             </a>
             <a href="/matches" class="action-card" style="margin-bottom: 0;">
                 <div>
                     <h3>Wedstrijden</h3>
                     <p>Wedstrijdschema en uitslagen.</p>
                 </div>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <?= $actionCardChevron ?>
             </a>
             <a href="/matches/reports" class="action-card" style="margin-bottom: 0;">
                 <div>
                     <h3>Rapportage</h3>
-                    <p>Bekijk basisplaatsen en doelpunten per speler.</p>
+                    <p>Statistieken per speler</p>
                 </div>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
+                <?= $actionCardChevron ?>
             </a>
         </div>
     </div>
@@ -111,4 +109,3 @@
         <?php endif; ?>
     </div>
 <?php endif; ?>
-

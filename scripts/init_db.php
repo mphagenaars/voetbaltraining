@@ -285,10 +285,18 @@ try {
         exercise_id INTEGER NOT NULL,
         sort_order INTEGER NOT NULL,
         duration INTEGER,
+        goal TEXT,
         FOREIGN KEY (training_id) REFERENCES trainings(id) ON DELETE CASCADE,
         FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
     )");
     echo "- Tabel 'training_exercises' aangemaakt (of bestond al).\n";
+
+    // Check of goal kolom bestaat (voor migratie)
+    $teColumns = $db->query("PRAGMA table_info(training_exercises)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('goal', $teColumns)) {
+        $db->exec("ALTER TABLE training_exercises ADD COLUMN goal TEXT");
+        echo "- Kolom 'goal' toegevoegd aan 'training_exercises'.\n";
+    }
 
     $db->exec("CREATE INDEX IF NOT EXISTS idx_training_exercises_training_sort ON training_exercises (training_id, sort_order)");
     $db->exec("CREATE INDEX IF NOT EXISTS idx_training_exercises_training_exercise ON training_exercises (training_id, exercise_id)");

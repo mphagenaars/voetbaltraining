@@ -87,9 +87,12 @@ $currentExercises = $isEdit ? ($training['exercises'] ?? []) : [];
                         <div class="drag-handle" title="Sleep om te sorteren">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                         </div>
-                        <span style="flex-grow: 1;"><?= e($ex['title']) ?></span>
+                        <div style="flex-grow: 1;">
+                            <div style="font-weight: 600; margin-bottom: 0.35rem;"><?= e($ex['title']) ?></div>
+                            <textarea name="goals[]" rows="2" placeholder="Doel van deze oefening binnen deze training" style="width: 100%; resize: vertical;"><?= e($ex['training_goal'] ?? '') ?></textarea>
+                        </div>
                         <input type="hidden" name="exercises[]" value="<?= $ex['id'] ?>">
-                        <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min">
+                        <input type="number" name="durations[]" value="<?= $ex['training_duration'] ?? '' ?>" style="width: 60px; padding: 0.25rem;" placeholder="min" title="Duur in minuten">
                         <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
                     </div>
                 <?php endforeach; ?>
@@ -216,9 +219,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="drag-handle" title="Sleep om te sorteren">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </div>
-            <span style="flex-grow: 1;">${title}</span>
+            <div style="flex-grow: 1;">
+                <div style="font-weight: 600; margin-bottom: 0.35rem;">${title}</div>
+                <textarea name="goals[]" rows="2" placeholder="Doel van deze oefening binnen deze training" style="width: 100%; resize: vertical;"></textarea>
+            </div>
             <input type="hidden" name="exercises[]" value="${id}">
-            <input type="number" name="durations[]" value="${duration}" style="width: 60px; padding: 0.25rem;" placeholder="min">
+            <input type="number" name="durations[]" value="${duration}" style="width: 60px; padding: 0.25rem;" placeholder="min" title="Duur in minuten">
             <span class="btn btn-sm btn-outline remove-btn" style="color: red; border-color: red;">X</span>
         `;
 

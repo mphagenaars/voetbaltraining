@@ -54,6 +54,13 @@ if (!empty($training['training_date'])) {
                 </span>
             </div>
 
+            <?php if (!empty($exercise['training_goal'])): ?>
+                <div style="margin-top: 0.25rem; margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 6px; background: rgba(0,0,0,0.03);">
+                    <strong>Doel in deze training:</strong><br>
+                    <?= nl2br(e($exercise['training_goal'])) ?>
+                </div>
+            <?php endif; ?>
+
             <?php if (!empty($exercise['image_path'])): ?>
                 <div style="margin: 1rem 0; text-align: center;">
                     <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 300px; border-radius: 4px;">
