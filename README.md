@@ -1,114 +1,103 @@
 # Voetbaltraining
 
-Een self-hosted webapplicatie voor voetbaltrainers om trainingen, oefeningen, wedstrijden en teamopstellingen te beheren. Deze applicatie is gebouwd met vanilla PHP (MVC architectuur) en maakt gebruik van een SQLite database.
+Self-hosted webapplicatie voor voetbaltrainers om oefenstof, trainingen, teams, spelers en wedstrijden te beheren.  
+De applicatie gebruikt vanilla PHP (MVC) met SQLite.
 
-## Kenmerken
+## Functionaliteit
 
-- **Oefeningen Beheer**: Creëer en beheer voetbaloefeningen. Voeg beschrijvingen, tags en tekeningen toe.
-- **Trainingsplanner**: Stel complete trainingen samen door oefeningen te combineren.
-- **Wedstrijdbeheer**: Plan wedstrijden, houd scores bij, noteer gebeurtenissen (doelpunten, kaarten) en voeg evaluaties toe.
-- **Team & Speler Beheer**: Beheer meerdere teams en spelerslijsten.
-- **Opstellingen**: Maak tactische opstellingen en koppel deze aan wedstrijden.
-- **Tekentool**: Geïntegreerde tekentool (gebaseerd op Konva.js) om oefeningen en tactieken visueel uit te werken.
-- **Admin Dashboard**: Beheer gebruikers en teams (voor beheerders).
-- **Accountbeheer**: Profielinstellingen en wachtwoordbeheer.
+- Oefeningen aanmaken/bewerken met tekenveld (Konva.js), bronvermelding en coachinstructies.
+- Oefeningen filteren op teamtaak, trainingsdoel en voetbalactie.
+- Reacties en opmerkingen op oefeningen.
+- Trainingen plannen per team en datum, met gekoppelde oefeningen, duur en doel per oefening.
+- Wedstrijden plannen, opstelling opslaan, live wedstrijdmodus gebruiken (timer + events), score/evaluatie bijhouden en rapportages bekijken.
+- Team- en spelersbeheer (incl. rugnummer/positie en afwezigen/keepers bij wedstrijden).
+- Rollen per team (`coach`, `trainer`, `speler`) en teamselectie in sessiecontext.
+- Accountbeheer (profiel, wachtwoord, zichtbaarheid van teams op dashboard).
+- Admin-functionaliteit voor gebruikers, teams, clubs, seizoenen, oefenopties en systeemactiviteit.
 
 ## Vereisten
 
-- PHP 8.1 of hoger
-- SQLite extensie voor PHP
-- PDO extensie voor PHP
+- PHP 8.1+ (CI draait op PHP 8.2)
+- PHP extensies: `pdo`, `sqlite3`, `mbstring`  
+- SQLite (bestand in `data/database.sqlite`)
+- Voor productie: Apache met `mod_rewrite`
 
-## Installatie & Gebruik
+## Snelstart (Development)
 
-### Automatische Installatie (Ubuntu/Debian)
-
-Gebruik het meegeleverde script om alle benodigdheden (Apache, PHP, SQLite) te installeren en de applicatie te configureren.
-
-1. **Clone de repository**
+1. Clone de repository:
    ```bash
    git clone https://github.com/mphagenaars/voetbaltraining.git
    cd voetbaltraining
    ```
-
-2. **Start de installatie**
+2. Initialiseer de database:
    ```bash
-   chmod +x install.sh
-   sudo ./install.sh
+   php scripts/init_db.php
    ```
+3. Maak een admin aan:
+   ```bash
+   php scripts/create_admin.php
+   ```
+4. Start de lokale server:
+   ```bash
+   php -S localhost:8000 -t public
+   ```
+5. Open de app op `http://localhost:8000`.
 
-3. **Open de applicatie**
-   De applicatie draait nu op poort 80 (Apache). Ga in je browser naar `http://localhost` (of het IP-adres van de server).
+## Installatie (Ubuntu/Debian)
 
-### Updates Installeren
+Voor een volledige serverinstallatie (Apache + PHP + SQLite + permissies):
 
-Wanneer er nieuwe features beschikbaar zijn, kun je de applicatie eenvoudig bijwerken zonder dataverlies:
+```bash
+chmod +x install.sh
+sudo ./install.sh
+```
+
+`install.sh` moet als root draaien en wijzigt Apache-configuratie en bestandsrechten.
+
+## Updaten
 
 ```bash
 chmod +x update.sh
 sudo ./update.sh
 ```
-Dit script haalt de laatste code op, werkt de database bij (indien nodig) en herstelt de bestandsrechten.
 
-### Handmatige Installatie (Development)
+`update.sh` voert `git pull`, database-initialisatie/migraties en permissieherstel uit.
 
-1. **Clone de repository**
-   ```bash
-   git clone https://github.com/mphagenaars/voetbaltraining.git
-   cd voetbaltraining
-   ```
+## Handige scripts
 
-2. **Initialiseer de database**
-   Dit script maakt de `data/database.sqlite` aan en zet de tabellen op.
-   ```bash
-   php scripts/init_db.php
-   ```
+- `php scripts/init_db.php` - database aanmaken en schema-migraties uitvoeren.
+- `php scripts/create_admin.php` - eerste admin-gebruiker aanmaken.
+- `php scripts/set_admin.php` - adminrechten geven aan bestaande gebruiker.
+- `php scripts/regression_tests.php` - regressietests draaien.
 
-3. **Maak een admin account aan**
-   Gebruik het hulpscript om een eerste gebruiker aan te maken.
-   ```bash
-   php scripts/create_admin.php
-   ```
+## Tests
 
-4. **Start de server**
-   Je kunt de ingebouwde PHP server gebruiken voor ontwikkeling.
-   ```bash
-   php -S localhost:8000 -t public
-   ```
+Draai lokaal:
 
-5. **Open de applicatie**
-   Ga in je browser naar `http://localhost:8000`.
+```bash
+php scripts/regression_tests.php
+```
+
+GitHub Actions draait dezelfde regressietests op pushes/PR's via `.github/workflows/regression-tests.yml`.
 
 ## Projectstructuur
 
-De applicatie volgt een strikte MVC (Model-View-Controller) structuur:
+- `public/` - webroot (`index.php`, CSS, JS, uploads, assets).
+- `src/` - applicatiecode.
+- `src/controllers/` - requestafhandeling.
+- `src/models/` - datalaag.
+- `src/views/` - templates.
+- `scripts/` - CLI scripts voor setup, beheer en tests.
+- `data/` - SQLite databasebestand.
 
-- `public/`: De web root. Bevat `index.php` (Front Controller & Router), CSS, JS en uploads.
-- `src/`: Broncode van de applicatie.
-    - `controllers/`: Afhandeling van verzoeken en business logic.
-    - `models/`: Database interacties (CRUD).
-    - `views/`: PHP templates voor de HTML weergave.
-    - `Database.php`: Singleton database connectie wrapper.
-    - `Session.php`: Helper voor veilig sessiebeheer en flash messages.
-    - `Validator.php`: Helper voor input validatie.
-    - `Csrf.php`: Beveiliging tegen Cross-Site Request Forgery.
-    - `View.php`: Template rendering engine.
-- `data/`: Bevat de SQLite database (`database.sqlite`).
-- `scripts/`: Hulpscripts voor installatie en onderhoud.
+## Beveiliging
 
-## Technologie & Beveiliging
-
-- **Backend**: PHP 8.1+ (Custom MVC, geen framework)
-- **Database**: SQLite
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Libraries**: Konva.js (voor tekeningen)
-- **Beveiliging**:
-    - CSRF protectie op alle formulieren.
-    - XSS preventie via automatische output escaping in Views.
-    - Veilig sessiebeheer via `Session` class.
-    - Wachtwoord hashing met `password_hash` (Bcrypt).
-    - Prepared statements (PDO) tegen SQL injectie.
+- CSRF-tokens op formulieren.
+- Output escaping met `e()` helper.
+- PDO prepared statements.
+- Wachtwoord hashing met `password_hash`.
+- Remember-me tokens met selector/validator patroon (hashed validator in DB).
 
 ## Licentie
 
-[MIT](LICENSE)
+Er is momenteel geen `LICENSE`-bestand aanwezig in deze repository.
