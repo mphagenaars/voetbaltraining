@@ -100,4 +100,4 @@ GitHub Actions draait dezelfde regressietests op pushes/PR's via `.github/workfl
 
 ## Licentie
 
-Er is momenteel geen `LICENSE`-bestand aanwezig in deze repository.
+Dit project valt onder de [Apache License 2.0](LICENSE).
