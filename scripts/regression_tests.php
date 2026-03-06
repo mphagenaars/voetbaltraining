@@ -277,6 +277,8 @@ $tests['addToTraining allows trainer and writes row'] = function (): void {
         assertSame('/exercises/view?id=2', $redirect, 'Unexpected redirect path');
         assertSame(1, (int)fetchValue($pdo, "SELECT COUNT(*) FROM training_exercises WHERE training_id = 1 AND exercise_id = 2"), 'Exercise should be added once');
         assertSame(1, (int)fetchValue($pdo, "SELECT sort_order FROM training_exercises WHERE training_id = 1 AND exercise_id = 2"), 'Expected append sort_order');
+        assertTrue(Session::hasFlash('success'), 'Expected success flash for successful add');
+        assertTrue(!Session::hasFlash('error'), 'Unexpected error flash for successful add');
     });
 };
 

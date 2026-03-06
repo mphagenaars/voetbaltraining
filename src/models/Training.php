@@ -44,11 +44,15 @@ class Training extends Model {
 
             $this->addExercise($trainingId, $exerciseId, $nextSortOrder, $duration, null);
             if ($startedTransaction) {
-                $this->pdo->commit();
+                $this->pdo->exec('COMMIT');
             }
         } catch (Throwable $e) {
-            if ($startedTransaction && $this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
+            if ($startedTransaction) {
+                try {
+                    $this->pdo->exec('ROLLBACK');
+                } catch (Throwable) {
+                    // Ignore rollback errors so we can rethrow the original exception.
+                }
             }
             throw $e;
         }
