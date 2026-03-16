@@ -20,6 +20,7 @@ De applicatie gebruikt vanilla PHP (MVC) met SQLite.
 - PHP 8.1+ (CI draait op PHP 8.2)
 - PHP extensies: `pdo`, `sqlite3`, `mbstring`  
 - SQLite (bestand in `data/database.sqlite`)
+- `ffmpeg` en `yt-dlp` (voor AI video-availability checks en frame-extractie)
 - Voor productie: Apache met `mod_rewrite`
 
 ## Snelstart (Development)
@@ -45,14 +46,28 @@ De applicatie gebruikt vanilla PHP (MVC) met SQLite.
 
 ## Installatie (Ubuntu/Debian)
 
-Voor een volledige serverinstallatie (Apache + PHP + SQLite + permissies):
+Voor een volledige serverinstallatie (Apache + PHP + SQLite + `ffmpeg` + `yt-dlp` + permissies):
 
 ```bash
 chmod +x install.sh
 sudo ./install.sh
 ```
 
-`install.sh` moet als root draaien en wijzigt Apache-configuratie en bestandsrechten.
+`install.sh` moet als root draaien en:
+
+- installeert alle server dependencies;
+- downloadt `yt-dlp` naar `/usr/local/bin/yt-dlp`;
+- zet rechten op `root:root` met execute-bit (`755`);
+- valideert dat `yt-dlp` ook uitvoerbaar is als `www-data`;
+- wijzigt Apache-configuratie en bestandsrechten.
+
+Snelle verificatie na installatie:
+
+```bash
+ls -l /usr/local/bin/yt-dlp
+sudo -u www-data /usr/local/bin/yt-dlp --version
+ffmpeg -version
+```
 
 ## Updaten
 

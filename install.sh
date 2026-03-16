@@ -22,13 +22,42 @@ echo "=========================================="
 
 # 2. System Updates & Dependencies
 echo ""
-echo "📦  [1/8] Installeren van benodigde pakketten..."
+echo "📦  [1/9] Installeren van benodigde pakketten..."
 apt-get update -q
-apt-get install -y -q git apache2 php php-sqlite3 php-pdo php-xml php-mbstring php-curl php-sodium libapache2-mod-php unzip sqlite3
+apt-get install -y -q git apache2 php php-sqlite3 php-pdo php-xml php-mbstring php-curl php-sodium libapache2-mod-php unzip sqlite3 ffmpeg curl ca-certificates
 
-# 3. Apache Configuratie
+# 3. yt-dlp installatie + validatie
 echo ""
-echo "🔧  [2/8] Apache configureren..."
+echo "🎞️  [2/9] yt-dlp installeren en valideren..."
+YT_DLP_PATH="/usr/local/bin/yt-dlp"
+YT_DLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
+TMP_YT_DLP="$(mktemp)"
+
+curl -fsSL "$YT_DLP_URL" -o "$TMP_YT_DLP"
+install -o root -g root -m 755 "$TMP_YT_DLP" "$YT_DLP_PATH"
+rm -f "$TMP_YT_DLP"
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "❌  Fout: ffmpeg is niet beschikbaar na installatie."
+    exit 1
+fi
+
+if ! "$YT_DLP_PATH" --version >/dev/null 2>&1; then
+    echo "❌  Fout: yt-dlp is geïnstalleerd maar niet uitvoerbaar."
+    exit 1
+fi
+
+if ! runuser -u "$WEB_USER" -- "$YT_DLP_PATH" --version >/dev/null 2>&1; then
+    echo "❌  Fout: yt-dlp is niet uitvoerbaar voor $WEB_USER."
+    exit 1
+fi
+
+echo "    - yt-dlp geïnstalleerd op $YT_DLP_PATH en uitvoerbaar voor $WEB_USER."
+echo "    - ffmpeg beschikbaar."
+
+# 4. Apache Configuratie
+echo ""
+echo "🔧  [3/9] Apache configureren..."
 
 # Enable mod_rewrite
 a2enmod rewrite
@@ -59,17 +88,17 @@ if [ -f /etc/apache2/sites-enabled/000-default.conf ]; then
 fi
 a2ensite voetbaltraining.conf > /dev/null
 
-# 4. Mappen Structuur
+# 5. Mappen Structuur
 echo ""
-echo "📂  [3/8] Mappen aanmaken..."
+echo "📂  [4/9] Mappen aanmaken..."
 mkdir -p data
 mkdir -p public/uploads
 echo "    - Map 'data' gecontroleerd."
 echo "    - Map 'public/uploads' gecontroleerd."
 
-# 5. Runtime configuratie
+# 6. Runtime configuratie
 echo ""
-echo "🧩  [4/8] Runtime configuratie genereren..."
+echo "🧩  [5/9] Runtime configuratie genereren..."
 CONFIG_FILE="$PROJECT_DIR/data/config.php"
 if [ ! -f "$CONFIG_FILE" ]; then
     ENCRYPTION_KEY=$(php -r "if (!function_exists('sodium_crypto_secretbox_keygen')) { fwrite(STDERR, 'Sodium-extensie ontbreekt.\n'); exit(1); } echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen());")
@@ -85,9 +114,9 @@ else
     echo "    - data/config.php bestaat al, overslaan."
 fi
 
-# 6. Database Initialisatie
+# 7. Database Initialisatie
 echo ""
-echo "🗄️  [5/8] Database initialiseren..."
+echo "🗄️  [6/9] Database initialiseren..."
 if [ -f "scripts/init_db.php" ]; then
     php scripts/init_db.php
 else
@@ -95,9 +124,9 @@ else
     exit 1
 fi
 
-# 7. Rechten Instellen
+# 8. Rechten Instellen
 echo ""
-echo "🔐  [6/8] Rechten instellen..."
+echo "🔐  [7/9] Rechten instellen..."
 
 # Huidige eigenaar van de bestanden
 OWNER=$(stat -c '%U' "$PROJECT_DIR")
@@ -140,9 +169,9 @@ fi
 
 echo "    - Bestandsrechten ingesteld (Owner: $OWNER, Group: $WEB_USER)."
 
-# 8. Security Hardening
+# 9. Security Hardening
 echo ""
-echo "🛡️  [7/8] Security Hardening..."
+echo "🛡️  [8/9] Security Hardening..."
 
 # Verberg PHP errors in productie (display_errors = Off)
 # We proberen dit in de php.ini van Apache te zetten
@@ -158,9 +187,9 @@ fi
 a2enmod ssl > /dev/null
 echo "    - Apache SSL module ingeschakeld."
 
-# 9. Service Herstarten
+# 10. Service Herstarten
 echo ""
-echo "🔄  [8/8] Apache herstarten..."
+echo "🔄  [9/9] Apache herstarten..."
 systemctl restart apache2
 
 # 10. Admin Gebruiker Aanmaken (Optioneel)
