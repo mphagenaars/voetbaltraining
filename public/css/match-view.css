@@ -268,3 +268,264 @@
     font-weight: bold;
     text-anchor: middle;
 }
+
+.match-tactics-card {
+    margin-top: 1rem;
+    padding: 1rem;
+}
+
+.match-tactics-header {
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #e3e8ee;
+}
+
+.match-tactics-header h3 {
+    margin: 0;
+}
+
+.match-tactics-header p {
+    color: #6c757d;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+}
+
+.match-tactics-layout {
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+}
+
+.match-tactics-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.match-tactics-sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+
+.match-tactics-sidebar-head h4 {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.match-tactics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: 560px;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+}
+
+.match-tactic-item {
+    width: 100%;
+    text-align: left;
+    border: 1px solid #d6dde4;
+    background: #ffffff;
+    border-radius: 7px;
+    padding: 0.42rem 0.55rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.match-tactic-item:hover {
+    border-color: #aab6c2;
+    background: #f8fafb;
+}
+
+.match-tactic-item.is-active {
+    border-color: #2e7d32;
+    background: rgba(46, 125, 50, 0.08);
+}
+
+.match-tactic-item-title {
+    font-weight: 600;
+    color: #212529;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.88rem;
+}
+
+.match-tactic-item-meta {
+    color: #6c757d;
+    font-size: 0.74rem;
+    display: block;
+    margin-top: 0.1rem;
+}
+
+.match-tactics-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.match-tactics-form-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: end;
+}
+
+.tactics-title-group {
+    margin: 0;
+    min-width: 180px;
+    flex: 1 1 320px;
+}
+
+.tactics-minute-group {
+    margin: 0;
+    flex: 0 0 88px;
+}
+
+.tactics-title-group label,
+.tactics-minute-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4a5561;
+}
+
+.match-tactics-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+    min-height: 1rem;
+    margin: 0;
+}
+
+.match-tactics-status-row {
+    min-height: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.match-tactics-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.tactics-action-icon {
+    padding: 0.2rem;
+}
+
+.tactics-action-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.tactics-action-icon-add,
+.tactics-action-icon-save {
+    color: #2e7d32;
+}
+
+.tactics-action-icon-delete {
+    color: #c62828;
+}
+
+.tactics-action-icon-add:hover,
+.tactics-action-icon-save:hover {
+    color: #2e7d32;
+}
+
+.tactics-action-icon-delete:hover {
+    color: #c62828;
+}
+
+.match-tactics-editor-shell {
+    border: 0;
+    background: transparent;
+}
+
+.match-tactics-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    background: transparent;
+    border-bottom: 0;
+}
+
+.match-tactics-toolbar .toolbar-row {
+    gap: 0.95rem;
+    align-items: flex-start;
+}
+
+.match-tactics-toolbar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.match-tactics-toolbar-group.is-right {
+    margin-left: auto;
+    align-items: flex-end;
+}
+
+.match-tactics-toolbar-label {
+    font-size: 0.78rem;
+    color: #4a5561;
+    font-weight: 600;
+}
+
+.match-tactics-canvas {
+    width: min(420px, 100%);
+    max-width: 100%;
+    margin: 0.2rem 0 0 0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.tactics-draggable-item-ball {
+    font-size: 22px;
+}
+
+@media (max-width: 900px) {
+    .match-tactics-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .match-tactics-list {
+        max-height: none;
+    }
+
+    .match-tactics-form-row {
+        flex-wrap: wrap;
+    }
+
+    .tactics-title-group {
+        flex-basis: 100%;
+    }
+
+    .tactics-minute-group {
+        flex: 0 0 110px;
+    }
+
+    .match-tactics-actions {
+        margin-left: 0;
+    }
+
+    .match-tactics-toolbar .toolbar-row {
+        gap: 0.85rem;
+    }
+
+    .match-tactics-toolbar-group.is-right {
+        margin-left: 0;
+        align-items: flex-start;
+    }
+
+    .match-tactics-canvas {
+        width: min(340px, 100%);
+    }
+}

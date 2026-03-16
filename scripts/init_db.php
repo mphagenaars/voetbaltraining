@@ -453,6 +453,62 @@ try {
         echo "- Kolom 'period' toegevoegd aan 'match_events'.\n";
     }
 
+    // Match tactics (wedstrijdsituaties op tactiekbord)
+    $db->exec("CREATE TABLE IF NOT EXISTS match_tactics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        phase TEXT NOT NULL DEFAULT 'open_play',
+        minute INTEGER NULL,
+        field_type TEXT NOT NULL DEFAULT 'landscape',
+        drawing_data TEXT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_by INTEGER NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    )");
+    echo "- Tabel 'match_tactics' aangemaakt (of bestond al).\n";
+
+    $mtColumns = $db->query("PRAGMA table_info(match_tactics)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('title', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN title TEXT DEFAULT 'Nieuwe situatie'");
+        echo "- Kolom 'title' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('phase', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN phase TEXT DEFAULT 'open_play'");
+        echo "- Kolom 'phase' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('minute', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN minute INTEGER NULL");
+        echo "- Kolom 'minute' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('field_type', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN field_type TEXT DEFAULT 'landscape'");
+        echo "- Kolom 'field_type' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('drawing_data', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN drawing_data TEXT NULL");
+        echo "- Kolom 'drawing_data' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('sort_order', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN sort_order INTEGER DEFAULT 0");
+        echo "- Kolom 'sort_order' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('created_by', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN created_by INTEGER NULL");
+        echo "- Kolom 'created_by' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('updated_at', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN updated_at DATETIME");
+        $db->exec("UPDATE match_tactics SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL OR TRIM(updated_at) = ''");
+        echo "- Kolom 'updated_at' toegevoegd aan 'match_tactics'.\n";
+    }
+
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_tactics_match_sort ON match_tactics (match_id, sort_order, id)");
+    echo "- Index voor 'match_tactics' gecontroleerd/aangemaakt.\n";
+
     // Migratie van oude lineups naar matches
     $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='lineups'")->fetchAll();
     if (count($tables) > 0) {

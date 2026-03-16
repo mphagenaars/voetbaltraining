@@ -4,11 +4,13 @@ declare(strict_types=1);
 class GameController extends BaseController {
     private Game $gameModel;
     private Player $playerModel;
+    private MatchTactic $matchTacticModel;
 
     public function __construct(PDO $pdo) {
         parent::__construct($pdo);
         $this->gameModel = new Game($pdo);
         $this->playerModel = new Player($pdo);
+        $this->matchTacticModel = new MatchTactic($pdo);
     }
 
     public function index(): void {
@@ -132,12 +134,14 @@ class GameController extends BaseController {
         $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
         $matchPlayers = $this->gameModel->getPlayers($id);
         $events = $this->gameModel->getEvents($id);
+        $matchTactics = $this->matchTacticModel->getForMatch($id);
 
         View::render('matches/view', [
             'match' => $match, 
             'players' => $players, 
             'matchPlayers' => $matchPlayers,
             'events' => $events,
+            'matchTactics' => $matchTactics,
             'pageTitle' => 'Wedstrijd - Trainer Bobby'
         ]);
     }
@@ -426,6 +430,202 @@ class GameController extends BaseController {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
+    }
+
+    public function saveTactic(): void {
+        header('Content-Type: application/json');
+
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
+            exit;
+        }
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Methode niet toegestaan.']);
+            exit;
+        }
+
+        $data = $this->decodeJsonBody();
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige requestdata.']);
+            exit;
+        }
+
+        $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+            exit;
+        }
+
+        $matchId = (int)($data['match_id'] ?? 0);
+        $match = $this->gameModel->getById($matchId);
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            exit;
+        }
+
+        $title = trim((string)($data['title'] ?? ''));
+        if ($title === '') {
+            $title = 'Nieuwe situatie';
+        }
+        $title = mb_substr($title, 0, 120);
+        $phase = 'open_play';
+
+        $minute = null;
+        $minuteRaw = $data['minute'] ?? null;
+        if ($minuteRaw !== null && $minuteRaw !== '') {
+            if (!is_numeric($minuteRaw)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Minuut moet een getal zijn.']);
+                exit;
+            }
+            $minute = (int)$minuteRaw;
+            if ($minute < 0 || $minute > 130) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Minuut moet tussen 0 en 130 liggen.']);
+                exit;
+            }
+        }
+
+        $fieldType = 'standard_30x42_5';
+
+        $drawingData = isset($data['drawing_data']) && is_string($data['drawing_data'])
+            ? trim($data['drawing_data'])
+            : '';
+        $drawingData = $drawingData !== '' ? $drawingData : null;
+        if ($drawingData !== null && strlen($drawingData) > 250000) {
+            http_response_code(400);
+            echo json_encode(['error' => 'De tekening is te groot om op te slaan.']);
+            exit;
+        }
+
+        $tacticId = (int)($data['tactic_id'] ?? 0);
+
+        try {
+            if ($tacticId > 0) {
+                $existing = $this->matchTacticModel->getByIdForMatch($tacticId, $matchId);
+                if (!$existing) {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Situatie niet gevonden.']);
+                    exit;
+                }
+
+                $this->matchTacticModel->updateTactic(
+                    $tacticId,
+                    $matchId,
+                    $title,
+                    $phase,
+                    $minute,
+                    $fieldType,
+                    $drawingData
+                );
+                $savedId = $tacticId;
+                $this->logActivity('update_match_tactic', $matchId, $title);
+            } else {
+                $savedId = $this->matchTacticModel->create(
+                    $matchId,
+                    $title,
+                    $phase,
+                    $minute,
+                    $fieldType,
+                    $drawingData,
+                    $this->matchTacticModel->getNextSortOrder($matchId),
+                    (int)Session::get('user_id')
+                );
+                $this->logActivity('create_match_tactic', $matchId, $title);
+            }
+
+            $saved = $this->matchTacticModel->getByIdForMatch($savedId, $matchId);
+            echo json_encode([
+                'success' => true,
+                'tactic' => $saved,
+                'tactics' => $this->matchTacticModel->getForMatch($matchId),
+            ]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Opslaan mislukt.']);
+        }
+    }
+
+    public function deleteTactic(): void {
+        header('Content-Type: application/json');
+
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
+            exit;
+        }
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Methode niet toegestaan.']);
+            exit;
+        }
+
+        $data = $this->decodeJsonBody();
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige requestdata.']);
+            exit;
+        }
+
+        $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+            exit;
+        }
+
+        $matchId = (int)($data['match_id'] ?? 0);
+        $tacticId = (int)($data['tactic_id'] ?? 0);
+
+        $match = $this->gameModel->getById($matchId);
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            exit;
+        }
+
+        if ($tacticId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige situatie-ID.']);
+            exit;
+        }
+
+        $existing = $this->matchTacticModel->getByIdForMatch($tacticId, $matchId);
+        if (!$existing) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Situatie niet gevonden.']);
+            exit;
+        }
+
+        try {
+            $this->matchTacticModel->deleteForMatch($tacticId, $matchId);
+            $this->logActivity('delete_match_tactic', $matchId, (string)$existing['title']);
+
+            echo json_encode([
+                'success' => true,
+                'tactics' => $this->matchTacticModel->getForMatch($matchId),
+            ]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Verwijderen mislukt.']);
+        }
+    }
+
+    private function decodeJsonBody(): ?array {
+        $raw = file_get_contents('php://input');
+        if (!is_string($raw) || trim($raw) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function canAccessMatchInCurrentTeam(?array $match): bool {

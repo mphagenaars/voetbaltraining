@@ -49,6 +49,8 @@ return [
     '/matches/update-score' => ['GameController', 'updateScore'],
     '/matches/update-details' => ['GameController', 'updateDetails'],
     '/matches/save-lineup' => ['GameController', 'saveLineup'],
+    '/matches/tactics/save' => ['GameController', 'saveTactic'],
+    '/matches/tactics/delete' => ['GameController', 'deleteTactic'],
 
     // Account
     '/account' => ['AccountController', 'index'],
