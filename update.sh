@@ -70,13 +70,20 @@ fi
 echo ""
 echo "⬇️  [2/5] Code ophalen (git pull)..."
 
-if [ -n "$(run_git status --porcelain --untracked-files=no)" ]; then
-    echo "❌  Er zijn lokale, getrackte wijzigingen. Commit/stash die eerst voor een veilige update."
-    exit 1
+DIRTY_STATUS="$(run_git status --porcelain --untracked-files=no)"
+PULL_MODE="ff-only"
+if [ -n "$DIRTY_STATUS" ]; then
+    echo "⚠️  Lokale, getrackte wijzigingen gevonden. We proberen een autostash update."
+    echo "$DIRTY_STATUS" | sed 's/^/    - /'
+    PULL_MODE="autostash"
 fi
 
 run_git fetch origin "$TARGET_BRANCH"
-run_git pull --ff-only origin "$TARGET_BRANCH"
+if [ "$PULL_MODE" = "autostash" ]; then
+    run_git pull --rebase --autostash origin "$TARGET_BRANCH"
+else
+    run_git pull --ff-only origin "$TARGET_BRANCH"
+fi
 
 # 4. Database backup (voor migratie)
 echo ""
