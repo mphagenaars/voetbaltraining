@@ -34,6 +34,19 @@ else
     echo "⚠️  Waarschuwing: scripts/init_db.php niet gevonden."
 fi
 
+# Zorg dat runtime config bestaat voor encryptie (nodig voor AI module)
+CONFIG_FILE="$PROJECT_DIR/data/config.php"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "    - data/config.php ontbreekt, aanmaken..."
+    ENCRYPTION_KEY=$(php -r "if (!function_exists('sodium_crypto_secretbox_keygen')) { fwrite(STDERR, 'Sodium-extensie ontbreekt.\n'); exit(1); } echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen());")
+    cat > "$CONFIG_FILE" <<EOF
+<?php
+return [
+    'encryption_key' => '$ENCRYPTION_KEY',
+];
+EOF
+fi
+
 # 4. Rechten Herstellen
 echo ""
 echo "🔐  [3/3] Rechten herstellen..."
@@ -66,6 +79,9 @@ chmod -R 775 "$PROJECT_DIR/public/uploads"
 # Database file specifiek
 if [ -f "$PROJECT_DIR/data/database.sqlite" ]; then
     chmod 664 "$PROJECT_DIR/data/database.sqlite"
+fi
+if [ -f "$PROJECT_DIR/data/config.php" ]; then
+    chmod 640 "$PROJECT_DIR/data/config.php"
 fi
 chmod 775 "$PROJECT_DIR/data"
 

@@ -25,6 +25,62 @@ try {
         $db->exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
         echo "- Kolom 'is_admin' toegevoegd aan 'users'.\n";
     }
+    if (!in_array('ai_access_enabled', $userColumns)) {
+        $db->exec("ALTER TABLE users ADD COLUMN ai_access_enabled INTEGER NOT NULL DEFAULT 0");
+        echo "- Kolom 'ai_access_enabled' toegevoegd aan 'users'.\n";
+    }
+
+    // App settings tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS app_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        \"key\" TEXT NOT NULL UNIQUE,
+        value TEXT NULL,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "- Tabel 'app_settings' aangemaakt (of bestond al).\n";
+
+    $settingColumns = $db->query("PRAGMA table_info(app_settings)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('updated_at', $settingColumns)) {
+        $db->exec("ALTER TABLE app_settings ADD COLUMN updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP");
+        echo "- Kolom 'updated_at' toegevoegd aan 'app_settings'.\n";
+    }
+
+    $settingStmt = $db->prepare("INSERT OR IGNORE INTO app_settings (\"key\", value, updated_at) VALUES (:key, :value, CURRENT_TIMESTAMP)");
+    $initialSettings = [
+        'ai_access_mode' => 'off',
+        'ai_default_model' => null,
+        'openrouter_api_key_enc' => null,
+        'openrouter_management_api_key_enc' => null,
+        'youtube_api_key_enc' => null,
+        'ai_billing_enabled' => '1',
+        'ai_pricing_version' => '1',
+        'ai_budget_mode' => 'monthly_per_user',
+        'ai_monthly_user_budget_eur' => null,
+        'ai_budget_reset_day' => '1',
+        'ai_rate_limit_per_minute' => '10',
+        'ai_max_sessions_per_user' => '50',
+        'ai_retrieval_enabled' => '1',
+        'ai_retrieval_youtube_enabled' => '1',
+        'ai_retrieval_max_candidates' => '10',
+        'ai_retrieval_min_youtube_sources' => '2',
+        'ai_retrieval_internal_limit' => '2',
+    ];
+    foreach ($initialSettings as $key => $value) {
+        $settingStmt->execute([
+            ':key' => $key,
+            ':value' => $value,
+        ]);
+    }
+    echo "- AI standaardinstellingen gecontroleerd/aangemaakt.\n";
+
+    // Legacy migratie: oude ai_enabled key omzetten naar ai_access_mode
+    $legacyAiEnabled = $db->query("SELECT value FROM app_settings WHERE \"key\" = 'ai_enabled' LIMIT 1")->fetchColumn();
+    if ($legacyAiEnabled !== false && $legacyAiEnabled !== null) {
+        $mappedMode = ((string)$legacyAiEnabled === '1') ? 'on' : 'off';
+        $stmt = $db->prepare("UPDATE app_settings SET value = :value, updated_at = CURRENT_TIMESTAMP WHERE \"key\" = 'ai_access_mode'");
+        $stmt->execute([':value' => $mappedMode]);
+        echo "- Legacy key 'ai_enabled' gemigreerd naar 'ai_access_mode'.\n";
+    }
 
     // Teams tabel
     $db->exec("CREATE TABLE IF NOT EXISTS teams (
@@ -427,6 +483,164 @@ try {
             echo "- Migratie voltooid.\n";
         }
     }
+
+    // AI modellen tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_models (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        model_id TEXT NOT NULL UNIQUE,
+        label TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        supports_vision INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "- Tabel 'ai_models' aangemaakt (of bestond al).\n";
+
+    // Migratie: supports_vision kolom toevoegen aan ai_models
+    $aiModelColumns = $db->query("PRAGMA table_info(ai_models)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('supports_vision', $aiModelColumns, true)) {
+        $db->exec("ALTER TABLE ai_models ADD COLUMN supports_vision INTEGER NOT NULL DEFAULT 0");
+        echo "- Kolom 'supports_vision' toegevoegd aan ai_models.\n";
+    }
+
+    // AI chat sessies tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        team_id INTEGER NULL,
+        exercise_id INTEGER NULL,
+        title TEXT NULL,
+        workflow_mode TEXT NULL,
+        current_plan_json TEXT NULL,
+        plan_updated_at TEXT NULL,
+        plan_version INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL,
+        FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE SET NULL
+    )");
+    echo "- Tabel 'ai_chat_sessions' aangemaakt (of bestond al).\n";
+
+    // Migratie: workflow kolommen voor bestaande databases
+    $sessionColumns = $db->query("PRAGMA table_info(ai_chat_sessions)")->fetchAll(PDO::FETCH_ASSOC);
+    $sessionColumnMap = [];
+    foreach ($sessionColumns as $col) {
+        if (!empty($col['name'])) {
+            $sessionColumnMap[(string)$col['name']] = true;
+        }
+    }
+
+    if (!isset($sessionColumnMap['workflow_mode'])) {
+        $db->exec("ALTER TABLE ai_chat_sessions ADD COLUMN workflow_mode TEXT NULL");
+    }
+    if (!isset($sessionColumnMap['current_plan_json'])) {
+        $db->exec("ALTER TABLE ai_chat_sessions ADD COLUMN current_plan_json TEXT NULL");
+    }
+    if (!isset($sessionColumnMap['plan_updated_at'])) {
+        $db->exec("ALTER TABLE ai_chat_sessions ADD COLUMN plan_updated_at TEXT NULL");
+    }
+    if (!isset($sessionColumnMap['plan_version'])) {
+        $db->exec("ALTER TABLE ai_chat_sessions ADD COLUMN plan_version INTEGER NOT NULL DEFAULT 0");
+    }
+
+    // AI chat berichten tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_chat_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        model_id TEXT NULL,
+        metadata_json TEXT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES ai_chat_sessions(id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'ai_chat_messages' aangemaakt (of bestond al).\n";
+
+    // AI model pricing tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_model_pricing (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        model_id TEXT NOT NULL UNIQUE,
+        currency TEXT NOT NULL DEFAULT 'EUR',
+        input_price_per_mtoken REAL NOT NULL DEFAULT 0,
+        output_price_per_mtoken REAL NOT NULL DEFAULT 0,
+        request_flat_price REAL NOT NULL DEFAULT 0,
+        min_request_price REAL NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (model_id) REFERENCES ai_models(model_id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'ai_model_pricing' aangemaakt (of bestond al).\n";
+
+    // AI usage events tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_usage_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        team_id INTEGER NULL,
+        session_id INTEGER NULL,
+        exercise_id INTEGER NULL,
+        provider TEXT NOT NULL DEFAULT 'openrouter',
+        generation_id TEXT NULL,
+        model_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        total_tokens INTEGER NOT NULL DEFAULT 0,
+        supplier_cost_usd REAL NOT NULL DEFAULT 0,
+        billable_cost_eur REAL NOT NULL DEFAULT 0,
+        pricing_version INTEGER NULL,
+        pricing_snapshot_json TEXT NULL,
+        error_code TEXT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "- Tabel 'ai_usage_events' aangemaakt (of bestond al).\n";
+
+    // AI quality events tabel
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_quality_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NULL,
+        team_id INTEGER NULL,
+        session_id INTEGER NULL,
+        event_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        external_id TEXT NULL,
+        payload_json TEXT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "- Tabel 'ai_quality_events' aangemaakt (of bestond al).\n";
+
+    // AI source cache tabel (retrieval)
+    $db->exec("CREATE TABLE IF NOT EXISTS ai_source_cache (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider TEXT NOT NULL,
+        external_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        url TEXT NULL,
+        snippet TEXT NULL,
+        metadata_json TEXT NULL,
+        fetched_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT NOT NULL,
+        UNIQUE(provider, external_id)
+    )");
+    echo "- Tabel 'ai_source_cache' aangemaakt (of bestond al).\n";
+
+    // Indexen voor AI tabellen
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_models_enabled_sort_order ON ai_models (enabled, sort_order)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_model_pricing_active_model_id ON ai_model_pricing (is_active, model_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_chat_sessions_user_team_updated ON ai_chat_sessions (user_id, team_id, updated_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_chat_messages_session_created ON ai_chat_messages (session_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_usage_events_user_created ON ai_usage_events (user_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_usage_events_team_created ON ai_usage_events (team_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_usage_events_model_created ON ai_usage_events (model_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_usage_events_generation_id ON ai_usage_events (generation_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_quality_events_user_created ON ai_quality_events (user_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_quality_events_team_created ON ai_quality_events (team_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_quality_events_session_created ON ai_quality_events (session_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_quality_events_type_created ON ai_quality_events (event_type, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_source_cache_provider_external ON ai_source_cache (provider, external_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_source_cache_expires_at ON ai_source_cache (expires_at)");
+    echo "- Indexen voor AI tabellen gecontroleerd/aangemaakt.\n";
 
     echo "Database succesvol geïnitialiseerd in data/database.sqlite\n";
 

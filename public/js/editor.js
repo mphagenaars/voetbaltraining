@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const containerEl = document.getElementById('container');
+    if (!containerEl) {
+        return;
+    }
+
+    const MIN_STABLE_CONTAINER_WIDTH = 120;
     
     // Logical dimensions (Design resolution)
     let V_WIDTH = 400;
@@ -16,11 +21,37 @@ document.addEventListener('DOMContentLoaded', function() {
         V_HEIGHT = 400;
     }
 
-    // Calculate scale to fit container width
-    const containerWidth = containerEl.offsetWidth;
+    function toStableWidth(value) {
+        const width = Number(value);
+        if (!Number.isFinite(width) || width < MIN_STABLE_CONTAINER_WIDTH) {
+            return 0;
+        }
+
+        return width;
+    }
+
+    function resolveContainerWidth() {
+        const directWidth = toStableWidth(containerEl.getBoundingClientRect().width || containerEl.offsetWidth);
+        if (directWidth > 0) {
+            return directWidth;
+        }
+
+        const parentWidth = toStableWidth(
+            containerEl.parentElement
+                ? (containerEl.parentElement.getBoundingClientRect().width || containerEl.parentElement.offsetWidth)
+                : 0
+        );
+        if (parentWidth > 0) {
+            return Math.min(parentWidth, V_WIDTH);
+        }
+
+        // Hidden containers can briefly report tiny widths; keep a safe fallback.
+        return V_WIDTH;
+    }
+
+    // Keep stage dimensions stable even when the editor starts hidden.
+    let containerWidth = resolveContainerWidth();
     let scale = containerWidth / V_WIDTH;
-    
-    // Adjust container height to match aspect ratio
     let containerHeight = V_HEIGHT * scale;
     containerEl.style.height = containerHeight + 'px';
 
@@ -38,6 +69,23 @@ document.addEventListener('DOMContentLoaded', function() {
     stage.add(fieldLayer);
     stage.add(mainLayer);
     stage.add(uiLayer);
+
+    function syncStageToContainer() {
+        const nextWidth = resolveContainerWidth();
+        if (!Number.isFinite(nextWidth) || nextWidth <= 0) {
+            return;
+        }
+
+        containerWidth = nextWidth;
+        scale = containerWidth / V_WIDTH;
+        containerHeight = V_HEIGHT * scale;
+
+        containerEl.style.height = containerHeight + 'px';
+        stage.width(containerWidth);
+        stage.height(containerHeight);
+        stage.scale({ x: scale, y: scale });
+        stage.batchDraw();
+    }
 
     // Helper to get logical pointer position
     function getPointerPosition() {
@@ -119,17 +167,12 @@ document.addEventListener('DOMContentLoaded', function() {
             V_HEIGHT = 400;
         }
 
-        // Recalculate scale
-        scale = containerWidth / V_WIDTH;
-        containerHeight = V_HEIGHT * scale;
-        
-        // Update container and stage
-        containerEl.style.height = containerHeight + 'px';
-        stage.width(containerWidth);
-        stage.height(containerHeight);
-        stage.scale({ x: scale, y: scale });
-
+        syncStageToContainer();
         drawField();
+        mainLayer.find('.item').forEach(clampNodeToField);
+        tr.forceUpdate();
+        mainLayer.batchDraw();
+        uiLayer.batchDraw();
     }
 
     // Event Listeners for Field Layout
@@ -143,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnSquare) btnSquare.addEventListener('click', () => updateFieldLayout('square'));
 
     drawField();
+    syncStageToContainer();
 
     // Transformer for selection
     const tr = new Konva.Transformer({
@@ -155,6 +199,63 @@ document.addEventListener('DOMContentLoaded', function() {
         padding: 5
     });
     uiLayer.add(tr);
+
+    function clampNodeToField(node) {
+        if (!node || typeof node.getClientRect !== 'function') {
+            return;
+        }
+
+        const box = node.getClientRect({ relativeTo: mainLayer });
+        if (!Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || !Number.isFinite(box.height)) {
+            return;
+        }
+
+        let dx = 0;
+        let dy = 0;
+
+        if (box.x < 0) {
+            dx = -box.x;
+        } else if ((box.x + box.width) > V_WIDTH) {
+            dx = V_WIDTH - (box.x + box.width);
+        }
+
+        if (box.y < 0) {
+            dy = -box.y;
+        } else if ((box.y + box.height) > V_HEIGHT) {
+            dy = V_HEIGHT - (box.y + box.height);
+        }
+
+        if (dx !== 0 || dy !== 0) {
+            node.x(node.x() + dx);
+            node.y(node.y() + dy);
+        }
+    }
+
+    function attachItemConstraints(node) {
+        if (!node || typeof node.hasName !== 'function' || !node.hasName('item')) {
+            return;
+        }
+
+        clampNodeToField(node);
+
+        node.on('dragmove.editorBounds', function () {
+            clampNodeToField(node);
+            mainLayer.batchDraw();
+        });
+
+        node.on('dragend.editorBounds', function () {
+            clampNodeToField(node);
+            mainLayer.batchDraw();
+            uiLayer.batchDraw();
+        });
+    }
+
+    tr.on('transformend.editorBounds', function () {
+        tr.nodes().forEach(clampNodeToField);
+        tr.forceUpdate();
+        mainLayer.batchDraw();
+        uiLayer.batchDraw();
+    });
 
     // Selection Rectangle
     const selectionRectangle = new Konva.Rect({
@@ -234,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 text.offsetX(text.width() / 2);
                 text.offsetY(text.height() / 2);
                 mainLayer.add(text);
+                attachItemConstraints(text);
                 mainLayer.batchDraw();
                 itemType = '';
             } else {
@@ -272,33 +374,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         imageSrc: `/images/assets/${itemType}.svg`
                     });
                     mainLayer.add(image);
+                    attachItemConstraints(image);
+                    mainLayer.batchDraw();
                     itemType = ''; // Reset
                 });
             }
         }
     });
 
-    // Load existing data
-    const existingData = document.getElementById('drawing_data').value;
-    if (existingData) {
-        const data = JSON.parse(existingData);
-        // We only want to load the mainLayer children (items), not the field
-        // But Konva.Node.create loads the whole stage or layer structure.
-        // Simpler approach: If we saved the whole stage, we might have issues with the field layer duplication.
-        // Let's assume we only save the 'children' of the mainLayer (excluding transformer).
-        
-        // For now, let's just implement saving first to see how we structure the data.
-    }
+    const drawingDataInput = document.getElementById('drawing_data');
+    const existingData = drawingDataInput ? drawingDataInput.value : '';
 
     // Save Data on Submit
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('form').addEventListener('submit', function() {
         // Remove transformer before saving
         tr.nodes([]);
         
         // Serialize mainLayer children (excluding transformer)
         // Actually, simpler: just save the whole mainLayer as JSON
         const json = mainLayer.toJSON();
-        document.getElementById('drawing_data').value = json;
+        if (drawingDataInput) {
+            drawingDataInput.value = json;
+        }
 
         // Generate Snapshot
         const dataURL = stage.toDataURL({ pixelRatio: 2 });
@@ -445,6 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mainLayer.add(lastLine);
             // Zones should be at the bottom by default
             lastLine.moveToBottom();
+            attachItemConstraints(lastLine);
         } else {
             let points = [pos.x, pos.y, pos.x, pos.y];
             
@@ -467,6 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             lastLine = new Konva.Arrow(config);
             mainLayer.add(lastLine);
+            attachItemConstraints(lastLine);
         }
         mainLayer.batchDraw();
     });
@@ -594,18 +693,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Load Data Logic (Refined)
-    if (existingData) {
+    function loadDrawingData(dataJson) {
+        if (!dataJson || typeof dataJson !== 'string') {
+            mainLayer.destroyChildren();
+            tr.nodes([]);
+            mainLayer.batchDraw();
+            uiLayer.batchDraw();
+            return;
+        }
+
         try {
-            // We expect existingData to be the JSON of the mainLayer
-            // We can't just replace the layer because we need the transformer.
-            // So we create a temporary layer to parse, then move children.
-            const tempLayer = Konva.Node.create(existingData);
-            const children = tempLayer.getChildren().slice(); // Copy array to avoid issues while moving
-            
+            const tempLayer = Konva.Node.create(dataJson);
+            const children = tempLayer.getChildren().slice();
+
+            mainLayer.destroyChildren();
+            tr.nodes([]);
+
             children.forEach(child => {
                 child.moveTo(mainLayer);
-                
+
                 if (child.getClassName() === 'Image' && child.getAttr('imageSrc')) {
                     const imgObj = new Image();
                     imgObj.onload = function() {
@@ -616,14 +722,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (child.name() === 'item') {
-                    // Re-enable dragging if needed
-                    child.draggable(true);
+                    child.draggable(currentTool === 'select');
+                    attachItemConstraints(child);
                 }
             });
+
+            if (drawingDataInput) {
+                drawingDataInput.value = dataJson;
+            }
+
             mainLayer.batchDraw();
+            uiLayer.batchDraw();
         } catch (e) {
             console.error("Error loading drawing data:", e);
         }
+    }
+
+    if (existingData) {
+        loadDrawingData(existingData);
+    }
+
+    window.exerciseEditorApi = {
+        setFieldType: function (type) {
+            if (!['portrait', 'landscape', 'square'].includes(type)) {
+                return;
+            }
+            updateFieldLayout(type);
+        },
+        loadDrawingData: function (drawingJson, fieldType) {
+            if (fieldType && ['portrait', 'landscape', 'square'].includes(fieldType)) {
+                updateFieldLayout(fieldType);
+            }
+            loadDrawingData(drawingJson);
+        },
+        refreshLayout: function () {
+            syncStageToContainer();
+            drawField();
+            fieldLayer.batchDraw();
+            mainLayer.batchDraw();
+            uiLayer.batchDraw();
+        },
+        exportDrawingData: function () {
+            return mainLayer.toJSON();
+        }
+    };
+
+    window.addEventListener('resize', function () {
+        syncStageToContainer();
+    });
+
+    if (typeof ResizeObserver === 'function' && containerEl.parentElement) {
+        const resizeObserver = new ResizeObserver(function () {
+            syncStageToContainer();
+        });
+        resizeObserver.observe(containerEl.parentElement);
     }
 
 });

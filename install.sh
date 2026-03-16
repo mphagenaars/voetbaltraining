@@ -22,13 +22,13 @@ echo "=========================================="
 
 # 2. System Updates & Dependencies
 echo ""
-echo "📦  [1/7] Installeren van benodigde pakketten..."
+echo "📦  [1/8] Installeren van benodigde pakketten..."
 apt-get update -q
-apt-get install -y -q git apache2 php php-sqlite3 php-pdo php-xml php-mbstring libapache2-mod-php unzip sqlite3
+apt-get install -y -q git apache2 php php-sqlite3 php-pdo php-xml php-mbstring php-curl php-sodium libapache2-mod-php unzip sqlite3
 
 # 3. Apache Configuratie
 echo ""
-echo "🔧  [2/7] Apache configureren..."
+echo "🔧  [2/8] Apache configureren..."
 
 # Enable mod_rewrite
 a2enmod rewrite
@@ -61,15 +61,33 @@ a2ensite voetbaltraining.conf > /dev/null
 
 # 4. Mappen Structuur
 echo ""
-echo "📂  [3/7] Mappen aanmaken..."
+echo "📂  [3/8] Mappen aanmaken..."
 mkdir -p data
 mkdir -p public/uploads
 echo "    - Map 'data' gecontroleerd."
 echo "    - Map 'public/uploads' gecontroleerd."
 
-# 5. Database Initialisatie
+# 5. Runtime configuratie
 echo ""
-echo "🗄️  [4/7] Database initialiseren..."
+echo "🧩  [4/8] Runtime configuratie genereren..."
+CONFIG_FILE="$PROJECT_DIR/data/config.php"
+if [ ! -f "$CONFIG_FILE" ]; then
+    ENCRYPTION_KEY=$(php -r "if (!function_exists('sodium_crypto_secretbox_keygen')) { fwrite(STDERR, 'Sodium-extensie ontbreekt.\n'); exit(1); } echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen());")
+    cat > "$CONFIG_FILE" <<EOF
+<?php
+return [
+    'encryption_key' => '$ENCRYPTION_KEY',
+];
+EOF
+    chmod 640 "$CONFIG_FILE"
+    echo "    - data/config.php aangemaakt met encryptiesleutel."
+else
+    echo "    - data/config.php bestaat al, overslaan."
+fi
+
+# 6. Database Initialisatie
+echo ""
+echo "🗄️  [5/8] Database initialiseren..."
 if [ -f "scripts/init_db.php" ]; then
     php scripts/init_db.php
 else
@@ -77,9 +95,9 @@ else
     exit 1
 fi
 
-# 6. Rechten Instellen
+# 7. Rechten Instellen
 echo ""
-echo "🔐  [5/7] Rechten instellen..."
+echo "🔐  [6/8] Rechten instellen..."
 
 # Huidige eigenaar van de bestanden
 OWNER=$(stat -c '%U' "$PROJECT_DIR")
@@ -116,12 +134,15 @@ fi
 
 # Zorg dat de map zelf ook schrijfbaar is voor SQLite (voor lock files etc)
 chmod 770 "$PROJECT_DIR/data"
+if [ -f "$PROJECT_DIR/data/config.php" ]; then
+    chmod 640 "$PROJECT_DIR/data/config.php"
+fi
 
 echo "    - Bestandsrechten ingesteld (Owner: $OWNER, Group: $WEB_USER)."
 
-# 7. Security Hardening
+# 8. Security Hardening
 echo ""
-echo "🛡️  [6/7] Security Hardening..."
+echo "🛡️  [7/8] Security Hardening..."
 
 # Verberg PHP errors in productie (display_errors = Off)
 # We proberen dit in de php.ini van Apache te zetten
@@ -137,12 +158,12 @@ fi
 a2enmod ssl > /dev/null
 echo "    - Apache SSL module ingeschakeld."
 
-# 8. Service Herstarten
+# 9. Service Herstarten
 echo ""
-echo "🔄  [7/7] Apache herstarten..."
+echo "🔄  [8/8] Apache herstarten..."
 systemctl restart apache2
 
-# 9. Admin Gebruiker Aanmaken (Optioneel)
+# 10. Admin Gebruiker Aanmaken (Optioneel)
 echo ""
 echo "👤  [Optioneel] Admin gebruiker aanmaken"
 read -p "    Wil je nu een admin account aanmaken? (j/n) " -n 1 -r

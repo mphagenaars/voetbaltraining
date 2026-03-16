@@ -1,5 +1,9 @@
 <?php
 $isEdit = isset($exercise);
+$formMode = isset($formMode) && in_array($formMode, ['manual', 'ai'], true) ? $formMode : 'manual';
+$baseFormPath = $isEdit ? ('/exercises/edit?id=' . (int)$exercise['id']) : '/exercises/create';
+$manualModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'mode=manual';
+$aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'mode=ai';
 ?>
 
 <div class="app-bar">
@@ -11,9 +15,114 @@ $isEdit = isset($exercise);
     </div>
 </div>
 
-<div class="card">
+<div class="card exercise-mode-card">
+    <h2 class="exercise-mode-title">Kies hoe je wilt starten</h2>
+    <p class="exercise-mode-subtitle">Je komt altijd uit op hetzelfde oefenformulier. Kies de manier die voor jou prettig werkt.</p>
+    <div class="exercise-mode-switch">
+        <a href="<?= e($manualModeUrl) ?>" class="exercise-mode-option<?= $formMode === 'manual' ? ' is-active' : '' ?>">
+            <strong>Zelf invullen</strong>
+            <span>Je maakt de oefening helemaal zelf</span>
+        </a>
+        <a href="<?= e($aiModeUrl) ?>" class="exercise-mode-option<?= $formMode === 'ai' ? ' is-active' : '' ?>">
+            <strong>Met AI hulp</strong>
+            <span>Beschrijf wat je zoekt en laat AI meedenken</span>
+        </a>
+    </div>
+</div>
+
+<div class="card" id="exercise-card"<?php if ($formMode === 'ai'): ?> data-ai-phase="search"<?php endif; ?>>
     <form method="POST" enctype="multipart/form-data">
         <?= Csrf::renderInput() ?>
+        <input type="hidden" name="form_mode" value="<?= e($formMode) ?>">
+
+        <?php if ($formMode === 'ai'): ?>
+        <div class="ai-search-section">
+            <div id="ai-chat-panel" class="ai-chat-panel">
+                <input type="hidden" id="ai-exercise-id" value="<?= (int)($exercise['id'] ?? 0) ?>">
+
+                <div class="ai-chat-row" hidden aria-hidden="true">
+                    <div class="ai-chat-field">
+                        <label for="ai-model-select">AI-keuze</label>
+                        <select id="ai-model-select" disabled>
+                            <option value="">Laden...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ai-chat-messages" id="ai-chat-messages"></div>
+                <div class="ai-chat-status" id="ai-chat-status">AI wordt klaargezet...</div>
+
+                <div class="ai-chat-input-row">
+                    <textarea id="ai-message-input" rows="3" placeholder="Beschrijf de oefening die je zoekt..." disabled></textarea>
+                    <input
+                        type="file"
+                        id="ai-screenshot-input"
+                        accept="image/png,image/jpeg,image/webp"
+                        multiple
+                        hidden
+                        aria-hidden="true"
+                        tabindex="-1"
+                        disabled
+                    >
+                    <div class="ai-chat-actions">
+                        <button type="button" class="btn-icon-square ai-chat-icon-btn" id="ai-new-chat-btn" title="Nieuw gesprek" aria-label="Nieuw gesprek" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
+                        <button type="button" class="btn-icon-square ai-chat-icon-btn ai-chat-icon-btn-danger" id="ai-stop-btn" style="display:none;" title="Stop verzoek" aria-label="Stop verzoek">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect></svg>
+                        </button>
+                        <button type="button" class="btn-icon-square ai-chat-icon-btn" id="ai-screenshot-clear-btn" style="display:none;" title="Wis screenshots" aria-label="Wis screenshots" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                        <button type="button" class="btn-icon-square ai-chat-icon-btn" id="ai-send-btn" title="Genereer voorstel" aria-label="Genereer voorstel" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="ai-usage-summary" id="ai-usage-summary" hidden></div>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="exercise-mode-hint">
+            AI gebruiken? Schakel bovenaan naar <strong>AI invoer</strong>.
+        </div>
+        <?php endif; ?>
+
+        <div class="ai-design-section"<?php if ($formMode === 'ai'): ?> hidden<?php endif; ?>>
+
+        <?php if ($formMode === 'ai'): ?>
+        <div class="ai-design-toolbar">
+            <button type="button" id="ai-back-to-search" class="btn btn-secondary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Terug naar zoeken
+            </button>
+        </div>
+        <?php endif; ?>
+
+        <div id="youtube-preview-card" class="exercise-video-preview" hidden>
+            <div class="exercise-video-preview-header">
+                <h3>Bronvideo</h3>
+                <a id="youtube-preview-link" class="exercise-video-preview-link" href="#" target="_blank" rel="noopener noreferrer">Open op YouTube</a>
+            </div>
+            <div class="exercise-video-preview-embed">
+                <iframe
+                    id="youtube-preview-frame"
+                    src=""
+                    title="Bronvideo preview"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                ></iframe>
+            </div>
+        </div>
+
+        <div class="exercise-details-header">
+            <h2>Standaard oefenstof</h2>
+            <p>Deze velden worden opgeslagen. In AI-modus kun je ze automatisch laten invullen en daarna handmatig bijsturen.</p>
+        </div>
+
         <div class="form-group">
             <label for="title">Titel *</label>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -240,6 +349,8 @@ $isEdit = isset($exercise);
             <input type="hidden" name="drawing_image" id="drawing_image">
             <input type="hidden" name="field_type" id="field_type" value="<?= e($exercise['field_type'] ?? 'square') ?>">
         </div>
+
+        </div><!-- /.ai-design-section -->
     </form>
 </div>
 
@@ -257,8 +368,106 @@ function updateNumber(id, change) {
 
 <script src="/js/konva.min.js"></script>
 <script src="/js/editor.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/editor.js') ?>"></script>
+<?php if ($formMode === 'ai'): ?>
+<script src="/js/exercise-ai-chat.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/exercise-ai-chat.js') ?>"></script>
+<?php endif; ?>
 
 <script>
+function sanitizeYouTubeVideoId(id) {
+    const value = String(id || '').trim();
+    return /^[A-Za-z0-9_-]{11}$/.test(value) ? value : null;
+}
+
+function parseYouTubeIdFromUrl(candidate) {
+    try {
+        const url = new URL(candidate);
+        const host = url.hostname.toLowerCase().replace(/^www\./, '');
+        const parts = url.pathname.split('/').filter(Boolean);
+
+        if (host === 'youtu.be') {
+            return sanitizeYouTubeVideoId(parts[0] || '');
+        }
+
+        if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
+            const fromQuery = sanitizeYouTubeVideoId(url.searchParams.get('v') || '');
+            if (fromQuery) {
+                return fromQuery;
+            }
+
+            if (parts[0] === 'embed' || parts[0] === 'shorts' || parts[0] === 'live') {
+                return sanitizeYouTubeVideoId(parts[1] || '');
+            }
+        }
+    } catch (e) {
+        return null;
+    }
+
+    return null;
+}
+
+function extractYouTubeVideoId(rawValue) {
+    const value = String(rawValue || '').trim();
+    if (value === '') {
+        return null;
+    }
+
+    const direct = sanitizeYouTubeVideoId(value);
+    if (direct) {
+        return direct;
+    }
+
+    const urlMatch = value.match(/https?:\/\/[^\s]+/i);
+    if (urlMatch) {
+        const parsed = parseYouTubeIdFromUrl(urlMatch[0]);
+        if (parsed) {
+            return parsed;
+        }
+    }
+
+    const firstToken = value.split(/\s+/)[0] || '';
+    const candidates = [firstToken];
+    if (!/^https?:\/\//i.test(firstToken)) {
+        candidates.push('https://' + firstToken);
+    }
+
+    for (const candidate of candidates) {
+        const parsed = parseYouTubeIdFromUrl(candidate);
+        if (parsed) {
+            return parsed;
+        }
+    }
+
+    return null;
+}
+
+function updateYouTubePreview() {
+    const sourceInput = document.getElementById('source');
+    const card = document.getElementById('youtube-preview-card');
+    const frame = document.getElementById('youtube-preview-frame');
+    const link = document.getElementById('youtube-preview-link');
+    if (!sourceInput || !card || !frame || !link) {
+        return;
+    }
+
+    const videoId = extractYouTubeVideoId(sourceInput.value);
+    if (!videoId) {
+        card.hidden = true;
+        frame.removeAttribute('src');
+        frame.dataset.videoId = '';
+        link.removeAttribute('href');
+        return;
+    }
+
+    const embedUrl = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?rel=0&modestbranding=1';
+    if (frame.dataset.videoId !== videoId) {
+        frame.src = embedUrl;
+        frame.dataset.videoId = videoId;
+    }
+
+    link.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(videoId);
+    card.hidden = false;
+}
+
 function toggleMultiSelect(id) {
     const wrapper = document.getElementById(id);
     const options = wrapper.querySelector('.multi-select-options');
@@ -305,5 +514,12 @@ document.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     updateTrigger('wrapper-objective');
     updateTrigger('wrapper-action');
+
+    const sourceInput = document.getElementById('source');
+    if (sourceInput) {
+        sourceInput.addEventListener('input', updateYouTubePreview);
+        sourceInput.addEventListener('change', updateYouTubePreview);
+    }
+    updateYouTubePreview();
 });
 </script>

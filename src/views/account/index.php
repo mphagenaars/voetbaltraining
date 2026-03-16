@@ -7,6 +7,115 @@
     </div>
 </div>
 
+<div class="card" id="ai-usage-card">
+    <h2>AI Verbruik</h2>
+    <p class="text-muted" id="ai-usage-loading">Laden...</p>
+    <div id="ai-usage-summary" style="display:none; margin-bottom: 1rem;"></div>
+    <div id="ai-usage-history-wrap" style="display:none;">
+        <h3 style="margin-bottom: 0.5rem;">Recente calls</h3>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom: 2px solid #eee;">
+                        <th style="padding: 0.5rem;">Datum</th>
+                        <th style="padding: 0.5rem;">Model</th>
+                        <th style="padding: 0.5rem;">Status</th>
+                        <th style="padding: 0.5rem;">Tokens</th>
+                        <th style="padding: 0.5rem;">Kosten (EUR)</th>
+                    </tr>
+                </thead>
+                <tbody id="ai-usage-history-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    const loadingEl = document.getElementById('ai-usage-loading');
+    const summaryEl = document.getElementById('ai-usage-summary');
+    const historyWrapEl = document.getElementById('ai-usage-history-wrap');
+    const historyBodyEl = document.getElementById('ai-usage-history-body');
+
+    const setError = function (message) {
+        loadingEl.textContent = message;
+        loadingEl.style.color = '#c62828';
+    };
+
+    try {
+        const [summaryRes, historyRes] = await Promise.all([
+            fetch('/ai/usage/summary'),
+            fetch('/ai/usage/history?per_page=10')
+        ]);
+
+        const summaryJson = await summaryRes.json();
+        const historyJson = await historyRes.json();
+
+        if (!summaryRes.ok || summaryJson.ok === false) {
+            throw new Error(summaryJson.error || 'Kon AI samenvatting niet laden.');
+        }
+        if (!historyRes.ok || historyJson.ok === false) {
+            throw new Error(historyJson.error || 'Kon AI historie niet laden.');
+        }
+
+        const summary = summaryJson.summary;
+        const formatMoney = function (value) {
+            if (value === null || value === undefined) return 'onbeperkt';
+            return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(Number(value));
+        };
+
+        const summaryLines = [];
+        summaryLines.push('Periode: ' + summary.period_start.substring(0, 10) + ' t/m ' + summary.period_end.substring(0, 10));
+        summaryLines.push('Tokens: ' + Number(summary.total_tokens || 0).toLocaleString('nl-NL'));
+        if (summary.billing_enabled) {
+            summaryLines.push('Kosten: ' + formatMoney(summary.billable_cost_eur || 0));
+            if (summary.budget_eur !== null) {
+                summaryLines.push('Budget: ' + formatMoney(summary.budget_eur));
+                summaryLines.push('Resterend: ' + formatMoney(summary.remaining_budget_eur));
+            } else {
+                summaryLines.push('Budget: onbeperkt');
+            }
+        }
+
+        summaryEl.innerHTML = summaryLines.map(function (line) {
+            return '<div>' + line + '</div>';
+        }).join('');
+
+        const rows = historyJson.events || [];
+        const escapeHtml = function (value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+        if (rows.length === 0) {
+            historyBodyEl.innerHTML = '<tr><td colspan=\"5\" style=\"padding: 0.75rem; color: var(--text-muted);\">Nog geen AI usage events.</td></tr>';
+        } else {
+            historyBodyEl.innerHTML = rows.map(function (row) {
+                const status = row.status || '-';
+                const tokenCount = Number(row.total_tokens || 0).toLocaleString('nl-NL');
+                const billable = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(Number(row.billable_cost_eur || 0));
+                return '<tr style=\"border-bottom: 1px solid #eee;\">' +
+                    '<td style=\"padding: 0.5rem;\">' + escapeHtml(String(row.created_at || '').substring(0, 16)) + '</td>' +
+                    '<td style=\"padding: 0.5rem;\"><code>' + escapeHtml(row.model_id || '-') + '</code></td>' +
+                    '<td style=\"padding: 0.5rem;\">' + escapeHtml(status) + '</td>' +
+                    '<td style=\"padding: 0.5rem;\">' + tokenCount + '</td>' +
+                    '<td style=\"padding: 0.5rem;\">' + billable + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        loadingEl.style.display = 'none';
+        summaryEl.style.display = '';
+        historyWrapEl.style.display = '';
+    } catch (error) {
+        setError(error.message || 'Kon AI verbruik niet laden.');
+    }
+});
+</script>
+
 <?php if (!empty($success)): ?>
     <div class="alert alert-success"><?= e($success) ?></div>
 <?php endif; ?>
@@ -89,4 +198,3 @@
         </form>
     </div>
 </div>
-

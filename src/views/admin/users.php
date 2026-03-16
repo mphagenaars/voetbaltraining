@@ -23,6 +23,7 @@
                 <th style="padding: 10px;">Gebruikersnaam</th>
                 <th style="padding: 10px;">Naam</th>
                 <th style="padding: 10px;">Admin</th>
+                <th style="padding: 10px;">AI Toegang</th>
                 <th style="padding: 10px; text-align: right;">Acties</th>
             </tr>
         </thead>
@@ -40,7 +41,23 @@
                         <?php endif; ?>
                     </td>
                     <td style="padding: 10px;">
+                        <?php if (!empty($user['ai_access_enabled'])): ?>
+                            <span class="badge" style="background: #e8f5e9; color: #1b5e20; padding: 0.25rem 0.5rem; border-radius: 0.35rem;">Aan</span>
+                        <?php else: ?>
+                            <span style="color: #6c757d;">Uit</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="padding: 10px;">
                         <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+                            <form action="/admin/update-user-ai-access" method="POST" style="margin:0;">
+                                <?= Csrf::renderInput() ?>
+                                <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                                <input type="hidden" name="ai_access_enabled" value="<?= !empty($user['ai_access_enabled']) ? 0 : 1 ?>">
+                                <button type="submit" class="btn-icon" title="<?= !empty($user['ai_access_enabled']) ? 'Zet AI uit' : 'Zet AI aan' ?>" style="<?= !empty($user['ai_access_enabled']) ? 'color: #1b5e20;' : '' ?>">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v5a8 8 0 0 0 16 0v-5a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"></path><path d="M9 12h6"></path></svg>
+                                </button>
+                            </form>
+
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                                 <form action="/admin/toggle-admin" method="POST" style="margin:0;">
                                     <?= Csrf::renderInput() ?>
@@ -72,4 +89,3 @@
         </tbody>
     </table>
 </div>
-

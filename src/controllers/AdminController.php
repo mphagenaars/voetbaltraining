@@ -3,20 +3,6 @@ declare(strict_types=1);
 
 class AdminController extends BaseController {
 
-    private function requireAdmin(): void {
-        $this->requireAuth();
-        
-        // Check DB voor zekerheid (sessie kan verouderd zijn)
-        $userModel = new User($this->pdo);
-        $user = $userModel->getById(Session::get('user_id'));
-        
-        if (!$user || empty($user['is_admin'])) {
-            http_response_code(403);
-            View::render('404', ['pageTitle' => 'Geen toegang']); // Of een specifieke 403 pagina
-            exit;
-        }
-    }
-
     public function index(): void {
         $this->requireAdmin();
         
@@ -250,6 +236,33 @@ class AdminController extends BaseController {
             Session::flash('success', 'Rechten aangepast.');
             $this->redirect('/admin');
          }
+    }
+
+    public function updateUserAiAccessEnabled(): void {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/users');
+        }
+
+        $this->verifyCsrf('/admin/users');
+
+        $userId = (int)($_POST['user_id'] ?? 0);
+        $aiAccessEnabled = !empty($_POST['ai_access_enabled']) ? 1 : 0;
+
+        if ($userId <= 0) {
+            Session::flash('error', 'Ongeldige gebruiker.');
+            $this->redirect('/admin/users');
+        }
+
+        $stmt = $this->pdo->prepare('UPDATE users SET ai_access_enabled = :ai_access_enabled WHERE id = :id');
+        $stmt->execute([
+            ':ai_access_enabled' => $aiAccessEnabled,
+            ':id' => $userId,
+        ]);
+
+        Session::flash('success', 'AI toegang bijgewerkt.');
+        $this->redirect('/admin/users');
     }
 
     public function manageTeams(): void {

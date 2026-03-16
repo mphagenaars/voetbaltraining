@@ -23,7 +23,7 @@
             <?= Csrf::renderInput() ?>
             <div style="display: flex; gap: 0.5rem;">
                 <input type="text" name="name" placeholder="Nieuwe club..." required style="flex: 1;">
-                <button type="submit" class="btn-icon-round" title="Toevoegen" style="background: var(--primary); color: white; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none;">
+                <button type="submit" class="btn-icon-round" title="Toevoegen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
@@ -62,7 +62,7 @@
         <form action="/admin/teams/add-season" method="POST" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
             <?= Csrf::renderInput() ?>
             <input type="text" name="name" placeholder="Nieuw seizoen (bijv. 2026-2027)..." required style="flex: 1;">
-            <button type="submit" class="btn-icon-round" title="Toevoegen" style="background: var(--primary); color: white; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none;">
+            <button type="submit" class="btn-icon-round" title="Toevoegen">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
         </form>

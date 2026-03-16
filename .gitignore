@@ -1,5 +1,8 @@
+/archief/
 /data/*.sqlite
 /data/*.db
+/data/config.php
+/data/tmp/
 /vendor/
 .DS_Store
 .copilot/
@@ -11,3 +14,4 @@ COPILOT_GUIDLINES.md
 server.log
 public/uploads/*
 git_update.sh
+

@@ -12,6 +12,7 @@ spl_autoload_register(function (string $class): void {
         $base . $class . '.php',
         $base . 'models/' . $class . '.php',
         $base . 'controllers/' . $class . '.php',
+        $base . 'services/' . $class . '.php',
     ];
 
     foreach ($paths as $path) {

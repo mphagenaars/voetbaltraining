@@ -39,6 +39,17 @@
         <p style="color: #666; margin-bottom: 1.5rem;">Bekijk en beheer teams van gebruikers.</p>
     </div>
 
+    <!-- AI Module Tile -->
+    <div class="card" style="cursor: pointer;" onclick="window.location.href='/admin/ai/settings'">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="background: #ede7f6; padding: 1rem; border-radius: 50%; color: #4527a0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h.01"></path><path d="M15 12h.01"></path><path d="M8 16h8"></path><path d="M12 2a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6h6a6 6 0 0 0 6-6v-5a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5z"></path></svg>
+            </div>
+            <h2 style="margin: 0;">AI Module</h2>
+        </div>
+        <p style="color: #666; margin-bottom: 1.5rem;">Beheer AI toegang, modellen, prijzen en API keys.</p>
+    </div>
+
     <!-- System Tile -->
     <div class="card" style="cursor: pointer;" onclick="window.location.href='/admin/system'">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
@@ -51,4 +62,3 @@
     </div>
 
 </div>
-

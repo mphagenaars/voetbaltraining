@@ -63,6 +63,7 @@ class ExerciseController extends BaseController {
     public function create(): void {
         $this->requireAuth();
         $this->verifyCsrf();
+        $formMode = $this->resolveFormMode($_POST['form_mode'] ?? $_GET['mode'] ?? null);
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator($_POST);
@@ -112,13 +113,18 @@ class ExerciseController extends BaseController {
                 $this->redirect('/exercises');
             }
         }
-        View::render('exercises/form', ['pageTitle' => 'Nieuwe Oefening - Trainer Bobby']);
+        View::render('exercises/form', [
+            'pageTitle' => 'Nieuwe Oefening - Trainer Bobby',
+            'formMode' => $formMode,
+        ]);
     }
 
     public function edit(): void {
         if (!Session::has('user_id')) {
             $this->redirect('/');
         }
+
+        $formMode = $this->resolveFormMode($_POST['form_mode'] ?? $_GET['mode'] ?? null);
         
         $exerciseModel = new Exercise($this->pdo);
         $id = (int)($_GET['id'] ?? 0);
@@ -174,7 +180,11 @@ class ExerciseController extends BaseController {
                 $this->redirect('/exercises');
             }
         }
-        View::render('exercises/form', ['exercise' => $exercise, 'pageTitle' => 'Oefening Bewerken - Trainer Bobby']);
+        View::render('exercises/form', [
+            'exercise' => $exercise,
+            'pageTitle' => 'Oefening Bewerken - Trainer Bobby',
+            'formMode' => $formMode,
+        ]);
     }
 
     public function view(): void {
@@ -330,6 +340,11 @@ class ExerciseController extends BaseController {
         }
 
         return false;
+    }
+
+    private function resolveFormMode(mixed $rawMode): string {
+        $mode = strtolower(trim((string)$rawMode));
+        return in_array($mode, ['manual', 'ai'], true) ? $mode : 'manual';
     }
 
     public function storeComment(): void {

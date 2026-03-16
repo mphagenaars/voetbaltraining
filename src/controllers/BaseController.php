@@ -18,6 +18,20 @@ abstract class BaseController {
         }
     }
 
+    protected function requireAdmin(): void {
+        $this->requireAuth();
+
+        // Check DB voor zekerheid (sessie kan verouderd zijn)
+        $userModel = new User($this->pdo);
+        $user = $userModel->getById((int) Session::get('user_id'));
+
+        if (!$user || empty($user['is_admin'])) {
+            http_response_code(403);
+            View::render('404', ['pageTitle' => 'Geen toegang']);
+            exit;
+        }
+    }
+
     protected function verifyCsrf(?string $redirectPath = null): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
