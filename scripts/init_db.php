@@ -41,7 +41,9 @@ try {
 
     $settingColumns = $db->query("PRAGMA table_info(app_settings)")->fetchAll(PDO::FETCH_COLUMN, 1);
     if (!in_array('updated_at', $settingColumns)) {
-        $db->exec("ALTER TABLE app_settings ADD COLUMN updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP");
+        // SQLite staat CURRENT_TIMESTAMP niet toe als DEFAULT bij ADD COLUMN op niet-lege tabellen.
+        $db->exec("ALTER TABLE app_settings ADD COLUMN updated_at TEXT");
+        $db->exec("UPDATE app_settings SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL OR TRIM(updated_at) = ''");
         echo "- Kolom 'updated_at' toegevoegd aan 'app_settings'.\n";
     }
 

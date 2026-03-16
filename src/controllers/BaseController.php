@@ -36,6 +36,7 @@ abstract class BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
                 // Redirect back to self or specified path on failure
+                Session::flash('error', 'Sessie verlopen of ongeldig formulier-token. Vernieuw de pagina en probeer opnieuw.');
                 $path = $redirectPath ?? $_SERVER['REQUEST_URI'];
                 header("Location: $path");
                 exit;

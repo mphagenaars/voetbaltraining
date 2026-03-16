@@ -490,7 +490,16 @@ class AiAdminController extends BaseController {
             $this->settings->set($settingKey, $encrypted);
             Session::flash('success', $successMessage);
         } catch (Throwable $e) {
-            Session::flash('error', 'API key kon niet worden opgeslagen.');
+            error_log('[AiAdminController] API key save failed: ' . $e->getMessage());
+
+            $message = 'API key kon niet worden opgeslagen.';
+            $errorText = strtolower($e->getMessage());
+            if (str_contains($errorText, 'readonly')) {
+                $message = 'API key kon niet worden opgeslagen: database is alleen-lezen. Controleer bestandsrechten op data/database.sqlite en data/.';
+            } elseif (str_contains($errorText, 'updated_at')) {
+                $message = 'API key kon niet worden opgeslagen door een onvolledige database-migratie. Draai scripts/init_db.php opnieuw.';
+            }
+            Session::flash('error', $message);
         }
 
         $this->redirect('/admin/ai/settings');
