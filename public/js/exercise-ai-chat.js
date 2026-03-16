@@ -848,6 +848,36 @@ document.addEventListener('DOMContentLoaded', function () {
         messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
+    function appendRetryRecoveryOption(recovery) {
+        if (!messagesEl || !recovery || !recovery.video_id) {
+            return;
+        }
+
+        var container = document.createElement('div');
+        container.className = 'ai-concept-recovery';
+
+        var text = document.createElement('div');
+        text.className = 'ai-concept-recovery-text';
+        text.textContent = recovery.message || 'Je kunt deze video opnieuw laten controleren.';
+        container.appendChild(text);
+
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ai-video-btn ai-video-btn-retry';
+        button.textContent = 'Opnieuw controleren';
+        button.addEventListener('click', function () {
+            sendVideoSelection(recovery.video_id, recovery.video_title || 'deze video', {
+                selectionOrigin: 'retry_same_video',
+                recoveryTriggerCode: recovery.trigger_code || '',
+                forceVideoRefresh: true,
+            });
+        });
+        container.appendChild(button);
+
+        messagesEl.appendChild(container);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
     function appendScreenshotRecoveryOption(recovery) {
         if (!messagesEl || !recovery || !recovery.video_id || !screenshotInput) {
             return;
@@ -898,8 +928,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var hasRecoveryChoices = Array.isArray(payload.recovery_video_choices) && payload.recovery_video_choices.length > 0;
         var hasConceptRecovery = payload.concept_recovery && payload.concept_recovery.video_id;
         var hasScreenshotRecovery = payload.screenshot_recovery && payload.screenshot_recovery.video_id;
+        var hasRetryRecovery = payload.retry_video && payload.retry_video.video_id;
 
-        if (hasRecoveryChoices || hasConceptRecovery || hasScreenshotRecovery) {
+        if (hasRecoveryChoices || hasConceptRecovery || hasScreenshotRecovery || hasRetryRecovery) {
             appendMessage('assistant', error.message);
             if (payload.source_review) {
                 appendSourceReview(payload.source_review);
@@ -920,7 +951,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 var phase = exerciseCard && exerciseCard.dataset ? String(exerciseCard.dataset.aiPhase || 'search') : 'search';
                 setScreenshotUploadEnabled(phase === 'design');
             }
-            setStatus(payload.screenshot_message || payload.recovery_message || payload.concept_message || 'Kies hoe je verder wilt.');
+            if (hasRetryRecovery) {
+                appendRetryRecoveryOption(payload.retry_video);
+            }
+            setStatus(payload.screenshot_message || payload.retry_message || payload.recovery_message || payload.concept_message || 'Kies hoe je verder wilt.');
             return;
         }
 
@@ -997,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', function () {
             selected_video_id: videoId,
             selection_origin: options && options.selectionOrigin ? String(options.selectionOrigin) : 'search_results',
             recovery_trigger_code: options && options.recoveryTriggerCode ? String(options.recoveryTriggerCode) : '',
+            force_video_refresh: options && options.forceVideoRefresh ? 1 : 0,
         }, {
             includeScreenshots: false,
         });

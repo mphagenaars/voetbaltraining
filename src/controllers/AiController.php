@@ -58,6 +58,7 @@ class AiController extends BaseController {
         $selectionOrigin = trim((string)($_POST['selection_origin'] ?? ''));
         $recoveryTriggerCode = trim((string)($_POST['recovery_trigger_code'] ?? ''));
         $conceptModeRequested = !empty($_POST['concept_mode']);
+        $forceVideoRefresh = !empty($_POST['force_video_refresh']);
         $requestedMode = strtolower(trim((string)($_POST['mode'] ?? '')));
         $uploadedScreenshots = $this->parseUploadedScreenshotFrames($_FILES['screenshot_files'] ?? null);
 
@@ -173,7 +174,8 @@ class AiController extends BaseController {
                     $fieldTypeHint, $formState, $selectedVideoId, $coachRequest, $segmentIdForGeneration,
                     $selectionOrigin,
                     $recoveryTriggerCode,
-                    $conceptModeRequested
+                    $conceptModeRequested,
+                    $forceVideoRefresh
                 );
             } elseif ($mode === 'screenshot_recovery') {
                 $maxSessions = max(1, (int)($settings['ai_max_sessions_per_user'] ?? 50));
@@ -426,7 +428,8 @@ class AiController extends BaseController {
         int $selectedSegmentId = 0,
         string $selectionOrigin = '',
         string $recoveryTriggerCode = '',
-        bool $conceptModeRequested = false
+        bool $conceptModeRequested = false,
+        bool $forceVideoRefresh = false
     ): void {
         $this->logVideoChoiceSelectionEvent(
             $userId,
@@ -439,7 +442,7 @@ class AiController extends BaseController {
         );
 
         // If a segment was selected, try to use cached source from the segment_choices response
-        if ($selectedSegmentId > 0) {
+        if ($selectedSegmentId > 0 && !$forceVideoRefresh) {
             $cached = $this->loadCachedSegmentSource($sessionId);
             if ($cached !== null) {
                 $source = $cached['source'];
@@ -476,7 +479,7 @@ class AiController extends BaseController {
             }
         }
 
-        $retrieval = $this->retrievalService->enrichSelectedVideo($videoId, $settings);
+        $retrieval = $this->retrievalService->enrichSelectedVideo($videoId, $settings, $forceVideoRefresh);
 
         if (!$retrieval['ok']) {
             $this->jsonResponse([
@@ -524,7 +527,8 @@ class AiController extends BaseController {
             $recoveryPayload = $this->buildRecoveryPayload($sessionId, $videoId);
             $conceptRecovery = $this->buildConceptRecoveryPayload($source, 'video_preflight_failed');
             $screenshotRecovery = $this->buildScreenshotRecoveryPayload($source, $settings, 'video_preflight_failed');
-            $assistantText = $this->augmentFailureMessageWithRecovery($assistantText, $recoveryPayload, $conceptRecovery, $screenshotRecovery);
+            $retryRecovery = $this->buildRetryVideoRecoveryPayload($source, 'video_preflight_failed');
+            $assistantText = $this->augmentFailureMessageWithRecovery($assistantText, $recoveryPayload, $conceptRecovery, $screenshotRecovery, $retryRecovery);
             $this->logGenerationBlockerQualityEvents(
                 $userId,
                 $teamId,
@@ -565,6 +569,9 @@ class AiController extends BaseController {
                     'video_preflight_failed'
                 );
             }
+            if (!empty($retryRecovery['retry_video'])) {
+                $metadata['retry_video'] = $retryRecovery['retry_video'];
+            }
             $this->sessionService->insertChatMessage(
                 $sessionId,
                 'assistant',
@@ -581,7 +588,7 @@ class AiController extends BaseController {
                 'sources_used' => $sourcesUsed,
                 'technical_preflight' => $source['technical_preflight'] ?? null,
                 'technical_viability' => $technicalViability,
-            ] + $recoveryPayload + $conceptRecovery + $screenshotRecovery, 422);
+            ] + $recoveryPayload + $conceptRecovery + $screenshotRecovery + $retryRecovery, 422);
         }
 
         // Extract keyframes for visual evidence (non-blocking: failures add warning but don't stop generation)
@@ -1294,6 +1301,24 @@ class AiController extends BaseController {
         ];
     }
 
+    private function buildRetryVideoRecoveryPayload(array $source, string $triggerCode = ''): array
+    {
+        $videoId = trim((string)($source['external_id'] ?? ''));
+        if ($videoId === '') {
+            return [];
+        }
+
+        return [
+            'retry_video' => [
+                'video_id' => $videoId,
+                'video_title' => trim((string)($source['title'] ?? 'deze video')),
+                'trigger_code' => trim($triggerCode),
+                'message' => 'Je kunt deze video direct opnieuw laten controleren.',
+            ],
+            'retry_message' => 'Wil je het nog een keer proberen met dezelfde video? Klik op opnieuw controleren.',
+        ];
+    }
+
     private function buildScreenshotRecoveryPayload(array $source, array $settings, string $triggerCode = ''): array
     {
         if (!$this->canOfferScreenshotRecovery($source, $settings)) {
@@ -1381,7 +1406,8 @@ class AiController extends BaseController {
         string $assistantText,
         array $recoveryPayload,
         array $conceptRecovery = [],
-        array $screenshotRecovery = []
+        array $screenshotRecovery = [],
+        array $retryRecovery = []
     ): string
     {
         $parts = [rtrim($assistantText)];
@@ -1396,6 +1422,10 @@ class AiController extends BaseController {
 
         if (!empty($screenshotRecovery['screenshot_recovery'])) {
             $parts[] = 'Speelt de video bij jou wel? Dan kun je ook screenshots uploaden.';
+        }
+
+        if (!empty($retryRecovery['retry_video'])) {
+            $parts[] = 'Je kunt dezelfde video ook opnieuw laten controleren.';
         }
 
         return implode(' ', $parts);

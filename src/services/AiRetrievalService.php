@@ -89,18 +89,18 @@ class AiRetrievalService {
     /**
      * Step 2 of two-step flow: enrich a selected video with full details including transcript.
      */
-    public function enrichSelectedVideo(string $videoId, array $settings): array {
-        return $this->fetchDirectVideo($videoId, $settings);
+    public function enrichSelectedVideo(string $videoId, array $settings, bool $forceRefresh = false): array {
+        return $this->fetchDirectVideo($videoId, $settings, $forceRefresh);
     }
 
     /**
      * Handle direct YouTube URL: user pasted a video link.
      */
-    public function fetchDirectVideo(string $videoId, array $settings): array {
+    public function fetchDirectVideo(string $videoId, array $settings, bool $forceRefresh = false): array {
         $cachedSource = $this->loadCachedSource('youtube', $videoId);
         if ($cachedSource !== null && $this->isUsableDirectVideoCache($cachedSource)) {
-            if ($this->needsTechnicalPreflightRefresh($cachedSource['technical_preflight'] ?? null)) {
-                $cachedSource = $this->attachTechnicalPreflight($cachedSource, $settings);
+            if ($forceRefresh || $this->needsTechnicalPreflightRefresh($cachedSource['technical_preflight'] ?? null)) {
+                $cachedSource = $this->attachTechnicalPreflight($cachedSource, $settings, $forceRefresh);
                 $this->storeSourceCache($cachedSource);
             }
             return [
@@ -475,7 +475,7 @@ PROMPT;
         return $result;
     }
 
-    private function attachTechnicalPreflight(array $video, array $settings): array {
+    private function attachTechnicalPreflight(array $video, array $settings, bool $forceProbe = false): array {
         $videoId = trim((string)($video['external_id'] ?? ''));
         $existing = $this->normalizeTechnicalPreflight(
             is_array($video['technical_preflight'] ?? null) ? $video['technical_preflight'] : null,
@@ -488,7 +488,7 @@ PROMPT;
             return $video;
         }
 
-        if (!$existing['checked'] || $this->needsTechnicalPreflightRefresh($existing)) {
+        if ($forceProbe || !$existing['checked'] || $this->needsTechnicalPreflightRefresh($existing)) {
             $probe = $this->frameExtractor->probeAvailability($videoId, $cookiesPath);
             $existing = $this->mergeProbeIntoTechnicalPreflight($existing, $probe, $video);
         }

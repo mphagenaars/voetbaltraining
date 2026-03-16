@@ -217,7 +217,7 @@ class FakeEvaluationRetrievalService extends AiRetrievalService {
         parent::__construct($pdo);
     }
 
-    public function fetchDirectVideo(string $videoId, array $settings): array {
+    public function fetchDirectVideo(string $videoId, array $settings, bool $forceRefresh = false): array {
         return $this->directResponses[$videoId] ?? [
             'ok' => false,
             'error' => 'missing fake direct response',
@@ -974,6 +974,59 @@ $tests['AiRetrievalService gebruikt broncache voor directe video'] = function ()
     assertTrue($second['ok'] === true, 'Second direct-video retrieval should succeed from cache');
     assertSame(1, count($youtube->videoCalls), 'Second call should hit cache and skip API');
     assertSame(1, count($extractor->probeCalls), 'Second call should reuse cached preflight');
+};
+
+$tests['AiRetrievalService kan directe video-preflight geforceerd opnieuw controleren'] = function (): void {
+    $pdo = createRetrievalPdo();
+    $youtube = new FakeYouTubeSearchClient();
+    $extractor = new FakeVideoFrameExtractor();
+    $youtube->videoItems['forceretry01'] = [
+        'external_id' => 'forceretry01',
+        'title' => 'Retry drill',
+        'snippet' => 'Oefening voor force refresh.',
+        'channel' => 'Coach Retry',
+        'published_at' => '2025-01-01T00:00:00Z',
+        'url' => 'https://www.youtube.com/watch?v=forceretry01',
+        'duration_seconds' => 300,
+        'first_chapter' => 'Setup',
+        'chapters' => [],
+        'transcript_excerpt' => '',
+        'transcript_source' => 'captions',
+    ];
+    $extractor->probeResponses['forceretry01'] = [
+        'checked' => true,
+        'downloadable_via_ytdlp' => false,
+        'auth_required' => false,
+        'error_code' => 'unavailable',
+        'error' => 'Video is unavailable',
+        'duration_seconds' => 300,
+        'used_cookies' => false,
+    ];
+
+    $service = new TestableAiRetrievalService($pdo, $youtube, null, $extractor);
+    $settings = retrievalSettings();
+
+    $first = $service->fetchDirectVideo('forceretry01', $settings);
+    assertTrue($first['ok'] === true, 'First direct-video retrieval should succeed');
+    assertSame(false, $first['source']['technical_preflight']['downloadable_via_ytdlp'] ?? null, 'Initial preflight should be unavailable');
+    assertSame(1, count($extractor->probeCalls), 'Initial call should probe availability once');
+
+    $extractor->probeResponses['forceretry01'] = [
+        'checked' => true,
+        'downloadable_via_ytdlp' => true,
+        'auth_required' => false,
+        'error_code' => null,
+        'error' => '',
+        'duration_seconds' => 300,
+        'used_cookies' => false,
+    ];
+
+    $retry = $service->fetchDirectVideo('forceretry01', $settings, true);
+    assertTrue($retry['ok'] === true, 'Force-refresh retry should still return source');
+    assertSame(true, $retry['source']['technical_preflight']['downloadable_via_ytdlp'] ?? null, 'Forced retry should overwrite stale preflight status');
+    assertSame('ok', $retry['source']['technical_preflight']['status'] ?? '', 'Forced retry should mark preflight as ok');
+    assertSame(2, count($extractor->probeCalls), 'Forced retry should run availability probe again immediately');
+    assertSame(1, count($youtube->videoCalls), 'Forced retry should keep using cached source metadata');
 };
 
 $tests['AiRetrievalService ververst incomplete zoekcache bij directe video'] = function (): void {
