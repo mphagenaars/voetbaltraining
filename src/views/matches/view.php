@@ -324,7 +324,7 @@
                     <div class="match-tactics-toolbar editor-toolbar" id="tactics-toolbar">
                         <div class="toolbar-row">
                             <div class="match-tactics-toolbar-group">
-                                <span class="match-tactics-toolbar-label">Spelers</span>
+                                <span class="match-tactics-toolbar-label">Objecten</span>
                                 <div class="group-items">
                                     <div class="draggable-item tactics-draggable-item tactics-draggable-item-ball" draggable="true" data-type="ball" title="Bal">⚽</div>
                                     <div class="draggable-item tactics-draggable-item" draggable="true" data-type="shirt_red_black"><img src="/images/assets/shirt_red_black.svg" alt="Speler Zwart/Rood"></div>
@@ -333,19 +333,26 @@
                             </div>
 
                             <div class="match-tactics-toolbar-group">
-                                <span class="match-tactics-toolbar-label">Pijlen</span>
+                                <span class="match-tactics-toolbar-label">Tekenen</span>
                                 <div class="group-items">
-                                    <button type="button" id="tactics-tool-arrow" class="tool-btn" title="Pass">
-                                        <img src="/images/assets/icon_arrow.svg" alt="Pass">
-                                    </button>
-                                    <button type="button" id="tactics-tool-dashed" class="tool-btn" title="Lopen zonder bal">
-                                        <img src="/images/assets/icon_arrow_dashed.svg" alt="Lopen zonder bal">
-                                    </button>
-                                    <button type="button" id="tactics-tool-zigzag" class="tool-btn" title="Dribbel">
-                                        <img src="/images/assets/icon_arrow_zigzag.svg" alt="Dribbel">
-                                    </button>
                                     <button type="button" id="tactics-tool-marker" class="tool-btn" title="Viltstift pijl">
-                                        <img src="/images/assets/icon_line.svg" alt="Viltstift pijl">
+                                        <svg class="tactics-marker-pen-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M4 20l4.8-1L19 8.8 15.2 5 5 15.2 4 20z"></path>
+                                            <path d="M13.8 6.4l3.8 3.8"></path>
+                                            <path d="M3.5 20.5h4.2"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" id="tactics-marker-color-black" class="tool-btn tactics-marker-option-btn" title="Witte lijn">
+                                        <span class="tactics-marker-swatch tactics-marker-swatch-black" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" id="tactics-marker-color-red" class="tool-btn tactics-marker-option-btn" title="Rode lijn">
+                                        <span class="tactics-marker-swatch tactics-marker-swatch-red" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" id="tactics-marker-style-solid" class="tool-btn tactics-marker-option-btn" title="Volle lijn">
+                                        <span class="tactics-marker-line-preview" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" id="tactics-marker-style-dashed" class="tool-btn tactics-marker-option-btn" title="Stippellijn">
+                                        <span class="tactics-marker-line-preview is-dashed" aria-hidden="true"></span>
                                     </button>
                                 </div>
                             </div>

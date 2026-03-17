@@ -358,6 +358,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let isSelecting = false;
         let lastLine;
         let activeDrawTool = '';
+        let activeMarkerStrokeStyle = 'solid';
+        let markerColor = '#ffffff';
+        let markerStrokeStyle = 'solid';
         let startPos;
         let x1;
         let y1;
@@ -369,9 +372,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const toolButtons = {
                 select: 'tactics-tool-select',
-                arrow: 'tactics-tool-arrow',
-                dashed: 'tactics-tool-dashed',
-                zigzag: 'tactics-tool-zigzag',
                 marker: 'tactics-tool-marker'
             };
 
@@ -399,30 +399,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        function calculateZigzagPoints(startX, startY, endX, endY) {
-            const dx = endX - startX;
-            const dy = endY - startY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx);
+        function applyMarkerButtonState() {
+            const whiteBtn = document.getElementById('tactics-marker-color-black');
+            const redBtn = document.getElementById('tactics-marker-color-red');
+            const solidBtn = document.getElementById('tactics-marker-style-solid');
+            const dashedBtn = document.getElementById('tactics-marker-style-dashed');
 
-            const step = 20;
-            const segments = Math.floor(dist / step);
-            if (segments < 2) {
-                return [startX, startY, endX, endY];
+            if (whiteBtn) {
+                whiteBtn.classList.toggle('active', markerColor === '#ffffff');
             }
-
-            const points = [startX, startY];
-            for (let i = 1; i < segments; i++) {
-                const t = i / segments;
-                const cx = startX + dx * t;
-                const cy = startY + dy * t;
-                const offset = (i % 2 === 0 ? 1 : -1) * 10;
-                const ox = cx + Math.cos(angle + Math.PI / 2) * offset;
-                const oy = cy + Math.sin(angle + Math.PI / 2) * offset;
-                points.push(ox, oy);
+            if (redBtn) {
+                redBtn.classList.toggle('active', markerColor === '#d32f2f');
             }
-            points.push(endX, endY);
-            return points;
+            if (solidBtn) {
+                solidBtn.classList.toggle('active', markerStrokeStyle === 'solid');
+            }
+            if (dashedBtn) {
+                dashedBtn.classList.toggle('active', markerStrokeStyle === 'dashed');
+            }
         }
 
         function loadDrawingData(dataJson) {
@@ -558,29 +552,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             isDrawing = true;
             activeDrawTool = currentTool;
+            activeMarkerStrokeStyle = markerStrokeStyle;
             startPos = pos;
 
             const config = {
                 points: [pos.x, pos.y, pos.x, pos.y],
-                stroke: 'white',
-                fill: 'white',
-                strokeWidth: 3,
-                pointerLength: 15,
-                pointerWidth: 15,
+                stroke: markerColor,
+                fill: markerColor,
+                strokeWidth: 4.5,
+                pointerLength: 13,
+                pointerWidth: 13,
+                lineCap: 'round',
+                lineJoin: 'round',
+                tension: 0.5,
                 name: 'item'
             };
 
-            if (currentTool === 'dashed') {
-                config.dash = [10, 10];
-            } else if (currentTool === 'zigzag') {
-                config.tension = 0.4;
-            } else if (currentTool === 'marker') {
-                config.strokeWidth = 4.5;
-                config.pointerLength = 13;
-                config.pointerWidth = 13;
-                config.lineCap = 'round';
-                config.lineJoin = 'round';
-                config.tension = 0.5;
+            if (activeMarkerStrokeStyle === 'dashed') {
+                config.dash = [24, 18];
+                config.lineCap = 'butt';
+                config.tension = 0;
+                config.strokeWidth = 4;
             }
 
             lastLine = new Konva.Arrow(config);
@@ -629,12 +621,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (activeDrawTool === 'marker') {
                 const points = lastLine.points().slice();
+                const minPointDistance = activeMarkerStrokeStyle === 'dashed' ? 6.5 : 2.4;
                 if (points.length < 2) {
                     points.push(clamped.x, clamped.y);
                 } else {
                     const lastX = points[points.length - 2];
                     const lastY = points[points.length - 1];
-                    if (Math.hypot(clamped.x - lastX, clamped.y - lastY) >= 2.2) {
+                    if (Math.hypot(clamped.x - lastX, clamped.y - lastY) >= minPointDistance) {
                         points.push(clamped.x, clamped.y);
                     } else {
                         points[points.length - 2] = clamped.x;
@@ -642,8 +635,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
                 lastLine.points(points);
-            } else if (activeDrawTool === 'zigzag') {
-                lastLine.points(calculateZigzagPoints(startPos.x, startPos.y, clamped.x, clamped.y));
             } else {
                 const points = lastLine.points();
                 points[2] = clamped.x;
@@ -680,6 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
             activeDrawTool = '';
+            activeMarkerStrokeStyle = 'solid';
             lastLine = null;
 
             if (!isSelecting) {
@@ -1193,10 +1185,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const selectBtn = document.getElementById('tactics-tool-select');
-        const arrowBtn = document.getElementById('tactics-tool-arrow');
-        const dashedBtn = document.getElementById('tactics-tool-dashed');
-        const zigzagBtn = document.getElementById('tactics-tool-zigzag');
         const markerBtn = document.getElementById('tactics-tool-marker');
+        const markerColorBlackBtn = document.getElementById('tactics-marker-color-black');
+        const markerColorRedBtn = document.getElementById('tactics-marker-color-red');
+        const markerStyleSolidBtn = document.getElementById('tactics-marker-style-solid');
+        const markerStyleDashedBtn = document.getElementById('tactics-marker-style-dashed');
         const clearBtn = document.getElementById('tactics-btn-clear');
         const deleteSelectedBtn = document.getElementById('tactics-btn-delete-selected');
         const toBackBtn = document.getElementById('tactics-btn-to-back');
@@ -1246,32 +1239,48 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTool('select');
             });
         }
-        if (arrowBtn) {
-            arrowBtn.addEventListener('click', function () {
-                if (armedToolbarType) {
-                    setArmedToolbarType('');
-                }
-                setTool('arrow');
-            });
-        }
-        if (dashedBtn) {
-            dashedBtn.addEventListener('click', function () {
-                if (armedToolbarType) {
-                    setArmedToolbarType('');
-                }
-                setTool('dashed');
-            });
-        }
-        if (zigzagBtn) {
-            zigzagBtn.addEventListener('click', function () {
-                if (armedToolbarType) {
-                    setArmedToolbarType('');
-                }
-                setTool('zigzag');
-            });
-        }
         if (markerBtn) {
             markerBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('marker');
+            });
+        }
+        if (markerColorBlackBtn) {
+            markerColorBlackBtn.addEventListener('click', function () {
+                markerColor = '#ffffff';
+                applyMarkerButtonState();
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('marker');
+            });
+        }
+        if (markerColorRedBtn) {
+            markerColorRedBtn.addEventListener('click', function () {
+                markerColor = '#d32f2f';
+                applyMarkerButtonState();
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('marker');
+            });
+        }
+        if (markerStyleSolidBtn) {
+            markerStyleSolidBtn.addEventListener('click', function () {
+                markerStrokeStyle = 'solid';
+                applyMarkerButtonState();
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('marker');
+            });
+        }
+        if (markerStyleDashedBtn) {
+            markerStyleDashedBtn.addEventListener('click', function () {
+                markerStrokeStyle = 'dashed';
+                applyMarkerButtonState();
                 if (armedToolbarType) {
                     setArmedToolbarType('');
                 }
@@ -1320,6 +1329,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         drawField();
+        applyMarkerButtonState();
         setTool('select');
 
         window.addEventListener('resize', function () {
