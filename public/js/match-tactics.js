@@ -357,6 +357,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let isDrawing = false;
         let isSelecting = false;
         let lastLine;
+        let activeDrawTool = '';
         let startPos;
         let x1;
         let y1;
@@ -370,7 +371,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 select: 'tactics-tool-select',
                 arrow: 'tactics-tool-arrow',
                 dashed: 'tactics-tool-dashed',
-                zigzag: 'tactics-tool-zigzag'
+                zigzag: 'tactics-tool-zigzag',
+                marker: 'tactics-tool-marker'
             };
 
             Object.keys(toolButtons).forEach(function (key) {
@@ -390,6 +392,11 @@ document.addEventListener('DOMContentLoaded', function () {
             mainLayer.find('.item').forEach(function (node) {
                 node.draggable(isDraggable);
             });
+
+            if (tool !== 'select' && tr.nodes().length > 0) {
+                tr.nodes([]);
+                uiLayer.batchDraw();
+            }
         }
 
         function calculateZigzagPoints(startX, startY, endX, endY) {
@@ -479,6 +486,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            if (currentTool !== 'select') {
+                return;
+            }
+
             if (!event.target.hasName('item')) {
                 return;
             }
@@ -507,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (event.target.hasName('item')) {
+            if (event.target.hasName('item') && currentTool === 'select') {
                 return;
             }
 
@@ -535,6 +546,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 tr.moveToTop();
 
                 isSelecting = true;
+                activeDrawTool = '';
+                lastLine = null;
                 uiLayer.batchDraw();
                 return;
             }
@@ -544,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             isDrawing = true;
+            activeDrawTool = currentTool;
             startPos = pos;
 
             const config = {
@@ -560,6 +574,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 config.dash = [10, 10];
             } else if (currentTool === 'zigzag') {
                 config.tension = 0.4;
+            } else if (currentTool === 'marker') {
+                config.strokeWidth = 4.5;
+                config.pointerLength = 13;
+                config.pointerWidth = 13;
+                config.lineCap = 'round';
+                config.lineJoin = 'round';
+                config.tension = 0.5;
             }
 
             lastLine = new Konva.Arrow(config);
@@ -606,7 +627,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const clamped = clampPointToPitch(pos);
 
-            if (currentTool === 'zigzag') {
+            if (activeDrawTool === 'marker') {
+                const points = lastLine.points().slice();
+                if (points.length < 2) {
+                    points.push(clamped.x, clamped.y);
+                } else {
+                    const lastX = points[points.length - 2];
+                    const lastY = points[points.length - 1];
+                    if (Math.hypot(clamped.x - lastX, clamped.y - lastY) >= 2.2) {
+                        points.push(clamped.x, clamped.y);
+                    } else {
+                        points[points.length - 2] = clamped.x;
+                        points[points.length - 1] = clamped.y;
+                    }
+                }
+                lastLine.points(points);
+            } else if (activeDrawTool === 'zigzag') {
                 lastLine.points(calculateZigzagPoints(startPos.x, startPos.y, clamped.x, clamped.y));
             } else {
                 const points = lastLine.points();
@@ -621,6 +657,8 @@ document.addEventListener('DOMContentLoaded', function () {
         stage.on('mouseup touchend', function (event) {
             if (armedToolbarType && isTouchKonvaEvent(event)) {
                 isDrawing = false;
+                activeDrawTool = '';
+                lastLine = null;
                 if (isSelecting) {
                     isSelecting = false;
                     selectionRectangle.visible(false);
@@ -630,6 +668,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             isDrawing = false;
+            if (activeDrawTool === 'marker' && lastLine) {
+                const markerPoints = lastLine.points();
+                const hasEnoughPoints = markerPoints.length >= 6;
+                const markerLength = hasEnoughPoints
+                    ? Math.hypot(markerPoints[markerPoints.length - 2] - markerPoints[0], markerPoints[markerPoints.length - 1] - markerPoints[1])
+                    : 0;
+                if (!hasEnoughPoints || markerLength < 6) {
+                    lastLine.destroy();
+                    mainLayer.batchDraw();
+                }
+            }
+            activeDrawTool = '';
+            lastLine = null;
 
             if (!isSelecting) {
                 return;
@@ -1145,6 +1196,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const arrowBtn = document.getElementById('tactics-tool-arrow');
         const dashedBtn = document.getElementById('tactics-tool-dashed');
         const zigzagBtn = document.getElementById('tactics-tool-zigzag');
+        const markerBtn = document.getElementById('tactics-tool-marker');
         const clearBtn = document.getElementById('tactics-btn-clear');
         const deleteSelectedBtn = document.getElementById('tactics-btn-delete-selected');
         const toBackBtn = document.getElementById('tactics-btn-to-back');
@@ -1162,6 +1214,29 @@ document.addEventListener('DOMContentLoaded', function () {
             mainLayer.batchDraw();
             uiLayer.batchDraw();
         }
+
+        document.addEventListener('keydown', function (event) {
+            if ((event.key !== 'Delete' && event.key !== 'Backspace') || tr.nodes().length === 0) {
+                return;
+            }
+
+            const activeElement = document.activeElement;
+            const activeTag = activeElement && activeElement.tagName ? activeElement.tagName.toUpperCase() : '';
+            const isEditable = !!(
+                activeElement &&
+                (activeElement.isContentEditable || activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT')
+            );
+
+            if (isEditable) {
+                return;
+            }
+
+            if (event.key === 'Backspace') {
+                event.preventDefault();
+            }
+
+            deleteSelected();
+        });
 
         if (selectBtn) {
             selectBtn.addEventListener('click', function () {
@@ -1193,6 +1268,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     setArmedToolbarType('');
                 }
                 setTool('zigzag');
+            });
+        }
+        if (markerBtn) {
+            markerBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('marker');
             });
         }
 

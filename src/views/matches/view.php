@@ -344,6 +344,9 @@
                                     <button type="button" id="tactics-tool-zigzag" class="tool-btn" title="Dribbel">
                                         <img src="/images/assets/icon_arrow_zigzag.svg" alt="Dribbel">
                                     </button>
+                                    <button type="button" id="tactics-tool-marker" class="tool-btn" title="Viltstift pijl">
+                                        <img src="/images/assets/icon_line.svg" alt="Viltstift pijl">
+                                    </button>
                                 </div>
                             </div>
 
