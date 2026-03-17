@@ -1,330 +1,206 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const containerEl = document.getElementById('container');
+document.addEventListener('DOMContentLoaded', function () {
+    var containerEl = document.getElementById('container');
     if (!containerEl) {
         return;
     }
 
-    const MIN_STABLE_CONTAINER_WIDTH = 120;
-    
-    // Logical dimensions (Design resolution)
-    let V_WIDTH = 400;
-    let V_HEIGHT = 600;
-    
-    const fieldTypeInput = document.getElementById('field_type');
-    let currentFieldType = fieldTypeInput ? fieldTypeInput.value : 'square';
-
-    if (currentFieldType === 'landscape') {
-        V_WIDTH = 600;
-        V_HEIGHT = 400;
-    } else if (currentFieldType === 'square') {
-        V_WIDTH = 400;
-        V_HEIGHT = 400;
+    if (typeof Konva === 'undefined') {
+        console.error('Konva is required for exercise editor.');
+        return;
     }
 
-    function toStableWidth(value) {
-        const width = Number(value);
-        if (!Number.isFinite(width) || width < MIN_STABLE_CONTAINER_WIDTH) {
-            return 0;
+    if (!window.KonvaSharedCore || typeof window.KonvaSharedCore.createBoard !== 'function') {
+        console.error('KonvaSharedCore is required for exercise editor.');
+        return;
+    }
+
+    var toolbarEl = document.getElementById('toolbar');
+    var fieldTypeInput = document.getElementById('field_type');
+    var drawingDataInput = document.getElementById('drawing_data');
+    var drawingImageInput = document.getElementById('drawing_image');
+
+    var formEl = containerEl.closest('form');
+    if (!formEl) {
+        console.error('Exercise editor form not found.');
+        return;
+    }
+
+    function normalizeFieldType(type) {
+        if (type === 'portrait' || type === 'landscape' || type === 'square') {
+            return type;
+        }
+        return 'square';
+    }
+
+    function createExerciseLayout(type) {
+        var normalizedType = normalizeFieldType(type);
+        var width = 400;
+        var height = 600;
+
+        if (normalizedType === 'landscape') {
+            width = 600;
+            height = 400;
+        } else if (normalizedType === 'square') {
+            width = 400;
+            height = 400;
         }
 
-        return width;
-    }
+        return {
+            key: normalizedType,
+            width: width,
+            height: height,
+            drawField: function (fieldLayer) {
+                fieldLayer.add(new Konva.Rect({
+                    x: 0,
+                    y: 0,
+                    width: width,
+                    height: height,
+                    fill: '#4CAF50'
+                }));
 
-    function resolveContainerWidth() {
-        const directWidth = toStableWidth(containerEl.getBoundingClientRect().width || containerEl.offsetWidth);
-        if (directWidth > 0) {
-            return directWidth;
-        }
+                var linePaint = {
+                    stroke: 'rgba(255,255,255,0.8)',
+                    strokeWidth: 2
+                };
 
-        const parentWidth = toStableWidth(
-            containerEl.parentElement
-                ? (containerEl.parentElement.getBoundingClientRect().width || containerEl.parentElement.offsetWidth)
-                : 0
-        );
-        if (parentWidth > 0) {
-            return Math.min(parentWidth, V_WIDTH);
-        }
-
-        // Hidden containers can briefly report tiny widths; keep a safe fallback.
-        return V_WIDTH;
-    }
-
-    // Keep stage dimensions stable even when the editor starts hidden.
-    let containerWidth = resolveContainerWidth();
-    let scale = containerWidth / V_WIDTH;
-    let containerHeight = V_HEIGHT * scale;
-    containerEl.style.height = containerHeight + 'px';
-
-    // Initialize Konva Stage
-    const stage = new Konva.Stage({
-        container: 'container',
-        width: containerWidth,
-        height: containerHeight,
-        scale: { x: scale, y: scale }
-    });
-
-    const fieldLayer = new Konva.Layer();
-    const mainLayer = new Konva.Layer();
-    const uiLayer = new Konva.Layer();
-    stage.add(fieldLayer);
-    stage.add(mainLayer);
-    stage.add(uiLayer);
-
-    function syncStageToContainer() {
-        const nextWidth = resolveContainerWidth();
-        if (!Number.isFinite(nextWidth) || nextWidth <= 0) {
-            return;
-        }
-
-        containerWidth = nextWidth;
-        scale = containerWidth / V_WIDTH;
-        containerHeight = V_HEIGHT * scale;
-
-        containerEl.style.height = containerHeight + 'px';
-        stage.width(containerWidth);
-        stage.height(containerHeight);
-        stage.scale({ x: scale, y: scale });
-        stage.batchDraw();
-    }
-
-    // Helper to get logical pointer position
-    function getPointerPosition() {
-        const pos = stage.getPointerPosition();
-        if (!pos) return null;
-        const transform = stage.getAbsoluteTransform().copy().invert();
-        return transform.point(pos);
-    }
-
-    // Draw Football Field
-    function drawField() {
-        fieldLayer.destroyChildren();
-
-        // Grass
-        const grass = new Konva.Rect({
-            x: 0,
-            y: 0,
-            width: V_WIDTH,
-            height: V_HEIGHT,
-            fill: '#4CAF50'
-        });
-        fieldLayer.add(grass);
-
-        // Lines style
-        const linePaint = {
-            stroke: 'rgba(255,255,255,0.8)',
-            strokeWidth: 2
+                var padding = 20;
+                fieldLayer.add(new Konva.Rect({
+                    x: padding,
+                    y: padding,
+                    width: width - (2 * padding),
+                    height: height - (2 * padding),
+                    stroke: linePaint.stroke,
+                    strokeWidth: linePaint.strokeWidth
+                }));
+            },
+            isPointInside: function (point) {
+                return !!(
+                    point &&
+                    point.x >= 0 &&
+                    point.x <= width &&
+                    point.y >= 0 &&
+                    point.y <= height
+                );
+            },
+            clampPoint: function (point) {
+                return {
+                    x: Math.max(0, Math.min(width, point.x)),
+                    y: Math.max(0, Math.min(height, point.y))
+                };
+            }
         };
-
-        const padding = 20;
-
-        if (currentFieldType === 'portrait') {
-            // Outer lines
-            fieldLayer.add(new Konva.Rect({
-                x: padding,
-                y: padding,
-                width: V_WIDTH - 2 * padding,
-                height: V_HEIGHT - 2 * padding,
-                ...linePaint
-            }));
-
-        } else if (currentFieldType === 'landscape') {
-            // Outer lines
-            fieldLayer.add(new Konva.Rect({
-                x: padding,
-                y: padding,
-                width: V_WIDTH - 2 * padding,
-                height: V_HEIGHT - 2 * padding,
-                ...linePaint
-            }));
-
-        } else if (currentFieldType === 'square') {
-            // Half field / Box
-            // Outer lines
-            fieldLayer.add(new Konva.Rect({
-                x: padding,
-                y: padding,
-                width: V_WIDTH - 2 * padding,
-                height: V_HEIGHT - 2 * padding,
-                ...linePaint
-            }));
-        }
-        
-        fieldLayer.batchDraw();
     }
 
-    function updateFieldLayout(type) {
-        currentFieldType = type;
-        if (fieldTypeInput) fieldTypeInput.value = type;
-        
-        if (type === 'portrait') {
-            V_WIDTH = 400;
-            V_HEIGHT = 600;
-        } else if (type === 'landscape') {
-            V_WIDTH = 600;
-            V_HEIGHT = 400;
-        } else if (type === 'square') {
-            V_WIDTH = 400;
-            V_HEIGHT = 400;
-        }
-
-        syncStageToContainer();
-        drawField();
-        mainLayer.find('.item').forEach(clampNodeToField);
-        tr.forceUpdate();
-        mainLayer.batchDraw();
-        uiLayer.batchDraw();
+    var currentFieldType = normalizeFieldType(fieldTypeInput ? fieldTypeInput.value : 'square');
+    if (fieldTypeInput) {
+        fieldTypeInput.value = currentFieldType;
     }
 
-    // Event Listeners for Field Layout
-    const btnPortrait = document.getElementById('btn-field-portrait');
-    if (btnPortrait) btnPortrait.addEventListener('click', () => updateFieldLayout('portrait'));
+    var board = window.KonvaSharedCore.createBoard({
+        moduleKey: 'exercise',
+        rootElement: containerEl.closest('.editor-wrapper') || containerEl,
+        containerElement: containerEl,
+        toolbarElement: toolbarEl,
+        toolbarItemSelector: '.draggable-item[draggable="true"]',
+        layout: createExerciseLayout(currentFieldType),
+        defaultTool: 'select',
+        toolButtons: {
+            select: 'tool-select',
+            arrow: 'tool-arrow',
+            dashed: 'tool-dashed',
+            zigzag: 'tool-zigzag',
+            marker: 'tool-marker',
+            zone: 'tool-zone'
+        },
+        resolveDrawConfig: function (context) {
+            if (context.tool === 'arrow') {
+                return {
+                    kind: 'arrow',
+                    attrs: {
+                        stroke: '#ffffff',
+                        fill: '#ffffff',
+                        strokeWidth: 3,
+                        pointerLength: 15,
+                        pointerWidth: 15,
+                        name: 'item'
+                    }
+                };
+            }
 
-    const btnLandscape = document.getElementById('btn-field-landscape');
-    if (btnLandscape) btnLandscape.addEventListener('click', () => updateFieldLayout('landscape'));
+            if (context.tool === 'dashed') {
+                return {
+                    kind: 'arrow',
+                    attrs: {
+                        stroke: '#ffffff',
+                        fill: '#ffffff',
+                        strokeWidth: 3,
+                        pointerLength: 15,
+                        pointerWidth: 15,
+                        dash: [10, 10],
+                        name: 'item'
+                    }
+                };
+            }
 
-    const btnSquare = document.getElementById('btn-field-square');
-    if (btnSquare) btnSquare.addEventListener('click', () => updateFieldLayout('square'));
+            if (context.tool === 'zigzag') {
+                return {
+                    kind: 'zigzag-arrow',
+                    step: 20,
+                    amplitude: 10,
+                    attrs: {
+                        stroke: '#ffffff',
+                        fill: '#ffffff',
+                        strokeWidth: 3,
+                        pointerLength: 15,
+                        pointerWidth: 15,
+                        name: 'item'
+                    }
+                };
+            }
 
-    drawField();
-    syncStageToContainer();
+            if (context.tool === 'marker') {
+                return {
+                    kind: 'poly-arrow',
+                    minPointDistance: 2.4,
+                    minPoints: 6,
+                    minLength: 6,
+                    attrs: {
+                        stroke: '#ffffff',
+                        fill: '#ffffff',
+                        strokeWidth: 4.5,
+                        pointerLength: 13,
+                        pointerWidth: 13,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                        tension: 0.5,
+                        name: 'item'
+                    }
+                };
+            }
 
-    // Transformer for selection
-    const tr = new Konva.Transformer({
-        borderStroke: '#2196F3',
-        borderStrokeWidth: 2,
-        anchorStroke: '#2196F3',
-        anchorFill: '#ffffff',
-        anchorSize: 10,
-        anchorCornerRadius: 5,
-        padding: 5
-    });
-    uiLayer.add(tr);
+            if (context.tool === 'zone') {
+                return {
+                    kind: 'rect-zone',
+                    toBottom: true,
+                    attrs: {
+                        fill: 'rgba(255, 255, 255, 0.2)',
+                        stroke: 'rgba(255, 255, 255, 0.5)',
+                        strokeWidth: 1,
+                        dash: [5, 5],
+                        name: 'item',
+                        isZone: true
+                    }
+                };
+            }
 
-    function clampNodeToField(node) {
-        if (!node || typeof node.getClientRect !== 'function') {
-            return;
-        }
+            return null;
+        },
+        placeItem: function (context) {
+            var type = context.type;
+            var pos = context.position;
 
-        const box = node.getClientRect({ relativeTo: mainLayer });
-        if (!Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || !Number.isFinite(box.height)) {
-            return;
-        }
-
-        let dx = 0;
-        let dy = 0;
-
-        if (box.x < 0) {
-            dx = -box.x;
-        } else if ((box.x + box.width) > V_WIDTH) {
-            dx = V_WIDTH - (box.x + box.width);
-        }
-
-        if (box.y < 0) {
-            dy = -box.y;
-        } else if ((box.y + box.height) > V_HEIGHT) {
-            dy = V_HEIGHT - (box.y + box.height);
-        }
-
-        if (dx !== 0 || dy !== 0) {
-            node.x(node.x() + dx);
-            node.y(node.y() + dy);
-        }
-    }
-
-    function attachItemConstraints(node) {
-        if (!node || typeof node.hasName !== 'function' || !node.hasName('item')) {
-            return;
-        }
-
-        clampNodeToField(node);
-
-        node.on('dragmove.editorBounds', function () {
-            clampNodeToField(node);
-            mainLayer.batchDraw();
-        });
-
-        node.on('dragend.editorBounds', function () {
-            clampNodeToField(node);
-            mainLayer.batchDraw();
-            uiLayer.batchDraw();
-        });
-    }
-
-    tr.on('transformend.editorBounds', function () {
-        tr.nodes().forEach(clampNodeToField);
-        tr.forceUpdate();
-        mainLayer.batchDraw();
-        uiLayer.batchDraw();
-    });
-
-    // Selection Rectangle
-    const selectionRectangle = new Konva.Rect({
-        fill: 'rgba(0,0,255,0.2)',
-        visible: false,
-        listening: false, // Don't catch events
-        name: 'selection-rectangle'
-    });
-    uiLayer.add(selectionRectangle);
-
-    // Selection Logic
-    stage.on('click tap', function (e) {
-        // do nothing if clicked NOT on our rectangles
-        if (!e.target.hasName('item')) {
-            return;
-        }
-
-        // If we are in selection mode (box selection just finished), don't handle click
-        // But wait, click fires after mouseup.
-        // If we just did a box selection, we don't want to select the item under cursor if it wasn't in the box?
-        // Actually, standard behavior is:
-        // - Click on item -> Select item (and deselect others unless shift)
-        // - Drag on empty -> Box select
-        
-        // currently we only support single selection
-        const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
-        const isSelected = tr.nodes().indexOf(e.target) >= 0;
-
-        if (!metaPressed && !isSelected) {
-            // if no key pressed and the node is not selected
-            // select just one
-            tr.nodes([e.target]);
-        } else if (metaPressed && isSelected) {
-            // if we pressed keys and node was selected
-            // we need to remove it from selection:
-            const nodes = tr.nodes().slice(); // use slice to have new copy of array
-            // remove node from array
-            nodes.splice(nodes.indexOf(e.target), 1);
-            tr.nodes(nodes);
-        } else if (metaPressed && !isSelected) {
-            // add the node into selection
-            const nodes = tr.nodes().concat([e.target]);
-            tr.nodes(nodes);
-        }
-        uiLayer.batchDraw();
-    });
-
-    // Drag and Drop from Toolbar
-    let itemType = '';
-    
-    document.querySelectorAll('.draggable-item').forEach(item => {
-        item.addEventListener('dragstart', function(e) {
-            itemType = item.dataset.type;
-        });
-    });
-
-    const container = stage.container();
-    container.addEventListener('dragover', function(e) {
-        e.preventDefault(); // Necessary to allow dropping
-    });
-
-    container.addEventListener('drop', function(e) {
-        e.preventDefault();
-        stage.setPointersPositions(e);
-        const pos = getPointerPosition();
-
-        if (itemType) {
-            if (itemType === 'ball') {
-                const text = new Konva.Text({
+            if (type === 'ball') {
+                var text = new Konva.Text({
                     x: pos.x,
                     y: pos.y,
                     text: '⚽',
@@ -334,448 +210,153 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 text.offsetX(text.width() / 2);
                 text.offsetY(text.height() / 2);
-                mainLayer.add(text);
-                attachItemConstraints(text);
-                mainLayer.batchDraw();
-                itemType = '';
-            } else {
-                Konva.Image.fromURL(`/images/assets/${itemType}.svg`, function(image) {
-                    let scaleX, scaleY;
-                    
-                    if (itemType.startsWith('shirt')) {
-                        // Player: Larger and wider
-                        const targetHeight = 50;
-                        const baseScale = targetHeight / image.height();
-                        scaleX = baseScale * 1.3; // 30% wider
-                        scaleY = baseScale;
-                    } else if (itemType === 'goal') {
-                        // Goal: Larger
-                        const targetWidth = 80;
-                        const baseScale = targetWidth / image.width();
-                        scaleX = baseScale;
-                        scaleY = baseScale;
-                    } else {
-                        // Cones, pawns (default)
-                        const targetSize = 25;
-                        const baseScale = targetSize / Math.max(image.width(), image.height());
-                        scaleX = baseScale;
-                        scaleY = baseScale;
-                    }
-                    
-                    image.setAttrs({
-                        x: pos.x,
-                        y: pos.y,
-                        scaleX: scaleX,
-                        scaleY: scaleY,
-                        offsetX: image.width() / 2,
-                        offsetY: image.height() / 2,
-                        draggable: true,
-                        name: 'item',
-                        imageSrc: `/images/assets/${itemType}.svg`
-                    });
-                    mainLayer.add(image);
-                    attachItemConstraints(image);
-                    mainLayer.batchDraw();
-                    itemType = ''; // Reset
+                context.addItemNode(text);
+                return;
+            }
+
+            var imageSrc = '/images/assets/' + type + '.svg';
+            Konva.Image.fromURL(imageSrc, function (image) {
+                var scaleX;
+                var scaleY;
+
+                if (type.indexOf('shirt') === 0) {
+                    var targetHeight = 50;
+                    var baseScaleShirt = targetHeight / image.height();
+                    scaleX = baseScaleShirt * 1.3;
+                    scaleY = baseScaleShirt;
+                } else if (type === 'goal') {
+                    var targetWidth = 80;
+                    var baseScaleGoal = targetWidth / image.width();
+                    scaleX = baseScaleGoal;
+                    scaleY = baseScaleGoal;
+                } else {
+                    var targetSize = 25;
+                    var baseScale = targetSize / Math.max(image.width(), image.height());
+                    scaleX = baseScale;
+                    scaleY = baseScale;
+                }
+
+                image.setAttrs({
+                    x: pos.x,
+                    y: pos.y,
+                    scaleX: scaleX,
+                    scaleY: scaleY,
+                    offsetX: image.width() / 2,
+                    offsetY: image.height() / 2,
+                    draggable: true,
+                    name: 'item',
+                    imageSrc: imageSrc
                 });
+
+                context.addItemNode(image);
+            });
+        },
+        touch: {
+            hintClassName: 'editor-touch-hint',
+            toolbarItemActiveClassName: 'is-touch-active',
+            toolbarItemArmedClassName: 'is-touch-armed',
+            containerArmedClassName: 'is-touch-armed',
+            containerDropTargetClassName: 'is-touch-drop-target',
+            containerPlaceFeedbackClassName: 'is-touch-place-feedback',
+            containerDraggingClassName: 'is-touch-dragging',
+            rootDraggingClassName: 'is-touch-dragging',
+            bodyScrollLockClassName: 'editor-touch-scroll-lock',
+            dragThresholdPx: 8,
+            placementFeedbackDurationMs: 200,
+            hintMessages: {
+                dragging: 'Sleep naar het veld en laat los om te plaatsen.',
+                armed: 'Tik op het veld om te plaatsen. Tik opnieuw op het icoon om te stoppen.'
             }
         }
     });
 
-    const drawingDataInput = document.getElementById('drawing_data');
-    const existingData = drawingDataInput ? drawingDataInput.value : '';
-
-    // Save Data on Submit
-    document.querySelector('form').addEventListener('submit', function() {
-        // Remove transformer before saving
-        tr.nodes([]);
-        
-        // Serialize mainLayer children (excluding transformer)
-        // Actually, simpler: just save the whole mainLayer as JSON
-        const json = mainLayer.toJSON();
-        if (drawingDataInput) {
-            drawingDataInput.value = json;
+    function setFieldType(type) {
+        currentFieldType = normalizeFieldType(type);
+        if (fieldTypeInput) {
+            fieldTypeInput.value = currentFieldType;
         }
-
-        // Generate Snapshot
-        const dataURL = stage.toDataURL({ pixelRatio: 2 });
-        document.getElementById('drawing_image').value = dataURL;
-    });
-
-    // Tool switching (Basic implementation)
-    let currentTool = 'select';
-    
-    document.getElementById('tool-select').addEventListener('click', () => setTool('select'));
-    document.getElementById('tool-arrow').addEventListener('click', () => setTool('arrow'));
-    document.getElementById('tool-dashed').addEventListener('click', () => setTool('dashed'));
-    document.getElementById('tool-zigzag').addEventListener('click', () => setTool('zigzag'));
-    document.getElementById('tool-zone').addEventListener('click', () => setTool('zone'));
-    document.getElementById('btn-clear').addEventListener('click', () => {
-        if(confirm('Weet je zeker dat je alles wilt wissen?')) {
-            mainLayer.destroyChildren();
-            tr.nodes([]);
-            uiLayer.batchDraw();
-            mainLayer.batchDraw();
-        }
-    });
-
-    // Delete selected items
-    function deleteSelected() {
-        const selectedNodes = tr.nodes();
-        if (selectedNodes.length > 0) {
-            selectedNodes.forEach(node => node.destroy());
-            tr.nodes([]);
-            mainLayer.batchDraw();
-            uiLayer.batchDraw();
-        }
+        board.setLayout(createExerciseLayout(currentFieldType));
     }
 
-    document.getElementById('btn-delete-selected').addEventListener('click', deleteSelected);
-
-    // Send to back
-    document.getElementById('btn-to-back').addEventListener('click', function() {
-        const selectedNodes = tr.nodes();
-        if (selectedNodes.length > 0) {
-            selectedNodes.forEach(node => node.moveToBottom());
-            mainLayer.batchDraw();
-        }
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if ((e.key === 'Delete' || e.key === 'Backspace') && tr.nodes().length > 0) {
-            // Prevent backspace from navigating back if not in an input
-            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                e.preventDefault();
-                deleteSelected();
-            }
-        }
-    });
-
-    function setTool(tool) {
-        currentTool = tool;
-        // Update UI buttons
-        document.querySelectorAll('.editor-toolbar button').forEach(b => {
-            if (b.classList.contains('tool-btn')) {
-                b.classList.remove('active');
-            }
+    var btnPortrait = document.getElementById('btn-field-portrait');
+    if (btnPortrait) {
+        btnPortrait.addEventListener('click', function () {
+            setFieldType('portrait');
         });
-
-        const btnId = tool === 'select' ? 'tool-select' : 
-                      tool === 'arrow' ? 'tool-arrow' :
-                      tool === 'dashed' ? 'tool-dashed' : 
-                      tool === 'zigzag' ? 'tool-zigzag' : 'tool-zone';
-        
-        const btn = document.getElementById(btnId);
-        if (btn) {
-            if (btn.classList.contains('tool-btn')) {
-                btn.classList.add('active');
-            }
-        }
-        
-        // Disable dragging for items if drawing
-        const isDraggable = tool === 'select';
-        mainLayer.find('.item').forEach(node => node.draggable(isDraggable));
     }
 
-    // Drawing Logic (Lines)
-    let isDrawing = false;
-    let isSelecting = false;
-    let lastLine;
-    let startPos;
-    let x1, y1, x2, y2;
-
-    stage.on('mousedown touchstart', function (e) {
-        // If clicking on transformer, do nothing
-        if (e.target.getParent() instanceof Konva.Transformer) {
-            return;
-        }
-        
-        // If clicking on an item, do nothing (let Konva handle drag or click selection)
-        if (e.target.hasName('item')) {
-            return;
-        }
-
-        if (currentTool === 'select') {
-            // Only start box selection if clicking on empty space (stage or field layer)
-            // e.target is the shape under cursor.
-            // If we are here, it's NOT an item or transformer.
-            
-            // Don't prevent default here, it might block click events
-            // e.evt.preventDefault(); 
-            
-            const pos = getPointerPosition();
-            x1 = pos.x;
-            y1 = pos.y;
-            x2 = x1;
-            y2 = y1;
-
-            selectionRectangle.width(0);
-            selectionRectangle.height(0);
-            selectionRectangle.visible(true);
-            // Ensure selection rectangle is on top of everything except transformer
-            selectionRectangle.moveToTop();
-            tr.moveToTop();
-            
-            isSelecting = true;
-            uiLayer.batchDraw();
-            return;
-        }
-        
-        isDrawing = true;
-        const pos = getPointerPosition();
-        startPos = pos;
-        
-        if (currentTool === 'zone') {
-            lastLine = new Konva.Rect({
-                x: pos.x,
-                y: pos.y,
-                width: 0,
-                height: 0,
-                fill: 'rgba(255, 255, 255, 0.2)',
-                stroke: 'rgba(255, 255, 255, 0.5)',
-                strokeWidth: 1,
-                dash: [5, 5],
-                name: 'item',
-                draggable: false
-            });
-            mainLayer.add(lastLine);
-            // Zones should be at the bottom by default
-            lastLine.moveToBottom();
-            attachItemConstraints(lastLine);
-        } else {
-            let points = [pos.x, pos.y, pos.x, pos.y];
-            
-            // All tools are arrows now
-            let config = {
-                points: points,
-                stroke: 'white',
-                fill: 'white',
-                strokeWidth: 3,
-                pointerLength: 15,
-                pointerWidth: 15,
-                name: 'item'
-            };
-
-            if (currentTool === 'dashed') {
-                config.dash = [10, 10];
-            } else if (currentTool === 'zigzag') {
-                config.tension = 0.4;
-            }
-            
-            lastLine = new Konva.Arrow(config);
-            mainLayer.add(lastLine);
-            attachItemConstraints(lastLine);
-        }
-        mainLayer.batchDraw();
-    });
-
-    stage.on('mousemove touchmove', function (e) {
-        if (isSelecting) {
-            const pos = getPointerPosition();
-            x2 = pos.x;
-            y2 = pos.y;
-
-            selectionRectangle.setAttrs({
-                visible: true,
-                x: Math.min(x1, x2),
-                y: Math.min(y1, y2),
-                width: Math.abs(x2 - x1),
-                height: Math.abs(y2 - y1),
-            });
-            uiLayer.batchDraw();
-            return;
-        }
-
-        if (!isDrawing) return;
-        const pos = getPointerPosition();
-        
-        if (currentTool === 'zone') {
-            const width = pos.x - startPos.x;
-            const height = pos.y - startPos.y;
-            lastLine.width(width);
-            lastLine.height(height);
-        } else if (currentTool === 'zigzag') {
-            const points = calculateZigzagPoints(startPos.x, startPos.y, pos.x, pos.y);
-            lastLine.points(points);
-        } else {
-            const points = lastLine.points();
-            points[2] = pos.x;
-            points[3] = pos.y;
-            lastLine.points(points);
-        }
-        mainLayer.batchDraw();
-    });
-
-    function calculateZigzagPoints(x1, y1, x2, y2) {
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const angle = Math.atan2(dy, dx);
-        
-        const step = 20;
-        const segments = Math.floor(dist / step);
-        
-        if (segments < 2) return [x1, y1, x2, y2];
-        
-        const points = [];
-        points.push(x1, y1);
-        
-        for (let i = 1; i < segments; i++) {
-            const t = i / segments;
-            const cx = x1 + dx * t;
-            const cy = y1 + dy * t;
-            
-            // Offset perpendicular
-            const offset = (i % 2 === 0 ? 1 : -1) * 10;
-            const ox = cx + Math.cos(angle + Math.PI/2) * offset;
-            const oy = cy + Math.sin(angle + Math.PI/2) * offset;
-            
-            points.push(ox, oy);
-        }
-        
-        points.push(x2, y2);
-        return points;
+    var btnLandscape = document.getElementById('btn-field-landscape');
+    if (btnLandscape) {
+        btnLandscape.addEventListener('click', function () {
+            setFieldType('landscape');
+        });
     }
 
-    stage.on('mouseup touchend', function () {
-        isDrawing = false;
-        
-        if (isSelecting) {
-            isSelecting = false;
-            selectionRectangle.visible(false);
-            
-            // Get the selection box coordinates directly from attributes
-            // This avoids issues if getClientRect() returns 0 for invisible nodes
-            const box = {
-                x: selectionRectangle.x(),
-                y: selectionRectangle.y(),
-                width: selectionRectangle.width(),
-                height: selectionRectangle.height()
-            };
-            
-            if (box.width > 5 || box.height > 5) {
-                const shapes = mainLayer.find('.item');
-                const selected = shapes.filter((shape) => {
-                    // Logic: Item must be FULLY contained within the selection box
-                    
-                    if (shape instanceof Konva.Arrow) {
-                        const points = shape.points();
-                        // Check if ALL points are inside the box
-                        for (let i = 0; i < points.length; i += 2) {
-                            const px = points[i];
-                            const py = points[i+1];
-                            // If any point is outside, the shape is not fully contained
-                            if (!(px >= box.x && px <= box.x + box.width &&
-                                  py >= box.y && py <= box.y + box.height)) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    } else {
-                        // For other shapes (Images, Rects), check if client rect is fully inside
-                        // Use relativeTo: mainLayer to get coordinates in the logical space (unscaled)
-                        const shapeBox = shape.getClientRect({ relativeTo: mainLayer });
-                        return (
-                            shapeBox.x >= box.x &&
-                            shapeBox.y >= box.y &&
-                            shapeBox.x + shapeBox.width <= box.x + box.width &&
-                            shapeBox.y + shapeBox.height <= box.y + box.height
-                        );
-                    }
-                });
-                
-                tr.nodes(selected);
-            } else {
-                tr.nodes([]);
-            }
-            uiLayer.batchDraw();
-        }
-    });
-
-    function loadDrawingData(dataJson) {
-        if (!dataJson || typeof dataJson !== 'string') {
-            mainLayer.destroyChildren();
-            tr.nodes([]);
-            mainLayer.batchDraw();
-            uiLayer.batchDraw();
-            return;
-        }
-
-        try {
-            const tempLayer = Konva.Node.create(dataJson);
-            const children = tempLayer.getChildren().slice();
-
-            mainLayer.destroyChildren();
-            tr.nodes([]);
-
-            children.forEach(child => {
-                child.moveTo(mainLayer);
-
-                if (child.getClassName() === 'Image' && child.getAttr('imageSrc')) {
-                    const imgObj = new Image();
-                    imgObj.onload = function() {
-                        child.image(imgObj);
-                        mainLayer.batchDraw();
-                    };
-                    imgObj.src = child.getAttr('imageSrc');
-                }
-
-                if (child.name() === 'item') {
-                    child.draggable(currentTool === 'select');
-                    attachItemConstraints(child);
-                }
-            });
-
-            if (drawingDataInput) {
-                drawingDataInput.value = dataJson;
-            }
-
-            mainLayer.batchDraw();
-            uiLayer.batchDraw();
-        } catch (e) {
-            console.error("Error loading drawing data:", e);
-        }
+    var btnSquare = document.getElementById('btn-field-square');
+    if (btnSquare) {
+        btnSquare.addEventListener('click', function () {
+            setFieldType('square');
+        });
     }
 
+    var clearBtn = document.getElementById('btn-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            board.clearArmedToolbarType();
+            if (!confirm('Weet je zeker dat je alles wilt wissen?')) {
+                return;
+            }
+            board.clearAll();
+        });
+    }
+
+    var deleteSelectedBtn = document.getElementById('btn-delete-selected');
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function () {
+            board.clearArmedToolbarType();
+            board.deleteSelected();
+        });
+    }
+
+    var toBackBtn = document.getElementById('btn-to-back');
+    if (toBackBtn) {
+        toBackBtn.addEventListener('click', function () {
+            board.clearArmedToolbarType();
+            board.sendSelectedToBack();
+        });
+    }
+
+    var existingData = drawingDataInput ? drawingDataInput.value : '';
     if (existingData) {
-        loadDrawingData(existingData);
+        board.loadDrawingData(existingData);
     }
+
+    formEl.addEventListener('submit', function () {
+        var drawingJson = board.exportDrawingData();
+        if (drawingDataInput) {
+            drawingDataInput.value = drawingJson;
+        }
+
+        if (drawingImageInput) {
+            drawingImageInput.value = board.exportImageDataUrl({ pixelRatio: 2 });
+        }
+    });
 
     window.exerciseEditorApi = {
         setFieldType: function (type) {
-            if (!['portrait', 'landscape', 'square'].includes(type)) {
-                return;
-            }
-            updateFieldLayout(type);
+            setFieldType(type);
         },
         loadDrawingData: function (drawingJson, fieldType) {
-            if (fieldType && ['portrait', 'landscape', 'square'].includes(fieldType)) {
-                updateFieldLayout(fieldType);
+            if (fieldType) {
+                setFieldType(fieldType);
             }
-            loadDrawingData(drawingJson);
+            board.loadDrawingData(drawingJson || '');
         },
         refreshLayout: function () {
-            syncStageToContainer();
-            drawField();
-            fieldLayer.batchDraw();
-            mainLayer.batchDraw();
-            uiLayer.batchDraw();
+            board.refreshLayout();
         },
         exportDrawingData: function () {
-            return mainLayer.toJSON();
+            return board.exportDrawingData();
         }
     };
-
-    window.addEventListener('resize', function () {
-        syncStageToContainer();
-    });
-
-    if (typeof ResizeObserver === 'function' && containerEl.parentElement) {
-        const resizeObserver = new ResizeObserver(function () {
-            syncStageToContainer();
-        });
-        resizeObserver.observe(containerEl.parentElement);
-    }
-
 });

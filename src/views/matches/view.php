@@ -381,4 +381,5 @@
 
 <script src="/js/konva.min.js"></script>
 <script src="/js/match-view.js?v=<?= time() ?>"></script>
+<script src="/js/konva-shared-core.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/konva-shared-core.js') ?>"></script>
 <script src="/js/match-tactics.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics.js') ?>"></script>

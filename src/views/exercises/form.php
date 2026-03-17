@@ -326,6 +326,9 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
                                 <button type="button" id="tool-zigzag" class="tool-btn" title="Dribbel">
                                     <img src="/images/assets/icon_arrow_zigzag.svg" alt="Dribbel">
                                 </button>
+                                <button type="button" id="tool-marker" class="tool-btn" title="Viltstift">
+                                    <img src="/images/assets/icon_marker.svg" alt="Viltstift">
+                                </button>
                             </div>
                         </div>
 
@@ -367,6 +370,7 @@ function updateNumber(id, change) {
 </script>
 
 <script src="/js/konva.min.js"></script>
+<script src="/js/konva-shared-core.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/konva-shared-core.js') ?>"></script>
 <script src="/js/editor.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/editor.js') ?>"></script>
 <?php if ($formMode === 'ai'): ?>
 <script src="/js/exercise-ai-chat.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/exercise-ai-chat.js') ?>"></script>
