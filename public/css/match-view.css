@@ -485,6 +485,7 @@
     margin: 0.2rem 0 0 0;
     border-radius: 4px;
     overflow: hidden;
+    transition: box-shadow 0.16s ease, outline-color 0.16s ease;
 }
 
 .tactics-draggable-item-ball {
@@ -492,7 +493,7 @@
 }
 
 .tactics-draggable-item {
-    touch-action: none;
+    touch-action: manipulation;
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
@@ -500,6 +501,77 @@
 
 .match-tactics-canvas {
     touch-action: none;
+}
+
+.match-tactics-touch-hint {
+    display: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4a5561;
+    margin-top: 0.2rem;
+}
+
+.match-tactics-touch-hint.is-visible {
+    display: block;
+}
+
+.tactics-draggable-item.is-touch-active {
+    transform: scale(1.08);
+    opacity: 0.92;
+}
+
+.tactics-draggable-item.is-touch-armed {
+    border-radius: 7px;
+    outline: 2px solid rgba(46, 125, 50, 0.45);
+    outline-offset: 1px;
+    background: rgba(46, 125, 50, 0.08);
+}
+
+.match-tactics-canvas.is-touch-armed {
+    box-shadow: inset 0 0 0 2px rgba(46, 125, 50, 0.36);
+}
+
+.match-tactics-canvas.is-touch-drop-target {
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.36);
+}
+
+.match-tactics-canvas.is-touch-place-feedback {
+    animation: tacticsCanvasPlaceFeedback 0.2s ease-out;
+}
+
+body.tactics-touch-scroll-lock {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+@keyframes tacticsCanvasPlaceFeedback {
+    0% {
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.45);
+    }
+    100% {
+        box-shadow: 0 0 0 4px rgba(46, 125, 50, 0);
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .match-tactics-toolbar .group-items {
+        gap: 0.58rem;
+    }
+
+    .match-tactics-toolbar .tactics-draggable-item,
+    .match-tactics-toolbar .tool-btn,
+    .match-tactics-toolbar .btn-icon {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        min-height: 48px;
+        padding: 6px;
+        border-radius: 10px;
+    }
+
+    .match-tactics-toolbar .tactics-draggable-item-ball {
+        font-size: 26px;
+    }
 }
 
 @media (max-width: 900px) {

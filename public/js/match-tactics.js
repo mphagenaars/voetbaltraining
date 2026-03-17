@@ -463,7 +463,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        let armedToolbarType = '';
+
+        function isTouchKonvaEvent(event) {
+            return !!(
+                event &&
+                event.evt &&
+                typeof event.evt.type === 'string' &&
+                event.evt.type.indexOf('touch') === 0
+            );
+        }
+
         stage.on('click tap', function (event) {
+            if (armedToolbarType && isTouchKonvaEvent(event)) {
+                return;
+            }
+
             if (!event.target.hasName('item')) {
                 return;
             }
@@ -484,6 +499,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         stage.on('mousedown touchstart', function (event) {
+            if (armedToolbarType && isTouchKonvaEvent(event)) {
+                return;
+            }
+
             if (event.target.getParent() instanceof Konva.Transformer) {
                 return;
             }
@@ -550,7 +569,11 @@ document.addEventListener('DOMContentLoaded', function () {
             mainLayer.batchDraw();
         });
 
-        stage.on('mousemove touchmove', function () {
+        stage.on('mousemove touchmove', function (event) {
+            if (armedToolbarType && isTouchKonvaEvent(event)) {
+                return;
+            }
+
             if (isSelecting) {
                 const pos = getPointerPosition();
                 if (!pos) {
@@ -595,7 +618,17 @@ document.addEventListener('DOMContentLoaded', function () {
             mainLayer.batchDraw();
         });
 
-        stage.on('mouseup touchend', function () {
+        stage.on('mouseup touchend', function (event) {
+            if (armedToolbarType && isTouchKonvaEvent(event)) {
+                isDrawing = false;
+                if (isSelecting) {
+                    isSelecting = false;
+                    selectionRectangle.visible(false);
+                    uiLayer.batchDraw();
+                }
+                return;
+            }
+
             isDrawing = false;
 
             if (!isSelecting) {
@@ -643,7 +676,9 @@ document.addEventListener('DOMContentLoaded', function () {
             uiLayer.batchDraw();
         });
 
-        document.querySelectorAll('.tactics-draggable-item').forEach(function (item) {
+        const toolbarItems = Array.prototype.slice.call(document.querySelectorAll('.tactics-draggable-item'));
+
+        toolbarItems.forEach(function (item) {
             item.addEventListener('dragstart', function () {
                 itemType = item.dataset.type || '';
             });
@@ -652,68 +687,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const stageContainer = stage.container();
         stageContainer.addEventListener('dragover', function (event) {
             event.preventDefault();
-        });
-
-        stageContainer.addEventListener('drop', function (event) {
-            event.preventDefault();
-            stage.setPointersPositions(event);
-            const pos = getPointerPosition();
-            if (!pos || !itemType || !isInsidePitch(pos)) {
-                return;
-            }
-
-            if (itemType === 'ball') {
-                const text = new Konva.Text({
-                    x: pos.x,
-                    y: pos.y,
-                    text: '⚽',
-                    fontSize: 20,
-                    draggable: true,
-                    name: 'item'
-                });
-                text.offsetX(text.width() / 2);
-                text.offsetY(text.height() / 2);
-                mainLayer.add(text);
-                attachItemConstraints(text);
-                mainLayer.batchDraw();
-                itemType = '';
-                return;
-            }
-
-            const imageSrc = '/images/assets/' + itemType + '.svg';
-            Konva.Image.fromURL(imageSrc, function (image) {
-                let scaleX;
-                let scaleY;
-
-                if (itemType.indexOf('shirt') === 0) {
-                    const targetHeight = 38;
-                    const baseScale = targetHeight / image.height();
-                    scaleX = baseScale * 1.18;
-                    scaleY = baseScale;
-                } else {
-                    const targetSize = 25;
-                    const baseScale = targetSize / Math.max(image.width(), image.height());
-                    scaleX = baseScale;
-                    scaleY = baseScale;
-                }
-
-                image.setAttrs({
-                    x: pos.x,
-                    y: pos.y,
-                    scaleX: scaleX,
-                    scaleY: scaleY,
-                    offsetX: image.width() / 2,
-                    offsetY: image.height() / 2,
-                    draggable: true,
-                    name: 'item',
-                    imageSrc: imageSrc
-                });
-
-                mainLayer.add(image);
-                attachItemConstraints(image);
-                mainLayer.batchDraw();
-                itemType = '';
-            });
         });
 
         function placeToolbarItemAtPosition(type, pos) {
@@ -773,23 +746,213 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Touch fallback for mobile/tablet: place toolbar items without relying on HTML5 DnD.
-        let activeToolbarTouch = null;
-
-        function updateToolbarGhostPosition(touch) {
-            if (!activeToolbarTouch || !activeToolbarTouch.ghost || !touch) {
+        stageContainer.addEventListener('drop', function (event) {
+            event.preventDefault();
+            stage.setPointersPositions(event);
+            const pos = getPointerPosition();
+            if (!pos || !itemType || !isInsidePitch(pos)) {
                 return;
             }
 
-            activeToolbarTouch.ghost.style.left = touch.clientX + 'px';
-            activeToolbarTouch.ghost.style.top = touch.clientY + 'px';
+            placeToolbarItemAtPosition(itemType, pos);
+            itemType = '';
+        });
+
+        // Touch fallback for mobile/tablet: drag to place + tap-to-place workflow.
+        const prefersCoarseTouch = typeof window.matchMedia === 'function'
+            ? window.matchMedia('(hover: none) and (pointer: coarse)').matches
+            : false;
+        const toolbarEl = document.getElementById('tactics-toolbar');
+        const touchHintEl = toolbarEl ? document.createElement('div') : null;
+        let activeToolbarTouch = null;
+        let touchPlacementFeedbackTimeoutId = null;
+        const TOUCH_DRAG_THRESHOLD_PX = 8;
+
+        if (touchHintEl) {
+            touchHintEl.className = 'match-tactics-touch-hint';
+            touchHintEl.setAttribute('aria-live', 'polite');
+            toolbarEl.appendChild(touchHintEl);
+        }
+
+        function findTouchByIdentifier(touchList, identifier) {
+            if (!touchList || !Number.isInteger(identifier)) {
+                return null;
+            }
+
+            for (let i = 0; i < touchList.length; i += 1) {
+                if (touchList[i].identifier === identifier) {
+                    return touchList[i];
+                }
+            }
+
+            return null;
+        }
+
+        function setTouchHint(message) {
+            if (!touchHintEl) {
+                return;
+            }
+
+            if (!prefersCoarseTouch || !message) {
+                touchHintEl.textContent = '';
+                touchHintEl.classList.remove('is-visible');
+                return;
+            }
+
+            touchHintEl.textContent = message;
+            touchHintEl.classList.add('is-visible');
+        }
+
+        function setTouchScrollLock(isLocked) {
+            document.body.classList.toggle('tactics-touch-scroll-lock', !!isLocked);
+        }
+
+        function setCanvasDropTargetState(isActive) {
+            stageContainer.classList.toggle('is-touch-drop-target', !!isActive);
+        }
+
+        function setCanvasArmedState(isActive) {
+            stageContainer.classList.toggle('is-touch-armed', !!isActive);
+        }
+
+        function updateTouchHintForState() {
+            if (activeToolbarTouch && activeToolbarTouch.isDragging) {
+                setTouchHint('Sleep naar het veld en laat los om te plaatsen.');
+                return;
+            }
+
+            if (armedToolbarType) {
+                setTouchHint('Tik op het veld om te plaatsen. Tik opnieuw op het icoon om te stoppen.');
+                return;
+            }
+
+            setTouchHint('');
+        }
+
+        function updateArmedToolbarVisualState() {
+            toolbarItems.forEach(function (item) {
+                const isArmed = (item.dataset.type || '') === armedToolbarType;
+                item.classList.toggle('is-touch-armed', isArmed);
+            });
+
+            setCanvasArmedState(Boolean(armedToolbarType));
+            updateTouchHintForState();
+        }
+
+        function setArmedToolbarType(nextType) {
+            armedToolbarType = nextType || '';
+            updateArmedToolbarVisualState();
+        }
+
+        function toggleArmedToolbarType(type) {
+            if (!type) {
+                setArmedToolbarType('');
+                return;
+            }
+
+            if (armedToolbarType === type) {
+                setArmedToolbarType('');
+                return;
+            }
+
+            setArmedToolbarType(type);
+        }
+
+        function flashTouchPlacementFeedback() {
+            stageContainer.classList.add('is-touch-place-feedback');
+            if (touchPlacementFeedbackTimeoutId !== null) {
+                window.clearTimeout(touchPlacementFeedbackTimeoutId);
+            }
+
+            touchPlacementFeedbackTimeoutId = window.setTimeout(function () {
+                stageContainer.classList.remove('is-touch-place-feedback');
+                touchPlacementFeedbackTimeoutId = null;
+            }, 200);
+        }
+
+        function createGhostForTouchItem(itemEl) {
+            const ghost = itemEl.cloneNode(true);
+            ghost.style.position = 'fixed';
+            ghost.style.left = '0px';
+            ghost.style.top = '0px';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '0.82';
+            ghost.style.zIndex = '2147483647';
+            ghost.style.transform = 'translate(-50%, -50%) scale(1.08)';
+            document.body.appendChild(ghost);
+            return ghost;
+        }
+
+        function requestGhostFrame() {
+            if (!activeToolbarTouch || !activeToolbarTouch.ghost || activeToolbarTouch.rafId !== null) {
+                return;
+            }
+
+            activeToolbarTouch.rafId = window.requestAnimationFrame(function () {
+                if (!activeToolbarTouch || !activeToolbarTouch.ghost) {
+                    return;
+                }
+
+                activeToolbarTouch.ghost.style.left = activeToolbarTouch.lastX + 'px';
+                activeToolbarTouch.ghost.style.top = activeToolbarTouch.lastY + 'px';
+                activeToolbarTouch.rafId = null;
+            });
+        }
+
+        function updateToolbarGhostPosition(touch) {
+            if (!activeToolbarTouch || !touch) {
+                return;
+            }
+
+            activeToolbarTouch.lastX = touch.clientX;
+            activeToolbarTouch.lastY = touch.clientY;
+
+            if (activeToolbarTouch.isDragging) {
+                const pos = getLogicalPositionFromViewportPoint(touch.clientX, touch.clientY);
+                setCanvasDropTargetState(Boolean(pos && isInsidePitch(pos)));
+            }
+
+            requestGhostFrame();
+        }
+
+        function startToolbarTouchDrag(touch) {
+            if (!activeToolbarTouch || activeToolbarTouch.isDragging) {
+                return;
+            }
+
+            activeToolbarTouch.isDragging = true;
+            activeToolbarTouch.ghost = createGhostForTouchItem(activeToolbarTouch.itemEl);
+
+            setTouchScrollLock(true);
+            root.classList.add('is-touch-dragging');
+            stageContainer.classList.add('is-touch-dragging');
+            updateTouchHintForState();
+            updateToolbarGhostPosition(touch);
         }
 
         function clearActiveToolbarTouch() {
-            if (activeToolbarTouch && activeToolbarTouch.ghost && activeToolbarTouch.ghost.parentNode) {
+            if (!activeToolbarTouch) {
+                return;
+            }
+
+            if (activeToolbarTouch.rafId !== null) {
+                window.cancelAnimationFrame(activeToolbarTouch.rafId);
+            }
+
+            if (activeToolbarTouch.ghost && activeToolbarTouch.ghost.parentNode) {
                 activeToolbarTouch.ghost.parentNode.removeChild(activeToolbarTouch.ghost);
             }
+
+            if (activeToolbarTouch.itemEl) {
+                activeToolbarTouch.itemEl.classList.remove('is-touch-active');
+            }
+
             activeToolbarTouch = null;
+            setCanvasDropTargetState(false);
+            setTouchScrollLock(false);
+            root.classList.remove('is-touch-dragging');
+            stageContainer.classList.remove('is-touch-dragging');
+            updateTouchHintForState();
         }
 
         function getLogicalPositionFromViewportPoint(clientX, clientY) {
@@ -814,9 +977,9 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         }
 
-        document.querySelectorAll('.tactics-draggable-item').forEach(function (item) {
+        toolbarItems.forEach(function (item) {
             item.addEventListener('touchstart', function (event) {
-                if (!event.touches || event.touches.length === 0) {
+                if (!event.changedTouches || event.changedTouches.length === 0) {
                     return;
                 }
 
@@ -825,24 +988,31 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                event.preventDefault();
+                if (activeToolbarTouch) {
+                    clearActiveToolbarTouch();
+                }
 
-                const ghost = item.cloneNode(true);
-                ghost.style.position = 'fixed';
-                ghost.style.left = '0px';
-                ghost.style.top = '0px';
-                ghost.style.pointerEvents = 'none';
-                ghost.style.opacity = '0.82';
-                ghost.style.zIndex = '2147483647';
-                ghost.style.transform = 'translate(-50%, -50%) scale(1.08)';
-                document.body.appendChild(ghost);
+                const startTouch = event.changedTouches[0];
+                if (!startTouch) {
+                    return;
+                }
+
+                item.classList.add('is-touch-active');
 
                 activeToolbarTouch = {
                     type: type,
-                    ghost: ghost
+                    itemEl: item,
+                    ghost: null,
+                    identifier: startTouch.identifier,
+                    startX: startTouch.clientX,
+                    startY: startTouch.clientY,
+                    lastX: startTouch.clientX,
+                    lastY: startTouch.clientY,
+                    isDragging: false,
+                    rafId: null
                 };
 
-                updateToolbarGhostPosition(event.touches[0]);
+                updateTouchHintForState();
             }, { passive: false });
         });
 
@@ -851,12 +1021,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (!event.touches || event.touches.length === 0) {
+            const touch = findTouchByIdentifier(event.touches, activeToolbarTouch.identifier);
+            if (!touch) {
+                return;
+            }
+
+            const dx = touch.clientX - activeToolbarTouch.startX;
+            const dy = touch.clientY - activeToolbarTouch.startY;
+            if (!activeToolbarTouch.isDragging && Math.hypot(dx, dy) >= TOUCH_DRAG_THRESHOLD_PX) {
+                startToolbarTouchDrag(touch);
+            }
+
+            if (!activeToolbarTouch.isDragging) {
                 return;
             }
 
             event.preventDefault();
-            updateToolbarGhostPosition(event.touches[0]);
+            updateToolbarGhostPosition(touch);
         }, { passive: false });
 
         document.addEventListener('touchend', function (event) {
@@ -864,10 +1045,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const touch = event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : null;
-            if (touch) {
+            const touch = findTouchByIdentifier(event.changedTouches, activeToolbarTouch.identifier);
+            if (!touch) {
+                return;
+            }
+
+            if (activeToolbarTouch.isDragging) {
+                event.preventDefault();
                 const pos = getLogicalPositionFromViewportPoint(touch.clientX, touch.clientY);
-                placeToolbarItemAtPosition(activeToolbarTouch.type, pos);
+                if (pos && isInsidePitch(pos)) {
+                    placeToolbarItemAtPosition(activeToolbarTouch.type, pos);
+                    flashTouchPlacementFeedback();
+                }
+            } else {
+                toggleArmedToolbarType(activeToolbarTouch.type);
             }
 
             clearActiveToolbarTouch();
@@ -879,6 +1070,76 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             clearActiveToolbarTouch();
         }, { passive: false });
+
+        stageContainer.addEventListener('touchstart', function (event) {
+            if (!armedToolbarType || activeToolbarTouch) {
+                return;
+            }
+
+            event.preventDefault();
+        }, { passive: false });
+
+        stageContainer.addEventListener('touchmove', function (event) {
+            if (!armedToolbarType || activeToolbarTouch) {
+                return;
+            }
+
+            event.preventDefault();
+        }, { passive: false });
+
+        stageContainer.addEventListener('touchend', function (event) {
+            if (!armedToolbarType || activeToolbarTouch) {
+                return;
+            }
+
+            const touch = event.changedTouches && event.changedTouches.length > 0
+                ? event.changedTouches[0]
+                : null;
+            if (!touch) {
+                return;
+            }
+
+            const pos = getLogicalPositionFromViewportPoint(touch.clientX, touch.clientY);
+            if (!pos || !isInsidePitch(pos)) {
+                return;
+            }
+
+            event.preventDefault();
+            placeToolbarItemAtPosition(armedToolbarType, pos);
+            flashTouchPlacementFeedback();
+        }, { passive: false });
+
+        document.addEventListener('touchstart', function (event) {
+            if (!armedToolbarType) {
+                return;
+            }
+
+            if (root.contains(event.target)) {
+                return;
+            }
+
+            setArmedToolbarType('');
+        }, { passive: true });
+
+        window.addEventListener('blur', function () {
+            if (activeToolbarTouch) {
+                clearActiveToolbarTouch();
+            }
+
+            if (armedToolbarType) {
+                setArmedToolbarType('');
+            }
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden && activeToolbarTouch) {
+                clearActiveToolbarTouch();
+            }
+
+            if (document.hidden && armedToolbarType) {
+                setArmedToolbarType('');
+            }
+        });
 
         const selectBtn = document.getElementById('tactics-tool-select');
         const arrowBtn = document.getElementById('tactics-tool-arrow');
@@ -903,20 +1164,43 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (selectBtn) {
-            selectBtn.addEventListener('click', function () { setTool('select'); });
+            selectBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('select');
+            });
         }
         if (arrowBtn) {
-            arrowBtn.addEventListener('click', function () { setTool('arrow'); });
+            arrowBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('arrow');
+            });
         }
         if (dashedBtn) {
-            dashedBtn.addEventListener('click', function () { setTool('dashed'); });
+            dashedBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('dashed');
+            });
         }
         if (zigzagBtn) {
-            zigzagBtn.addEventListener('click', function () { setTool('zigzag'); });
+            zigzagBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                setTool('zigzag');
+            });
         }
 
         if (clearBtn) {
             clearBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
                 if (!confirm('Weet je zeker dat je deze tekening wilt wissen?')) {
                     return;
                 }
@@ -928,11 +1212,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (deleteSelectedBtn) {
-            deleteSelectedBtn.addEventListener('click', deleteSelected);
+            deleteSelectedBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
+                deleteSelected();
+            });
         }
 
         if (toBackBtn) {
             toBackBtn.addEventListener('click', function () {
+                if (armedToolbarType) {
+                    setArmedToolbarType('');
+                }
                 const selectedNodes = tr.nodes();
                 if (selectedNodes.length === 0) {
                     return;
