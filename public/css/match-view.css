@@ -491,6 +491,17 @@
     font-size: 22px;
 }
 
+.tactics-draggable-item {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.match-tactics-canvas {
+    touch-action: none;
+}
+
 @media (max-width: 900px) {
     .match-tactics-layout {
         grid-template-columns: 1fr;

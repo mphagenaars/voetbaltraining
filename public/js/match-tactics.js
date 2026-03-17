@@ -716,6 +716,170 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
+        function placeToolbarItemAtPosition(type, pos) {
+            if (!type || !pos || !isInsidePitch(pos)) {
+                return;
+            }
+
+            if (type === 'ball') {
+                const text = new Konva.Text({
+                    x: pos.x,
+                    y: pos.y,
+                    text: '⚽',
+                    fontSize: 20,
+                    draggable: true,
+                    name: 'item'
+                });
+                text.offsetX(text.width() / 2);
+                text.offsetY(text.height() / 2);
+                mainLayer.add(text);
+                attachItemConstraints(text);
+                mainLayer.batchDraw();
+                return;
+            }
+
+            const imageSrc = '/images/assets/' + type + '.svg';
+            Konva.Image.fromURL(imageSrc, function (image) {
+                let scaleX;
+                let scaleY;
+
+                if (type.indexOf('shirt') === 0) {
+                    const targetHeight = 38;
+                    const baseScale = targetHeight / image.height();
+                    scaleX = baseScale * 1.18;
+                    scaleY = baseScale;
+                } else {
+                    const targetSize = 25;
+                    const baseScale = targetSize / Math.max(image.width(), image.height());
+                    scaleX = baseScale;
+                    scaleY = baseScale;
+                }
+
+                image.setAttrs({
+                    x: pos.x,
+                    y: pos.y,
+                    scaleX: scaleX,
+                    scaleY: scaleY,
+                    offsetX: image.width() / 2,
+                    offsetY: image.height() / 2,
+                    draggable: true,
+                    name: 'item',
+                    imageSrc: imageSrc
+                });
+
+                mainLayer.add(image);
+                attachItemConstraints(image);
+                mainLayer.batchDraw();
+            });
+        }
+
+        // Touch fallback for mobile/tablet: place toolbar items without relying on HTML5 DnD.
+        let activeToolbarTouch = null;
+
+        function updateToolbarGhostPosition(touch) {
+            if (!activeToolbarTouch || !activeToolbarTouch.ghost || !touch) {
+                return;
+            }
+
+            activeToolbarTouch.ghost.style.left = touch.clientX + 'px';
+            activeToolbarTouch.ghost.style.top = touch.clientY + 'px';
+        }
+
+        function clearActiveToolbarTouch() {
+            if (activeToolbarTouch && activeToolbarTouch.ghost && activeToolbarTouch.ghost.parentNode) {
+                activeToolbarTouch.ghost.parentNode.removeChild(activeToolbarTouch.ghost);
+            }
+            activeToolbarTouch = null;
+        }
+
+        function getLogicalPositionFromViewportPoint(clientX, clientY) {
+            const rect = stageContainer.getBoundingClientRect();
+            if (
+                clientX < rect.left ||
+                clientX > rect.right ||
+                clientY < rect.top ||
+                clientY > rect.bottom
+            ) {
+                return null;
+            }
+
+            const stageX = clientX - rect.left;
+            const stageY = clientY - rect.top;
+            const scaleX = stage.scaleX() || 1;
+            const scaleY = stage.scaleY() || 1;
+
+            return {
+                x: stageX / scaleX,
+                y: stageY / scaleY
+            };
+        }
+
+        document.querySelectorAll('.tactics-draggable-item').forEach(function (item) {
+            item.addEventListener('touchstart', function (event) {
+                if (!event.touches || event.touches.length === 0) {
+                    return;
+                }
+
+                const type = item.dataset.type || '';
+                if (!type) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const ghost = item.cloneNode(true);
+                ghost.style.position = 'fixed';
+                ghost.style.left = '0px';
+                ghost.style.top = '0px';
+                ghost.style.pointerEvents = 'none';
+                ghost.style.opacity = '0.82';
+                ghost.style.zIndex = '2147483647';
+                ghost.style.transform = 'translate(-50%, -50%) scale(1.08)';
+                document.body.appendChild(ghost);
+
+                activeToolbarTouch = {
+                    type: type,
+                    ghost: ghost
+                };
+
+                updateToolbarGhostPosition(event.touches[0]);
+            }, { passive: false });
+        });
+
+        document.addEventListener('touchmove', function (event) {
+            if (!activeToolbarTouch) {
+                return;
+            }
+
+            if (!event.touches || event.touches.length === 0) {
+                return;
+            }
+
+            event.preventDefault();
+            updateToolbarGhostPosition(event.touches[0]);
+        }, { passive: false });
+
+        document.addEventListener('touchend', function (event) {
+            if (!activeToolbarTouch) {
+                return;
+            }
+
+            const touch = event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : null;
+            if (touch) {
+                const pos = getLogicalPositionFromViewportPoint(touch.clientX, touch.clientY);
+                placeToolbarItemAtPosition(activeToolbarTouch.type, pos);
+            }
+
+            clearActiveToolbarTouch();
+        }, { passive: false });
+
+        document.addEventListener('touchcancel', function () {
+            if (!activeToolbarTouch) {
+                return;
+            }
+            clearActiveToolbarTouch();
+        }, { passive: false });
+
         const selectBtn = document.getElementById('tactics-tool-select');
         const arrowBtn = document.getElementById('tactics-tool-arrow');
         const dashedBtn = document.getElementById('tactics-tool-dashed');
