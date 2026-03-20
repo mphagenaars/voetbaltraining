@@ -903,8 +903,7 @@ class GameController extends BaseController {
             $safeTitle = 'situatie';
         }
 
-        $timestamp = date('Ymd-His');
-        return 'tactiek-' . $safeTitle . '-' . $timestamp . '.' . trim($extension);
+        return $safeTitle . '.' . trim($extension);
     }
 
     private function registerDirectoryCleanup(string $dir): void {

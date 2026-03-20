@@ -17,6 +17,7 @@ class KonvaSanitizer {
         '/images/assets/shirt_red_black.svg' => ['width' => 65, 'height' => 50],
         '/images/assets/shirt_red_white.svg' => ['width' => 65, 'height' => 50],
         '/images/assets/shirt_orange.svg' => ['width' => 65, 'height' => 50],
+        '/images/assets/shirt_yellow.svg' => ['width' => 65, 'height' => 50],
         '/images/assets/pawn.svg' => ['width' => 25, 'height' => 25],
         '/images/assets/cone_white.svg' => ['width' => 25, 'height' => 25],
         '/images/assets/cone_yellow.svg' => ['width' => 25, 'height' => 25],

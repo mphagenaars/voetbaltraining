@@ -75,6 +75,34 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_me'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['is_admin'] = (bool)($user['is_admin'] ?? false);
+
+                // Restore a valid team context as well, so API calls that require
+                // current_team keep working after remember-me auto login.
+                if (!isset($_SESSION['current_team'])) {
+                    $teamModel = new Team($db);
+                    $teams = $teamModel->getTeamsForUser((int)$user['id']);
+                    if (!empty($teams)) {
+                        $selectedTeam = null;
+                        foreach ($teams as $teamCandidate) {
+                            if (empty($teamCandidate['is_hidden'])) {
+                                $selectedTeam = $teamCandidate;
+                                break;
+                            }
+                        }
+
+                        if (!$selectedTeam) {
+                            $selectedTeam = $teams[0];
+                        }
+
+                        $role = Team::resolveMemberRole($selectedTeam);
+                        $_SESSION['current_team'] = [
+                            'id' => (int)($selectedTeam['id'] ?? 0),
+                            'name' => (string)($selectedTeam['name'] ?? ''),
+                            'role' => $role,
+                            'invite_code' => (string)($selectedTeam['invite_code'] ?? '')
+                        ];
+                    }
+                }
             }
         }
     }

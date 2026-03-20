@@ -82,21 +82,7 @@
     function buildExportFilename(title, extension) {
         var ext = String(extension || 'webm').trim() || 'webm';
         var safeTitle = sanitizeFileNamePart(title);
-        var now = new Date();
-
-        function pad2(value) {
-            var text = String(Math.max(0, Number(value) || 0));
-            return text.length < 2 ? ('0' + text) : text;
-        }
-
-        var year = String(now.getFullYear());
-        var month = pad2(now.getMonth() + 1);
-        var day = pad2(now.getDate());
-        var hours = pad2(now.getHours());
-        var minutes = pad2(now.getMinutes());
-        var seconds = pad2(now.getSeconds());
-
-        return 'tactiek-' + safeTitle + '-' + year + month + day + '-' + hours + minutes + seconds + '.' + ext;
+        return safeTitle + '.' + ext;
     }
 
     function triggerBlobDownload(blob, filename) {

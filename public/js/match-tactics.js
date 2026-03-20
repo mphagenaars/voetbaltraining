@@ -307,11 +307,14 @@ document.addEventListener('DOMContentLoaded', function () {
         var ANIMATION_TRACK_PROPERTY_HIGHLIGHT = 'highlight';
         var SHIRT_LONG_PRESS_MS = 450;
         var SHIRT_LONG_PRESS_MOVE_PX = 10;
+        var SHIRT_ASSET_TYPE_ALIASES = {
+            shirt_orange: 'shirt_yellow'
+        };
         var SHIRT_COLOR_OPTIONS = [
             { assetType: 'shirt_red_black', label: 'Rood/Zwart', color: '#d32f2f', colorAlt: '#101010' },
             { assetType: 'shirt_red_white', label: 'Rood/Wit', color: '#d32f2f', colorAlt: '#ffffff' },
             { assetType: 'shirt_blue', label: 'Blauw', color: '#1e88e5', colorAlt: '' },
-            { assetType: 'shirt_orange', label: 'Geel', color: '#fdd835', colorAlt: '' }
+            { assetType: 'shirt_yellow', label: 'Geel', color: '#fdd835', colorAlt: '' }
         ];
         var EXPORT_RECORDING_FPS = 30;
         var EXPORT_VIDEO_BITS_PER_SECOND = 2500000;
@@ -466,8 +469,16 @@ document.addEventListener('DOMContentLoaded', function () {
             return fileName.replace(/\.svg$/i, '').trim();
         }
 
-        function isKnownShirtAssetType(assetType) {
+        function normalizeShirtAssetType(assetType) {
             var normalized = String(assetType || '').trim();
+            if (normalized === '') {
+                return '';
+            }
+            return SHIRT_ASSET_TYPE_ALIASES[normalized] || normalized;
+        }
+
+        function isKnownShirtAssetType(assetType) {
+            var normalized = normalizeShirtAssetType(assetType);
             if (normalized === '') {
                 return false;
             }
@@ -480,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!node || typeof node.getClassName !== 'function' || node.getClassName() !== 'Image') {
                 return '';
             }
-            var assetType = extractAssetTypeFromImageSrc(node.getAttr('imageSrc'));
+            var assetType = normalizeShirtAssetType(extractAssetTypeFromImageSrc(node.getAttr('imageSrc')));
             return isKnownShirtAssetType(assetType) ? assetType : '';
         }
 
@@ -606,13 +617,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function applyShirtAssetTypeToNode(node, assetType) {
-            var targetAssetType = String(assetType || '').trim();
+            var targetAssetType = normalizeShirtAssetType(assetType);
             if (!node || !isKnownShirtAssetType(targetAssetType)) {
                 return;
             }
 
-            var currentAssetType = getShirtAssetTypeForNode(node);
-            if (currentAssetType === targetAssetType) {
+            var currentRawAssetType = extractAssetTypeFromImageSrc(node.getAttr('imageSrc'));
+            var currentAssetType = normalizeShirtAssetType(currentRawAssetType);
+            if (currentAssetType === targetAssetType && currentRawAssetType === targetAssetType) {
                 return;
             }
 
@@ -2442,6 +2454,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Content-Type': 'application/json',
                 'X-CSRF-Token': csrfTokenEl.value
             },
+            credentials: 'same-origin',
             body: JSON.stringify(payload)
         })
             .then(function (response) {
@@ -2502,6 +2515,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Content-Type': 'application/json',
                 'X-CSRF-Token': csrfTokenEl.value
             },
+            credentials: 'same-origin',
             body: JSON.stringify(deletePayload)
         })
             .then(function (response) {
