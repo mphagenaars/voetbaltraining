@@ -5,12 +5,14 @@ class GameController extends BaseController {
     private Game $gameModel;
     private Player $playerModel;
     private MatchTactic $matchTacticModel;
+    private MatchTacticInputValidator $matchTacticInputValidator;
 
     public function __construct(PDO $pdo) {
         parent::__construct($pdo);
         $this->gameModel = new Game($pdo);
         $this->playerModel = new Player($pdo);
         $this->matchTacticModel = new MatchTactic($pdo);
+        $this->matchTacticInputValidator = new MatchTacticInputValidator();
     }
 
     public function index(): void {
@@ -461,91 +463,112 @@ class GameController extends BaseController {
             exit;
         }
 
-        $matchId = (int)($data['match_id'] ?? 0);
-        $match = $this->gameModel->getById($matchId);
-        if (!$this->canAccessMatchInCurrentTeam($match)) {
+        $context = $this->resolveTacticContext($data, false);
+        if (!$context) {
             http_response_code(403);
-            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            echo json_encode(['error' => 'Geen toegang tot deze tactiekcontext.']);
             exit;
         }
 
-        $title = trim((string)($data['title'] ?? ''));
-        if ($title === '') {
-            $title = 'Nieuwe situatie';
-        }
-        $title = mb_substr($title, 0, 120);
-        $phase = 'open_play';
-
-        $minute = null;
-        $minuteRaw = $data['minute'] ?? null;
-        if ($minuteRaw !== null && $minuteRaw !== '') {
-            if (!is_numeric($minuteRaw)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Minuut moet een getal zijn.']);
-                exit;
-            }
-            $minute = (int)$minuteRaw;
-            if ($minute < 0 || $minute > 130) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Minuut moet tussen 0 en 130 liggen.']);
-                exit;
-            }
-        }
-
-        $fieldType = 'standard_30x42_5';
-
-        $drawingData = isset($data['drawing_data']) && is_string($data['drawing_data'])
-            ? trim($data['drawing_data'])
-            : '';
-        $drawingData = $drawingData !== '' ? $drawingData : null;
-        if ($drawingData !== null && strlen($drawingData) > 250000) {
+        try {
+            $validated = $this->matchTacticInputValidator->validateForSave($data);
+        } catch (InvalidArgumentException $e) {
             http_response_code(400);
-            echo json_encode(['error' => 'De tekening is te groot om op te slaan.']);
+            echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
+        $title = $validated['title'];
+        $phase = $validated['phase'];
+        $minute = $validated['minute'];
+        $fieldType = $validated['field_type'];
+        $drawingData = $validated['drawing_data'];
 
         $tacticId = (int)($data['tactic_id'] ?? 0);
 
         try {
-            if ($tacticId > 0) {
-                $existing = $this->matchTacticModel->getByIdForMatch($tacticId, $matchId);
-                if (!$existing) {
-                    http_response_code(404);
-                    echo json_encode(['error' => 'Situatie niet gevonden.']);
-                    exit;
+            if (($context['mode'] ?? '') === MatchTactic::CONTEXT_MATCH) {
+                $matchId = (int)($context['match_id'] ?? 0);
+                if ($tacticId > 0) {
+                    $existing = $this->matchTacticModel->getByIdForMatch($tacticId, $matchId);
+                    if (!$existing) {
+                        http_response_code(404);
+                        echo json_encode(['error' => 'Situatie niet gevonden.']);
+                        exit;
+                    }
+
+                    $this->matchTacticModel->updateTactic(
+                        $tacticId,
+                        $matchId,
+                        $title,
+                        $phase,
+                        $minute,
+                        $fieldType,
+                        $drawingData
+                    );
+                    $savedId = $tacticId;
+                    $this->logActivity('update_match_tactic', $matchId, $title);
+                } else {
+                    $savedId = $this->matchTacticModel->create(
+                        $matchId,
+                        $title,
+                        $phase,
+                        $minute,
+                        $fieldType,
+                        $drawingData,
+                        $this->matchTacticModel->getNextSortOrder($matchId),
+                        (int)Session::get('user_id')
+                    );
+                    $this->logActivity('create_match_tactic', $matchId, $title);
                 }
 
-                $this->matchTacticModel->updateTactic(
-                    $tacticId,
-                    $matchId,
-                    $title,
-                    $phase,
-                    $minute,
-                    $fieldType,
-                    $drawingData
-                );
-                $savedId = $tacticId;
-                $this->logActivity('update_match_tactic', $matchId, $title);
+                $saved = $this->matchTacticModel->getByIdForMatch($savedId, $matchId);
+                echo json_encode([
+                    'success' => true,
+                    'tactic' => $saved,
+                    'tactics' => $this->matchTacticModel->getForMatch($matchId),
+                ]);
             } else {
-                $savedId = $this->matchTacticModel->create(
-                    $matchId,
-                    $title,
-                    $phase,
-                    $minute,
-                    $fieldType,
-                    $drawingData,
-                    $this->matchTacticModel->getNextSortOrder($matchId),
-                    (int)Session::get('user_id')
-                );
-                $this->logActivity('create_match_tactic', $matchId, $title);
-            }
+                $teamId = (int)($context['team_id'] ?? 0);
+                if ($tacticId > 0) {
+                    $existing = $this->matchTacticModel->getByIdForTeam($tacticId, $teamId);
+                    if (!$existing) {
+                        http_response_code(404);
+                        echo json_encode(['error' => 'Situatie niet gevonden.']);
+                        exit;
+                    }
 
-            $saved = $this->matchTacticModel->getByIdForMatch($savedId, $matchId);
-            echo json_encode([
-                'success' => true,
-                'tactic' => $saved,
-                'tactics' => $this->matchTacticModel->getForMatch($matchId),
-            ]);
+                    $this->matchTacticModel->updateForTeam(
+                        $tacticId,
+                        $teamId,
+                        $title,
+                        $phase,
+                        $minute,
+                        $fieldType,
+                        $drawingData
+                    );
+                    $savedId = $tacticId;
+                    $this->logActivity('update_team_tactic', $teamId, $title);
+                } else {
+                    $savedId = $this->matchTacticModel->createForTeam(
+                        $teamId,
+                        $title,
+                        $phase,
+                        $minute,
+                        $fieldType,
+                        $drawingData,
+                        $this->matchTacticModel->getNextSortOrderForTeamContext($teamId),
+                        (int)Session::get('user_id')
+                    );
+                    $this->logActivity('create_team_tactic', $teamId, $title);
+                }
+
+                $saved = $this->matchTacticModel->getByIdForTeam($savedId, $teamId);
+                echo json_encode([
+                    'success' => true,
+                    'tactic' => $saved,
+                    'tactics' => $this->matchTacticModel->getForTeam($teamId),
+                ]);
+            }
         } catch (Throwable $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Opslaan mislukt.']);
@@ -581,13 +604,11 @@ class GameController extends BaseController {
             exit;
         }
 
-        $matchId = (int)($data['match_id'] ?? 0);
         $tacticId = (int)($data['tactic_id'] ?? 0);
-
-        $match = $this->gameModel->getById($matchId);
-        if (!$this->canAccessMatchInCurrentTeam($match)) {
+        $context = $this->resolveTacticContext($data, false);
+        if (!$context) {
             http_response_code(403);
-            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            echo json_encode(['error' => 'Geen toegang tot deze tactiekcontext.']);
             exit;
         }
 
@@ -597,25 +618,184 @@ class GameController extends BaseController {
             exit;
         }
 
-        $existing = $this->matchTacticModel->getByIdForMatch($tacticId, $matchId);
-        if (!$existing) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Situatie niet gevonden.']);
-            exit;
-        }
-
         try {
-            $this->matchTacticModel->deleteForMatch($tacticId, $matchId);
-            $this->logActivity('delete_match_tactic', $matchId, (string)$existing['title']);
+            if (($context['mode'] ?? '') === MatchTactic::CONTEXT_MATCH) {
+                $matchId = (int)($context['match_id'] ?? 0);
+                $existing = $this->matchTacticModel->getByIdForMatch($tacticId, $matchId);
+                if (!$existing) {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Situatie niet gevonden.']);
+                    exit;
+                }
 
-            echo json_encode([
-                'success' => true,
-                'tactics' => $this->matchTacticModel->getForMatch($matchId),
-            ]);
+                $this->matchTacticModel->deleteForMatch($tacticId, $matchId);
+                $this->logActivity('delete_match_tactic', $matchId, (string)$existing['title']);
+
+                echo json_encode([
+                    'success' => true,
+                    'tactics' => $this->matchTacticModel->getForMatch($matchId),
+                ]);
+            } else {
+                $teamId = (int)($context['team_id'] ?? 0);
+                $existing = $this->matchTacticModel->getByIdForTeam($tacticId, $teamId);
+                if (!$existing) {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Situatie niet gevonden.']);
+                    exit;
+                }
+
+                $this->matchTacticModel->deleteForTeam($tacticId, $teamId);
+                $this->logActivity('delete_team_tactic', $teamId, (string)$existing['title']);
+
+                echo json_encode([
+                    'success' => true,
+                    'tactics' => $this->matchTacticModel->getForTeam($teamId),
+                ]);
+            }
         } catch (Throwable $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Verwijderen mislukt.']);
         }
+    }
+
+    public function exportTacticVideo(): void {
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
+            exit;
+        }
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Methode niet toegestaan.']);
+            exit;
+        }
+
+        $csrfToken = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+            exit;
+        }
+
+        $context = $this->resolveTacticContext($_POST, true);
+        if (!$context) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Geen toegang tot deze tactiekcontext.']);
+            exit;
+        }
+
+        $upload = $_FILES['video'] ?? null;
+        if (!is_array($upload)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Geen videobestand ontvangen.']);
+            exit;
+        }
+
+        $uploadError = (int)($upload['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $this->resolveUploadErrorMessage($uploadError)]);
+            exit;
+        }
+
+        $uploadedTmpPath = is_string($upload['tmp_name'] ?? null) ? $upload['tmp_name'] : '';
+        if ($uploadedTmpPath === '' || !is_uploaded_file($uploadedTmpPath)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Upload van videobestand is ongeldig.']);
+            exit;
+        }
+
+        $uploadSize = (int)($upload['size'] ?? 0);
+        if ($uploadSize <= 0) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Het geuploade videobestand is leeg.']);
+            exit;
+        }
+        if ($uploadSize > (100 * 1024 * 1024)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Videobestand is te groot (max 100 MB).']);
+            exit;
+        }
+
+        $title = is_string($_POST['title'] ?? null) ? trim((string)$_POST['title']) : '';
+        $inputExtensionRaw = strtolower(trim((string)($_POST['input_extension'] ?? pathinfo((string)($upload['name'] ?? ''), PATHINFO_EXTENSION))));
+        $inputExtension = in_array($inputExtensionRaw, ['webm', 'mp4', 'mov'], true) ? $inputExtensionRaw : 'webm';
+
+        $workDir = dirname(__DIR__, 2) . '/data/tmp/tactic-video-export/' . uniqid('exp_', true);
+        if (!@mkdir($workDir, 0755, true) && !is_dir($workDir)) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Kon tijdelijke exportmap niet aanmaken.']);
+            exit;
+        }
+
+        $this->registerDirectoryCleanup($workDir);
+
+        $inputPath = $workDir . '/input.' . $inputExtension;
+        if (!move_uploaded_file($uploadedTmpPath, $inputPath)) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Kon geuploade video niet verwerken.']);
+            exit;
+        }
+
+        $outputPath = $workDir . '/output.mp4';
+        if ($inputExtension === 'mp4') {
+            if (!@copy($inputPath, $outputPath)) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Kon MP4-bestand niet voorbereiden voor download.']);
+                exit;
+            }
+        } else {
+            $transcoder = new MatchTacticVideoTranscoder();
+            $result = $transcoder->transcodeToMp4($inputPath, $outputPath, 180);
+            if (!($result['ok'] ?? false)) {
+                $detail = trim((string)($result['error'] ?? ''));
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'error' => $detail !== ''
+                        ? ('MP4-conversie op server mislukt: ' . $detail)
+                        : 'MP4-conversie op server mislukt.',
+                ]);
+                exit;
+            }
+        }
+
+        clearstatcache(true, $outputPath);
+        $outputSize = is_file($outputPath) ? (int)@filesize($outputPath) : 0;
+        if ($outputSize <= 0) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'MP4-conversie leverde geen geldig bestand op.']);
+            exit;
+        }
+
+        $downloadName = $this->buildTacticVideoFilename($title, 'mp4');
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: video/mp4');
+        header('Content-Disposition: attachment; filename="' . $downloadName . '"');
+        header('Content-Length: ' . $outputSize);
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
+        readfile($outputPath);
+        exit;
     }
 
     private function decodeJsonBody(): ?array {
@@ -645,5 +825,104 @@ class GameController extends BaseController {
             (int)Session::get('user_id'),
             (bool)Session::get('is_admin')
         );
+    }
+
+    private function canAccessCurrentTeam(int $teamId): bool {
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            return false;
+        }
+
+        $currentTeamId = (int)(Session::get('current_team')['id'] ?? 0);
+        if ($teamId <= 0 || $teamId !== $currentTeamId) {
+            return false;
+        }
+
+        $teamModel = new Team($this->pdo);
+        return $teamModel->canAccessTeam(
+            $teamId,
+            (int)Session::get('user_id'),
+            (bool)Session::get('is_admin')
+        );
+    }
+
+    private function resolveTacticContext(array $data, bool $allowImplicitTeam = false): ?array {
+        $matchId = (int)($data['match_id'] ?? 0);
+        if ($matchId > 0) {
+            $match = $this->gameModel->getById($matchId);
+            if (!$this->canAccessMatchInCurrentTeam($match)) {
+                return null;
+            }
+
+            return [
+                'mode' => MatchTactic::CONTEXT_MATCH,
+                'match_id' => $matchId,
+                'team_id' => (int)($match['team_id'] ?? 0),
+            ];
+        }
+
+        $teamId = (int)($data['team_id'] ?? 0);
+        if ($allowImplicitTeam && $teamId <= 0 && Session::has('current_team')) {
+            $teamId = (int)(Session::get('current_team')['id'] ?? 0);
+        }
+        if ($teamId > 0 && $this->canAccessCurrentTeam($teamId)) {
+            return [
+                'mode' => MatchTactic::CONTEXT_TEAM,
+                'match_id' => 0,
+                'team_id' => $teamId,
+            ];
+        }
+
+        return null;
+    }
+
+    private function resolveUploadErrorMessage(int $uploadErrorCode): string {
+        switch ($uploadErrorCode) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'Geuploade video is te groot.';
+            case UPLOAD_ERR_PARTIAL:
+                return 'Upload van video is onvolledig.';
+            case UPLOAD_ERR_NO_FILE:
+                return 'Geen videobestand geüpload.';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Tijdelijke uploadmap ontbreekt op de server.';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Kon videobestand niet wegschrijven op de server.';
+            case UPLOAD_ERR_EXTENSION:
+                return 'Upload geblokkeerd door server-extensie.';
+            default:
+                return 'Onbekende uploadfout.';
+        }
+    }
+
+    private function buildTacticVideoFilename(string $title, string $extension): string {
+        $safeTitle = strtolower(trim($title));
+        $safeTitle = preg_replace('/[^a-z0-9]+/', '-', $safeTitle) ?? '';
+        $safeTitle = trim($safeTitle, '-');
+        if ($safeTitle === '') {
+            $safeTitle = 'situatie';
+        }
+
+        $timestamp = date('Ymd-His');
+        return 'tactiek-' . $safeTitle . '-' . $timestamp . '.' . trim($extension);
+    }
+
+    private function registerDirectoryCleanup(string $dir): void {
+        register_shutdown_function(static function () use ($dir): void {
+            if (!is_dir($dir)) {
+                return;
+            }
+
+            $entries = @scandir($dir);
+            if (is_array($entries)) {
+                foreach ($entries as $entry) {
+                    if ($entry === '.' || $entry === '..') {
+                        continue;
+                    }
+                    @unlink($dir . '/' . $entry);
+                }
+            }
+            @rmdir($dir);
+        });
     }
 }

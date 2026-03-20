@@ -47,6 +47,13 @@
                 </div>
                 <?= $actionCardChevron ?>
             </a>
+            <a href="/tactics" class="action-card" style="margin-bottom: 0;">
+                <div>
+                    <h3>Tactiekstudio</h3>
+                    <p>Gebruik het tactiekbord.</p>
+                </div>
+                <?= $actionCardChevron ?>
+            </a>
             <a href="/matches" class="action-card" style="margin-bottom: 0;">
                 <div>
                     <h3>Wedstrijden</h3>

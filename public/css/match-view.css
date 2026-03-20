@@ -443,6 +443,192 @@
     color: #c62828;
 }
 
+.match-tactics-animation-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin: 0.2rem 0 0.35rem;
+    padding: 0.38rem 0.55rem 0.4rem;
+    border: 1px solid #d6dde4;
+    border-radius: 7px;
+    background: #f8fafb;
+}
+
+.match-tactics-animation-head {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    column-gap: 0.35rem;
+    row-gap: 0.16rem;
+}
+
+.match-tactics-animation-controls {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.3rem;
+    margin-left: 0.15rem;
+}
+
+.match-tactics-animation-select-field {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.08rem;
+}
+
+.match-tactics-animation-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border: 1px solid #d6dde4;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 0;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #22303a;
+    cursor: pointer;
+}
+
+.match-tactics-animation-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.match-tactics-animation-btn svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.match-tactics-animation-select-label {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: #4a5561;
+    margin-left: 0;
+    line-height: 1;
+}
+
+.match-tactics-animation-select {
+    height: 30px;
+    min-height: 30px;
+    border: 1px solid #d6dde4;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 0 0.3rem;
+    font-size: 0.72rem;
+    color: #22303a;
+}
+
+.match-tactics-animation-mode {
+    width: 148px;
+}
+
+.match-tactics-animation-slow-rate {
+    width: 82px;
+}
+
+.match-tactics-animation-export-btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    align-self: auto;
+}
+
+.match-tactics-animation-export-btn:disabled {
+    opacity: 0.5;
+}
+
+.match-tactics-animation-export-label {
+    visibility: hidden;
+}
+
+.match-tactics-animation-toggle.is-enabled {
+    border-color: #2e7d32;
+    background: rgba(46, 125, 50, 0.08);
+}
+
+.match-tactics-animation-highlight.is-active {
+    border-color: #f9a825;
+    background: rgba(249, 168, 37, 0.16);
+    color: #7a4e07;
+}
+
+.match-tactics-shirt-color-menu {
+    position: fixed;
+    z-index: 1200;
+    min-width: 170px;
+    padding: 0.3rem;
+    border: 1px solid #d6dde4;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(20, 31, 41, 0.2);
+    display: none;
+}
+
+.match-tactics-shirt-color-menu.is-visible {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.18rem;
+}
+
+.match-tactics-shirt-color-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    border: 1px solid transparent;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 0.22rem 0.35rem;
+    font-size: 0.72rem;
+    color: #22303a;
+    text-align: left;
+    cursor: pointer;
+}
+
+.match-tactics-shirt-color-btn:hover {
+    border-color: #c5d0db;
+    background: #f6f9fb;
+}
+
+.match-tactics-shirt-color-btn.is-active {
+    border-color: #2e7d32;
+    background: rgba(46, 125, 50, 0.09);
+}
+
+.match-tactics-shirt-color-swatch {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 1px solid rgba(15, 23, 42, 0.25);
+    flex-shrink: 0;
+}
+
+.match-tactics-shirt-color-label {
+    white-space: nowrap;
+}
+
+.match-tactics-animation-range {
+    width: 100%;
+    accent-color: #2e7d32;
+}
+
+.match-tactics-animation-time {
+    font-size: 0.74rem;
+    color: #4a5561;
+    margin-left: 0;
+    flex: 1 0 100%;
+    text-align: right;
+    min-height: 1em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
 .match-tactics-editor-shell {
     border: 0;
     background: transparent;
@@ -692,5 +878,9 @@ body.tactics-touch-scroll-lock {
 
     .match-tactics-canvas {
         width: min(340px, 100%);
+    }
+
+    .match-tactics-animation-controls {
+        margin-left: 0;
     }
 }

@@ -51,6 +51,13 @@ return [
     '/matches/save-lineup' => ['GameController', 'saveLineup'],
     '/matches/tactics/save' => ['GameController', 'saveTactic'],
     '/matches/tactics/delete' => ['GameController', 'deleteTactic'],
+    '/matches/tactics/export-video' => ['GameController', 'exportTacticVideo'],
+
+    // Tactics Studio
+    '/tactics' => ['TacticsController', 'index'],
+    '/tactics/save' => ['GameController', 'saveTactic'],
+    '/tactics/delete' => ['GameController', 'deleteTactic'],
+    '/tactics/export-video' => ['GameController', 'exportTacticVideo'],
 
     // Account
     '/account' => ['AccountController', 'index'],

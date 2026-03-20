@@ -456,22 +456,38 @@ try {
     // Match tactics (wedstrijdsituaties op tactiekbord)
     $db->exec("CREATE TABLE IF NOT EXISTS match_tactics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        match_id INTEGER NOT NULL,
+        team_id INTEGER NOT NULL,
+        match_id INTEGER NULL,
+        context_type TEXT NOT NULL DEFAULT 'match',
         title TEXT NOT NULL,
         phase TEXT NOT NULL DEFAULT 'open_play',
         minute INTEGER NULL,
-        field_type TEXT NOT NULL DEFAULT 'landscape',
+        field_type TEXT NOT NULL DEFAULT 'standard_30x42_5',
         drawing_data TEXT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_by INTEGER NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
         FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
         FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
     )");
     echo "- Tabel 'match_tactics' aangemaakt (of bestond al).\n";
 
-    $mtColumns = $db->query("PRAGMA table_info(match_tactics)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    $mtInfo = $db->query("PRAGMA table_info(match_tactics)")->fetchAll(PDO::FETCH_ASSOC);
+    $mtColumns = array_map(
+        static fn(array $column): string => (string)$column['name'],
+        $mtInfo
+    );
+
+    if (!in_array('team_id', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN team_id INTEGER NULL");
+        echo "- Kolom 'team_id' toegevoegd aan 'match_tactics'.\n";
+    }
+    if (!in_array('context_type', $mtColumns, true)) {
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN context_type TEXT DEFAULT 'match'");
+        echo "- Kolom 'context_type' toegevoegd aan 'match_tactics'.\n";
+    }
     if (!in_array('title', $mtColumns, true)) {
         $db->exec("ALTER TABLE match_tactics ADD COLUMN title TEXT DEFAULT 'Nieuwe situatie'");
         echo "- Kolom 'title' toegevoegd aan 'match_tactics'.\n";
@@ -485,7 +501,7 @@ try {
         echo "- Kolom 'minute' toegevoegd aan 'match_tactics'.\n";
     }
     if (!in_array('field_type', $mtColumns, true)) {
-        $db->exec("ALTER TABLE match_tactics ADD COLUMN field_type TEXT DEFAULT 'landscape'");
+        $db->exec("ALTER TABLE match_tactics ADD COLUMN field_type TEXT DEFAULT 'standard_30x42_5'");
         echo "- Kolom 'field_type' toegevoegd aan 'match_tactics'.\n";
     }
     if (!in_array('drawing_data', $mtColumns, true)) {
@@ -506,8 +522,128 @@ try {
         echo "- Kolom 'updated_at' toegevoegd aan 'match_tactics'.\n";
     }
 
+    // Backfill team/context waarden op oudere schema's.
+    $db->exec("UPDATE match_tactics
+               SET team_id = (
+                   SELECT m.team_id
+                   FROM matches m
+                   WHERE m.id = match_tactics.match_id
+               )
+               WHERE team_id IS NULL
+                 AND match_id IS NOT NULL");
+    $db->exec("UPDATE match_tactics
+               SET context_type = CASE
+                   WHEN match_id IS NULL THEN 'team'
+                   ELSE 'match'
+               END
+               WHERE context_type IS NULL
+                  OR TRIM(context_type) = ''");
+
+    $mtInfo = $db->query("PRAGMA table_info(match_tactics)")->fetchAll(PDO::FETCH_ASSOC);
+    $mtColumns = array_map(
+        static fn(array $column): string => (string)$column['name'],
+        $mtInfo
+    );
+    $matchIdIsNullable = true;
+    foreach ($mtInfo as $column) {
+        if ((string)$column['name'] === 'match_id') {
+            $matchIdIsNullable = ((int)$column['notnull'] === 0);
+            break;
+        }
+    }
+
+    $needsMatchTacticsRebuild = (
+        !$matchIdIsNullable ||
+        !in_array('team_id', $mtColumns, true) ||
+        !in_array('context_type', $mtColumns, true)
+    );
+
+    if ($needsMatchTacticsRebuild) {
+        $hasTeamIdBefore = in_array('team_id', $mtColumns, true);
+        $hasContextTypeBefore = in_array('context_type', $mtColumns, true);
+        $teamIdExpr = $hasTeamIdBefore ? 'old.team_id' : 'm.team_id';
+        $contextTypeExpr = $hasContextTypeBefore
+            ? "CASE
+                   WHEN old.context_type IN ('match', 'team') THEN old.context_type
+                   WHEN old.match_id IS NULL THEN 'team'
+                   ELSE 'match'
+               END"
+            : "CASE
+                   WHEN old.match_id IS NULL THEN 'team'
+                   ELSE 'match'
+               END";
+
+        $db->beginTransaction();
+        try {
+            $db->exec("CREATE TABLE match_tactics_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                team_id INTEGER NOT NULL,
+                match_id INTEGER NULL,
+                context_type TEXT NOT NULL DEFAULT 'match',
+                title TEXT NOT NULL,
+                phase TEXT NOT NULL DEFAULT 'open_play',
+                minute INTEGER NULL,
+                field_type TEXT NOT NULL DEFAULT 'standard_30x42_5',
+                drawing_data TEXT NULL,
+                sort_order INTEGER NOT NULL DEFAULT 0,
+                created_by INTEGER NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+                FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+                FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+            )");
+
+            $db->exec("INSERT INTO match_tactics_new (
+                    id,
+                    team_id,
+                    match_id,
+                    context_type,
+                    title,
+                    phase,
+                    minute,
+                    field_type,
+                    drawing_data,
+                    sort_order,
+                    created_by,
+                    created_at,
+                    updated_at
+                )
+                SELECT
+                    old.id,
+                    COALESCE($teamIdExpr, m.team_id) AS team_id,
+                    old.match_id,
+                    $contextTypeExpr AS context_type,
+                    COALESCE(old.title, 'Nieuwe situatie') AS title,
+                    COALESCE(old.phase, 'open_play') AS phase,
+                    old.minute,
+                    COALESCE(old.field_type, 'standard_30x42_5') AS field_type,
+                    old.drawing_data,
+                    COALESCE(old.sort_order, 0) AS sort_order,
+                    old.created_by,
+                    COALESCE(old.created_at, CURRENT_TIMESTAMP) AS created_at,
+                    COALESCE(old.updated_at, CURRENT_TIMESTAMP) AS updated_at
+                FROM match_tactics old
+                LEFT JOIN matches m ON m.id = old.match_id
+                WHERE COALESCE($teamIdExpr, m.team_id) IS NOT NULL");
+
+            $db->exec("DROP TABLE match_tactics");
+            $db->exec("ALTER TABLE match_tactics_new RENAME TO match_tactics");
+
+            $db->commit();
+            echo "- Tabel 'match_tactics' gemigreerd naar context-schema.\n";
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     $db->exec("CREATE INDEX IF NOT EXISTS idx_match_tactics_match_sort ON match_tactics (match_id, sort_order, id)");
     echo "- Index voor 'match_tactics' gecontroleerd/aangemaakt.\n";
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_tactics_team_context ON match_tactics (team_id, context_type, updated_at, id)");
+    echo "- Team/context index voor 'match_tactics' gecontroleerd/aangemaakt.\n";
 
     // Migratie van oude lineups naar matches
     $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='lineups'")->fetchAll();

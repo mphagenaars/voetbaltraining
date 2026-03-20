@@ -1,4 +1,3 @@
-# Voetbaltraining
 
 Self-hosted webapplicatie voor voetbaltrainers om oefenstof, trainingen, teams, spelers en wedstrijden te beheren.  
 De applicatie gebruikt vanilla PHP (MVC) met SQLite.
