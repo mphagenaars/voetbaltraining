@@ -42,4 +42,11 @@
 <script src="/js/match-tactics/playback-runtime.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/playback-runtime.js') ?>"></script>
 <script src="/js/match-tactics/animation-panel.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/animation-panel.js') ?>"></script>
 <script src="/js/match-tactics/video-export.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/video-export.js') ?>"></script>
+<script src="/js/match-tactics/tactics-store.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/tactics-store.js') ?>"></script>
+<script src="/js/match-tactics/autosave-queue.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/autosave-queue.js') ?>"></script>
+<script src="/js/match-tactics/tactics-api.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/tactics-api.js') ?>"></script>
+<script src="/js/match-tactics/tactics-editor-session.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/tactics-editor-session.js') ?>"></script>
+<script src="/js/match-tactics/board-controls.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/board-controls.js') ?>"></script>
+<script src="/js/match-tactics/shirt-color-menu.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/shirt-color-menu.js') ?>"></script>
+<script src="/js/match-tactics/animation-authoring.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics/animation-authoring.js') ?>"></script>
 <script src="/js/match-tactics.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/match-tactics.js') ?>"></script>

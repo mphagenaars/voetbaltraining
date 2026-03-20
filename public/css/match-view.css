@@ -404,6 +404,9 @@
 }
 
 .match-tactics-status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
     min-height: 1rem;
     margin-bottom: 0.2rem;
 }
@@ -425,8 +428,7 @@
     height: 18px;
 }
 
-.tactics-action-icon-add,
-.tactics-action-icon-save {
+.tactics-action-icon-add {
     color: #2e7d32;
 }
 
@@ -434,13 +436,29 @@
     color: #c62828;
 }
 
-.tactics-action-icon-add:hover,
-.tactics-action-icon-save:hover {
+.tactics-action-icon-add:hover {
     color: #2e7d32;
 }
 
 .tactics-action-icon-delete:hover {
     color: #c62828;
+}
+
+.match-tactics-retry-btn {
+    appearance: none;
+    border: 1px solid #c62828;
+    background: #fff;
+    color: #c62828;
+    font-size: 0.76rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.12rem 0.58rem;
+    cursor: pointer;
+    line-height: 1.3;
+}
+
+.match-tactics-retry-btn:hover {
+    background: rgba(198, 40, 40, 0.08);
 }
 
 .match-tactics-animation-panel {

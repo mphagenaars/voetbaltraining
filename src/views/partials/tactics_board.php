@@ -64,13 +64,11 @@ $tacticsShowSourceMeta = !empty($tacticsShowSourceMeta);
                     <button type="button" id="tactics-delete-btn" class="btn-icon tactics-action-icon tactics-action-icon-delete" title="Situatie verwijderen" aria-label="Situatie verwijderen">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
                     </button>
-                    <button type="button" id="tactics-save-btn" class="btn-icon tactics-action-icon tactics-action-icon-save" title="Situatie opslaan" aria-label="Situatie opslaan">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    </button>
                 </div>
             </div>
             <div class="match-tactics-status-row">
                 <span id="tactics-save-status" class="match-tactics-status"></span>
+                <button type="button" id="tactics-save-retry-btn" class="match-tactics-retry-btn" hidden>Opnieuw proberen</button>
             </div>
 
             <div class="match-tactics-editor-shell">

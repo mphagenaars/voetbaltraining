@@ -76,9 +76,8 @@
             + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-restart" aria-label="Terug naar begin" title="Terug naar begin" disabled></button>'
             + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-prev" aria-label="Vorige frame" title="Vorige frame" disabled></button>'
             + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-next" aria-label="Volgende frame" title="Volgende frame" disabled></button>'
-            + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-keyframe" aria-label="Moment opslaan" title="Moment opslaan" disabled></button>'
             + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-highlight" aria-label="Speler highlighten" title="Speler highlighten" disabled></button>'
-            + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-keyframe-delete" aria-label="Moment verwijderen" title="Moment verwijderen" disabled></button>'
+            + '  <button type="button" class="match-tactics-animation-btn match-tactics-animation-keyframe-delete" aria-label="Keyframe verwijderen" title="Keyframe verwijderen" disabled></button>'
             + '  <div class="match-tactics-animation-controls">'
             + '    <label class="match-tactics-animation-select-field" for="match-tactics-animation-mode">'
             + '      <span class="match-tactics-animation-select-label">Modus</span>'
@@ -118,7 +117,6 @@
             restartBtn: panelEl.querySelector('.match-tactics-animation-restart'),
             prevFrameBtn: panelEl.querySelector('.match-tactics-animation-prev'),
             nextFrameBtn: panelEl.querySelector('.match-tactics-animation-next'),
-            addKeyframeBtn: panelEl.querySelector('.match-tactics-animation-keyframe'),
             highlightBtn: panelEl.querySelector('.match-tactics-animation-highlight'),
             deleteKeyframeBtn: panelEl.querySelector('.match-tactics-animation-keyframe-delete'),
             modeEl: panelEl.querySelector('.match-tactics-animation-mode'),
@@ -133,7 +131,6 @@
         setButtonIcon(refs.restartBtn, 'restart');
         setButtonIcon(refs.prevFrameBtn, 'prev');
         setButtonIcon(refs.nextFrameBtn, 'next');
-        setButtonIcon(refs.addKeyframeBtn, 'key-add');
         setButtonIcon(refs.highlightBtn, 'highlight');
         setButtonIcon(refs.deleteKeyframeBtn, 'key-delete');
         setButtonIcon(refs.exportBtn, 'export');
@@ -155,9 +152,6 @@
             }
             if (refs.nextFrameBtn && typeof map.onNextFrame === 'function') {
                 refs.nextFrameBtn.addEventListener('click', map.onNextFrame);
-            }
-            if (refs.addKeyframeBtn && typeof map.onAddKeyframe === 'function') {
-                refs.addKeyframeBtn.addEventListener('click', map.onAddKeyframe);
             }
             if (refs.highlightBtn && typeof map.onToggleHighlight === 'function') {
                 refs.highlightBtn.addEventListener('click', map.onToggleHighlight);

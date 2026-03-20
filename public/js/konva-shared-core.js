@@ -492,6 +492,7 @@
                 clampNodeToLayout(node);
                 mainLayer.batchDraw();
                 uiLayer.batchDraw();
+                notifyContentChange('dragend');
             });
         }
 
@@ -516,6 +517,7 @@
             }
             registerItemNode(node);
             mainLayer.batchDraw();
+            notifyContentChange('add-item');
         }
 
         var tr = new Konva.Transformer({
@@ -534,6 +536,7 @@
             tr.forceUpdate();
             mainLayer.batchDraw();
             uiLayer.batchDraw();
+            notifyContentChange('transformend');
         });
 
         var selectionRectangle = new Konva.Rect({
@@ -619,6 +622,20 @@
                     clearSelection: clearSelection
                 });
             }
+        }
+
+        function notifyContentChange(reason) {
+            if (typeof config.onContentChange !== 'function') {
+                return;
+            }
+            config.onContentChange({
+                reason: isNonEmptyString(reason) ? reason.trim() : '',
+                layout: activeLayout,
+                stage: stage,
+                mainLayer: mainLayer,
+                fieldLayer: fieldLayer,
+                uiLayer: uiLayer
+            });
         }
 
         function setTool(nextTool) {
@@ -745,7 +762,7 @@
 
         function finalizeDrawingShape() {
             if (!activeShape || !activeDrawConfig) {
-                return;
+                return false;
             }
 
             if (activeDrawConfig.kind === 'poly-arrow') {
@@ -765,8 +782,10 @@
                 if (!hasEnoughPoints || lineLength < minLength) {
                     activeShape.destroy();
                     mainLayer.batchDraw();
+                    return false;
                 }
             }
+            return true;
         }
 
         function selectNodesInsideBox(box) {
@@ -983,7 +1002,10 @@
             }
 
             if (isDrawing) {
-                finalizeDrawingShape();
+                var didCommitShape = finalizeDrawingShape();
+                if (didCommitShape) {
+                    notifyContentChange('draw');
+                }
             }
             resetDrawingState();
 
@@ -1624,6 +1646,7 @@
             clearSelection();
             mainLayer.batchDraw();
             uiLayer.batchDraw();
+            notifyContentChange('delete-selected');
         }
 
         function sendSelectedToBack() {
@@ -1636,12 +1659,14 @@
                 node.moveToBottom();
             });
             mainLayer.batchDraw();
+            notifyContentChange('send-to-back');
         }
 
         function clearAll() {
             clearArmedToolbarType();
             loadedDocumentMeta = null;
             clearLayerData();
+            notifyContentChange('clear-all');
         }
 
         function refreshLayout() {
