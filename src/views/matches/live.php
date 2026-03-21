@@ -14,12 +14,17 @@
     </div>
 
     <!-- Timer Section -->
-    <div class="card" style="text-align: center; margin-bottom: 1rem; padding: 2rem 1rem;">
+    <div class="card live-timer-card" style="text-align: center; margin-bottom: 1rem; padding: 2rem 1rem;">
         <h2 id="period-display" style="font-size: 1.2rem; color: #666; margin-bottom: 0.5rem;">
             <?= $timerState['current_period'] > 0 ? "Periode " . $timerState['current_period'] : "Nog niet gestart" ?>
         </h2>
         <div id="timer-display" style="font-size: 4rem; font-weight: bold; font-family: monospace; line-height: 1;">
             <?= sprintf("%02d:00", $timerState['total_minutes']) ?>
+        </div>
+        <div class="live-scoreboard" aria-live="polite">
+            <span class="live-score-team-value" id="score-home"><?= (int)$match['score_home'] ?></span>
+            <div class="live-score-separator" aria-hidden="true">-</div>
+            <span class="live-score-team-value" id="score-away"><?= (int)$match['score_away'] ?></span>
         </div>
         <div style="margin-top: 1.5rem;">
             <button id="timer-btn" class="btn btn-primary" style="font-size: 1.2rem; padding: 0.8rem 2rem; min-width: 150px;">

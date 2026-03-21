@@ -114,6 +114,7 @@ class Game extends Model {
             'absent' => 'absent_matches',
             'starts' => 'starts',
             'goals' => 'goals',
+            'goal_matches' => 'goal_matches',
             'keepers' => 'keeper_selections',
         ];
 
@@ -130,6 +131,7 @@ class Game extends Model {
                 p.name,
                 COALESCE(start_stats.starts, 0) AS starts,
                 COALESCE(goal_stats.goals, 0) AS goals,
+                COALESCE(goal_match_stats.goal_matches, 0) AS goal_matches,
                 COALESCE(absent_stats.absent_matches, 0) AS absent_matches,
                 COALESCE(keeper_stats.keeper_selections, 0) AS keeper_selections,
                 MAX(
@@ -156,6 +158,15 @@ class Game extends Model {
                 GROUP BY me.player_id
             ) goal_stats ON goal_stats.player_id = p.id
             LEFT JOIN (
+                SELECT me.player_id, COUNT(DISTINCT me.match_id) AS goal_matches
+                FROM match_events me
+                JOIN matches m ON m.id = me.match_id
+                WHERE m.team_id = :team_id_goal_matches
+                  AND me.type = 'goal'
+                  AND me.player_id IS NOT NULL
+                GROUP BY me.player_id
+            ) goal_match_stats ON goal_match_stats.player_id = p.id
+            LEFT JOIN (
                 SELECT mp.player_id, COUNT(*) AS absent_matches
                 FROM match_players mp
                 JOIN matches m ON m.id = mp.match_id
@@ -178,6 +189,7 @@ class Game extends Model {
         $stmt->execute([
             ':team_id_start' => $teamId,
             ':team_id_goal' => $teamId,
+            ':team_id_goal_matches' => $teamId,
             ':team_id_absent' => $teamId,
             ':team_id_keeper' => $teamId,
             ':team_id_total_matches' => $teamId,

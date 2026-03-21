@@ -61,7 +61,7 @@ class GameController extends BaseController {
         $this->requireTeamContext();
 
         $teamId = (int)Session::get('current_team')['id'];
-        $allowedSort = ['name', 'matches', 'absent', 'starts', 'goals', 'keepers'];
+        $allowedSort = ['name', 'matches', 'absent', 'starts', 'goals', 'goal_matches', 'keepers'];
         $sort = strtolower((string)($_GET['sort'] ?? 'matches'));
         $dir = strtolower((string)($_GET['dir'] ?? 'desc'));
 

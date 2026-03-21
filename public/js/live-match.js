@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const timerDisplay = document.getElementById('timer-display');
     const periodDisplay = document.getElementById('period-display');
     const timerBtn = document.getElementById('timer-btn');
+    const scoreHomeDisplay = document.getElementById('score-home');
+    const scoreAwayDisplay = document.getElementById('score-away');
     const modal = document.getElementById('action-modal');
     const actionForm = document.getElementById('action-form');
     const timelineList = document.getElementById('timeline-list');
@@ -12,6 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initial State
     let state = JSON.parse(document.getElementById('initial_timer_state').value);
+    let scoreState = {
+        home: Number.parseInt(scoreHomeDisplay ? scoreHomeDisplay.textContent : '0', 10) || 0,
+        away: Number.parseInt(scoreAwayDisplay ? scoreAwayDisplay.textContent : '0', 10) || 0
+    };
     let timerInterval = null;
     let orientationRefreshTimeout = null;
 
@@ -104,6 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
         periodDisplay.textContent = state.current_period > 0 ? `Periode ${state.current_period}` : 'Nog niet gestart';
     }
 
+    function updateScoreUI() {
+        if (scoreHomeDisplay) {
+            scoreHomeDisplay.textContent = scoreState.home.toString();
+        }
+        if (scoreAwayDisplay) {
+            scoreAwayDisplay.textContent = scoreState.away.toString();
+        }
+    }
+
     function startTicker() {
         if (timerInterval) clearInterval(timerInterval);
         if (state.is_playing) {
@@ -155,6 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start ticker on load
     startTicker();
+    updateScoreUI();
 
     // --- Modal Logic ---
     window.openActionModal = function(type) {
@@ -278,6 +294,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(resData => {
             if (resData.success) {
                 closeModal();
+                if (typeof resData.score_home !== 'undefined' && typeof resData.score_away !== 'undefined') {
+                    scoreState.home = Number.parseInt(resData.score_home, 10) || 0;
+                    scoreState.away = Number.parseInt(resData.score_away, 10) || 0;
+                    updateScoreUI();
+                }
                 // Refresh timeline
                 // Simplified: just reload list mostly or append.
                 // Since `resData.events` returns full list, simpler to rebuild list.
