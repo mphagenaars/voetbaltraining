@@ -8,15 +8,15 @@
 </div>
 
 <div class="card">
-    <h3 style="margin-bottom: 1rem;">Teamoverzicht</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem;">
-        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fafafa;">
-            <div style="font-size: 0.85rem; color: var(--text-muted);">Wedstrijden</div>
-            <div style="font-size: 1.7rem; font-weight: 700; line-height: 1.2;"><?= (int)($summary['total_matches'] ?? 0) ?></div>
+    <h3 class="report-section-title">Teamoverzicht</h3>
+    <div class="report-summary-grid">
+        <div class="report-summary-item">
+            <div class="report-summary-label">Wedstrijden</div>
+            <div class="report-summary-value"><?= (int)($summary['total_matches'] ?? 0) ?></div>
         </div>
-        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fafafa;">
-            <div style="font-size: 0.85rem; color: var(--text-muted);">Doelpunten</div>
-            <div style="font-size: 1.7rem; font-weight: 700; line-height: 1.2;"><?= (int)($summary['total_goals'] ?? 0) ?></div>
+        <div class="report-summary-item">
+            <div class="report-summary-label">Doelpunten</div>
+            <div class="report-summary-value"><?= (int)($summary['total_goals'] ?? 0) ?></div>
         </div>
     </div>
 </div>
@@ -34,7 +34,7 @@
         $columnCount = count($columnPickerLabels);
     ?>
     <div class="report-card-header">
-        <h3 style="margin: 0;">Spelerstatistieken</h3>
+        <h3>Spelerstatistieken</h3>
         <?php if (!empty($playerStats)): ?>
             <div class="report-column-picker" data-report-column-picker data-team-id="<?= (int)(Session::get('current_team')['id'] ?? 0) ?>">
                 <button
@@ -108,50 +108,50 @@
             };
         ?>
         <div class="table-responsive">
-            <table class="report-table" data-report-columns-table style="width: 100%; border-collapse: collapse; font-size: 0.95rem; table-layout: fixed;">
+            <table class="report-table" data-report-columns-table>
                 <colgroup>
-                    <col data-col-id="name" style="width: 34%;">
-                    <col data-col-id="matches" style="width: 11%;">
-                    <col data-col-id="absent" style="width: 11%;">
-                    <col data-col-id="starts" style="width: 11%;">
-                    <col data-col-id="goals" style="width: 11%;">
-                    <col data-col-id="goal_matches" style="width: 11%;">
-                    <col data-col-id="keepers" style="width: 11%;">
+                    <col data-col-id="name" class="report-col-name">
+                    <col data-col-id="matches" class="report-col-compact">
+                    <col data-col-id="absent" class="report-col-compact">
+                    <col data-col-id="starts" class="report-col-compact">
+                    <col data-col-id="goals" class="report-col-compact">
+                    <col data-col-id="goal_matches" class="report-col-compact">
+                    <col data-col-id="keepers" class="report-col-compact">
                 </colgroup>
                 <thead>
-                    <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
-                        <th data-col-id="name" style="padding: 0.6rem 0.4rem;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('name')) ?>" title="Speler" style="color: inherit; text-decoration: none;">
+                    <tr class="report-table-head-row">
+                        <th data-col-id="name" class="report-th">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('name')) ?>" title="Speler">
                                 <span>Speler</span><?= $sortIndicator('name') ?>
                             </a>
                         </th>
-                        <th data-col-id="matches" style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('matches')) ?>" title="Wedstrijden" style="color: inherit; text-decoration: none;">
+                        <th data-col-id="matches" class="report-th report-th-right">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('matches')) ?>" title="Wedstrijden">
                                 <span class="report-label-full">Wedstrijden</span><span class="report-label-short">Weds.</span><?= $sortIndicator('matches') ?>
                             </a>
                         </th>
-                        <th data-col-id="absent" style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('absent')) ?>" title="Afwezig" style="color: inherit; text-decoration: none;">
+                        <th data-col-id="absent" class="report-th report-th-right">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('absent')) ?>" title="Afwezig">
                                 <span class="report-label-full">Afwezig</span><span class="report-label-short">Afw.</span><?= $sortIndicator('absent') ?>
                             </a>
                         </th>
-                        <th data-col-id="starts" style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('starts')) ?>" title="Basis" style="color: inherit; text-decoration: none;">
+                        <th data-col-id="starts" class="report-th report-th-right">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('starts')) ?>" title="Basis">
                                 <span class="report-label-full">Basis</span><span class="report-label-short">Bas.</span><?= $sortIndicator('starts') ?>
                             </a>
                         </th>
-                        <th data-col-id="goals" style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('goals')) ?>" title="Goals" style="color: inherit; text-decoration: none;">
+                        <th data-col-id="goals" class="report-th report-th-right">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('goals')) ?>" title="Goals">
                                 <span class="report-label-full">Goals</span><span class="report-label-short">Gls.</span><?= $sortIndicator('goals') ?>
                             </a>
                         </th>
-                        <th data-col-id="goal_matches" style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('goal_matches')) ?>" title="Unieke wedstrijden met minimaal 1 doelpunt" style="color: inherit; text-decoration: none;">
+                        <th data-col-id="goal_matches" class="report-th report-th-right">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('goal_matches')) ?>" title="Unieke wedstrijden met minimaal 1 doelpunt">
                                 <span class="report-label-full">Wedstr. gescoord</span><span class="report-label-short">W+G</span><?= $sortIndicator('goal_matches') ?>
                             </a>
                         </th>
-                        <th data-col-id="keepers" style="padding: 0.6rem 0.4rem; text-align: right;">
-                            <a class="report-sort-link" href="<?= e($buildSortUrl('keepers')) ?>" title="Aangewezen keeper" style="color: inherit; text-decoration: none;">
+                        <th data-col-id="keepers" class="report-th report-th-right">
+                            <a class="report-sort-link" href="<?= e($buildSortUrl('keepers')) ?>" title="Aangewezen keeper">
                                 <span class="report-label-full">Keeper</span><span class="report-label-short">gk</span><?= $sortIndicator('keepers') ?>
                             </a>
                         </th>
@@ -159,16 +159,16 @@
                 </thead>
                 <tbody>
                     <?php foreach ($playerStats as $stat): ?>
-                        <tr style="border-bottom: 1px solid #f0f0f0;">
-                            <td data-col-id="name" style="padding: 0.55rem 0.4rem;">
+                        <tr class="report-table-row">
+                            <td data-col-id="name" class="report-td">
                                 <strong><?= e($stat['name']) ?></strong>
                             </td>
-                            <td data-col-id="matches" style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['matches_played'] ?></td>
-                            <td data-col-id="absent" style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['absent_matches'] ?></td>
-                            <td data-col-id="starts" style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['starts'] ?></td>
-                            <td data-col-id="goals" style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['goals'] ?></td>
-                            <td data-col-id="goal_matches" style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['goal_matches'] ?></td>
-                            <td data-col-id="keepers" style="padding: 0.55rem 0.4rem; text-align: right; font-weight: 600;"><?= (int)$stat['keeper_selections'] ?></td>
+                            <td data-col-id="matches" class="report-td report-td-right"><?= (int)$stat['matches_played'] ?></td>
+                            <td data-col-id="absent" class="report-td report-td-right"><?= (int)$stat['absent_matches'] ?></td>
+                            <td data-col-id="starts" class="report-td report-td-right"><?= (int)$stat['starts'] ?></td>
+                            <td data-col-id="goals" class="report-td report-td-right"><?= (int)$stat['goals'] ?></td>
+                            <td data-col-id="goal_matches" class="report-td report-td-right"><?= (int)$stat['goal_matches'] ?></td>
+                            <td data-col-id="keepers" class="report-td report-td-right"><?= (int)$stat['keeper_selections'] ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

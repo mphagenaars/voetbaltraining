@@ -55,6 +55,9 @@
                         <a href="/matches/view?id=<?= $match['id'] ?>" class="btn-icon" title="Bekijken">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </a>
+                        <a href="/matches/edit?id=<?= $match['id'] ?>" class="btn-icon" title="Bewerken">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                        </a>
                         <?php if (Session::get('is_admin')): ?>
                             <form action="/matches/delete" method="POST" style="display: inline;" onsubmit="return confirm('Weet je zeker dat je deze wedstrijd wilt verwijderen?');">
                                 <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">

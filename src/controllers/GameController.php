@@ -34,27 +34,93 @@ class GameController extends BaseController {
     public function create(): void {
         $this->requireTeamContext();
 
+        $formData = [
+            'opponent' => trim((string)($_POST['opponent'] ?? '')),
+            'date' => trim((string)($_POST['date'] ?? date('Y-m-d\TH:i'))),
+            'is_home' => (string)($_POST['is_home'] ?? '1'),
+            'formation' => trim((string)($_POST['formation'] ?? '11-vs-11')),
+        ];
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->verifyCsrf('/matches');
+            $this->verifyCsrf('/matches/create');
             
             $validator = new Validator($_POST);
             $validator->required('opponent')->required('date');
 
             if ($validator->isValid()) {
-                $isHome = (int)($_POST['is_home'] ?? 1);
-                $formation = trim($_POST['formation'] ?? '11-vs-11');
+                $isHome = (int)($formData['is_home'] ?? '1');
+                $formation = $formData['formation'] !== '' ? $formData['formation'] : '11-vs-11';
+                $opponent = $formData['opponent'];
+                $date = $formData['date'];
                 
-                $matchId = $this->gameModel->create(Session::get('current_team')['id'], $_POST['opponent'], $_POST['date'], $isHome, $formation);
+                $matchId = $this->gameModel->create(
+                    (int)Session::get('current_team')['id'],
+                    $opponent,
+                    $date,
+                    $isHome,
+                    $formation
+                );
                 
                 // Log activity
-                $this->logActivity('create_match', $matchId, $_POST['opponent']);
+                $this->logActivity('create_match', $matchId, $opponent);
 
                 Session::flash('success', 'Wedstrijd aangemaakt.');
                 $this->redirect('/matches/view?id=' . $matchId);
             }
         }
 
-        View::render('matches/create', ['pageTitle' => 'Nieuwe Wedstrijd - Trainer Bobby']);
+        View::render('matches/form', [
+            'formData' => $formData,
+            'pageTitle' => 'Nieuwe Wedstrijd - Trainer Bobby'
+        ]);
+    }
+
+    public function edit(): void {
+        $this->requireTeamContext();
+
+        $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+        $match = $this->gameModel->getById($id);
+
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
+            $this->redirect('/matches');
+        }
+
+        $parsedMatchDate = strtotime((string)($match['date'] ?? ''));
+        $defaultDate = $parsedMatchDate !== false ? date('Y-m-d\TH:i', $parsedMatchDate) : date('Y-m-d\TH:i');
+        $formData = [
+            'opponent' => trim((string)($_POST['opponent'] ?? ($match['opponent'] ?? ''))),
+            'date' => trim((string)($_POST['date'] ?? $defaultDate)),
+            'is_home' => (string)($_POST['is_home'] ?? (string)($match['is_home'] ?? '1')),
+            'formation' => trim((string)($_POST['formation'] ?? ($match['formation'] ?? '11-vs-11'))),
+        ];
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/matches/edit?id=' . $id);
+
+            $validator = new Validator($_POST);
+            $validator->required('opponent')->required('date');
+
+            if ($validator->isValid()) {
+                $isHome = (int)($formData['is_home'] ?? '1');
+                $formation = $formData['formation'] !== '' ? $formData['formation'] : '11-vs-11';
+                $opponent = $formData['opponent'];
+                $date = $formData['date'];
+
+                $this->gameModel->updateMatch($id, $opponent, $date, $isHome, $formation);
+
+                // Log activity
+                $this->logActivity('edit_match', $id, $opponent);
+
+                Session::flash('success', 'Wedstrijd bijgewerkt.');
+                $this->redirect('/matches/view?id=' . $id);
+            }
+        }
+
+        View::render('matches/form', [
+            'match' => $match,
+            'formData' => $formData,
+            'pageTitle' => 'Wedstrijd Bewerken - Trainer Bobby'
+        ]);
     }
 
     public function reports(): void {
@@ -80,6 +146,7 @@ class GameController extends BaseController {
             'summary' => $summary,
             'currentSort' => $sort,
             'currentDir' => $dir,
+            'extraCssFiles' => ['/css/reports.css'],
             'pageTitle' => 'Wedstrijd Rapportage - Trainer Bobby'
         ]);
     }

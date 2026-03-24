@@ -28,6 +28,21 @@ class Game extends Model {
         return (int)$this->pdo->lastInsertId();
     }
 
+    public function updateMatch(int $matchId, string $opponent, string $date, int $isHome, string $formation): void {
+        $stmt = $this->pdo->prepare("
+            UPDATE matches
+            SET opponent = :opponent, date = :date, is_home = :is_home, formation = :formation
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':opponent' => $opponent,
+            ':date' => $date,
+            ':is_home' => $isHome,
+            ':formation' => $formation,
+            ':id' => $matchId
+        ]);
+    }
+
     public function savePlayers(int $matchId, array $players): void {
         $this->replaceMany(
             "DELETE FROM match_players WHERE match_id = :match_id",

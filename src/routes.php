@@ -40,6 +40,7 @@ return [
     // Matches
     '/matches' => ['GameController', 'index'],
     '/matches/create' => ['GameController', 'create'],
+    '/matches/edit' => ['GameController', 'edit'],
     '/matches/delete' => ['GameController', 'delete'],
     '/matches/view' => ['GameController', 'view'],
     '/matches/live' => ['GameController', 'live'],

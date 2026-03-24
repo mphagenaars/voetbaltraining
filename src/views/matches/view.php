@@ -24,7 +24,10 @@
             </a>
             <h1 class="app-bar-title"><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h1>
         </div>
-        <div class="app-bar-end">
+        <div class="app-bar-end" style="display: flex; align-items: center; gap: 0.75rem;">
+            <a href="/matches/edit?id=<?= $match['id'] ?>" class="btn-icon-round" title="Wedstrijd bewerken">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+            </a>
             <a href="/matches/live?id=<?= $match['id'] ?>" class="btn btn-primary" style="background-color: #2e7d32; color: white; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                 LIVE MODE
