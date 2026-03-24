@@ -887,6 +887,22 @@ body.tactics-touch-scroll-lock {
 
     .match-tactics-toolbar .toolbar-row {
         gap: 0.5rem;
+        flex-wrap: wrap;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .match-tactics-toolbar {
+        overflow-x: visible;
+        overflow-y: visible;
+    }
+
+    .match-tactics-toolbar-group {
+        flex: 1 1 100%;
+    }
+
+    .match-tactics-toolbar .group-items {
+        flex-wrap: wrap;
     }
 
     .match-tactics-toolbar-group.is-right {
