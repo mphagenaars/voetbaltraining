@@ -57,22 +57,22 @@ laad_config() {
 # ─── SSH-helpers ──────────────────────────────────────────────────────────────
 
 ssh_opts() {
+    local OPTS="-o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new"
     if [ -f "$SSH_KEY" ]; then
-        echo "-i $SSH_KEY -o IdentitiesOnly=yes"
-    else
-        echo ""
+        OPTS="$OPTS -i $SSH_KEY -o IdentitiesOnly=yes"
     fi
+    echo "$OPTS"
 }
 
 remote() {
     # shellcheck disable=SC2046
-    ssh $(ssh_opts) -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" "$@"
+    ssh $(ssh_opts) "${DEPLOY_USER}@${DEPLOY_HOST}" "$@"
 }
 
 # Voert een commando interactief uit op de server (toont output direct)
 remote_interactief() {
     # shellcheck disable=SC2046
-    ssh $(ssh_opts) -t -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" "$@"
+    ssh $(ssh_opts) -t "${DEPLOY_USER}@${DEPLOY_HOST}" "$@"
 }
 
 # ─── Encryptiesleutel controleren op de server ────────────────────────────────
@@ -209,7 +209,7 @@ setup() {
     else
         read -rp "  Mag ik wachtwoordloos sudo instellen voor update.sh op de server? [j/n]: " ANTWOORD
         if [[ "$ANTWOORD" =~ ^[Jj]$ ]]; then
-            remote "echo '${SUDOERS_REGEL}' | sudo tee /etc/sudoers.d/voetbaltraining-deploy > /dev/null && sudo chmod 440 /etc/sudoers.d/voetbaltraining-deploy"
+            remote_interactief "echo '${SUDOERS_REGEL}' | sudo tee /etc/sudoers.d/voetbaltraining-deploy > /dev/null && sudo chmod 440 /etc/sudoers.d/voetbaltraining-deploy"
             ok "Sudo-regel aangemaakt."
         else
             echo ""
