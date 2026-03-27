@@ -58,15 +58,7 @@
                 <span style="font-size: 2rem;">⚽</span>
                 Doelpunt
             </button>
-            <button class="action-btn card-btn" onclick="openActionModal('card')" style="background-color: #ff9800; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 2rem;">🟨🟥</span>
-                Kaart
-            </button>
-            <button class="action-btn sub-btn" onclick="openActionModal('sub')" style="background-color: #2196f3; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 2rem;">🔄</span>
-                Wissel
-            </button>
-             <button class="action-btn note-btn" onclick="openActionModal('other')" style="background-color: #9e9e9e; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <button class="action-btn note-btn" onclick="openActionModal('other')" style="background-color: #9e9e9e; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
                 <span style="font-size: 2rem;">📝</span>
                 Notitie
             </button>

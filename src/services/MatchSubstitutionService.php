@@ -23,6 +23,18 @@ class MatchSubstitutionService {
         }
 
         $timerState = $this->gameModel->getTimerState($matchId);
+        $isPlaying = (bool)($timerState['is_playing'] ?? false);
+        if (!$isPlaying) {
+            return $this->applyNextPeriodLineupChange(
+                $matchId,
+                $playerOutId,
+                $playerInId,
+                $slotCode,
+                $userId,
+                $timerState
+            );
+        }
+
         $period = (int)($timerState['current_period'] ?? 0);
         if ($period <= 0) {
             $period = 1;
@@ -31,37 +43,12 @@ class MatchSubstitutionService {
         $minuteDisplay = max(1, (int)floor($clockSeconds / 60) + 1);
 
         $liveState = $this->liveStateService->getLiveStateAt($matchId, $period, $clockSeconds, $timerState);
-        $lineupMap = $liveState['lineup_map'] ?? [];
-        $benchLookup = [];
-        foreach (($liveState['bench'] ?? []) as $benchPlayer) {
-            $benchLookup[(int)($benchPlayer['player_id'] ?? 0)] = true;
-        }
-
-        $resolvedSlotCode = MatchSlotCode::sanitize((string)($slotCode ?? ''));
-        $lineupSlotByPlayer = [];
-        foreach ($lineupMap as $mapSlotCode => $mapPlayerId) {
-            $lineupSlotByPlayer[(int)$mapPlayerId] = (string)$mapSlotCode;
-        }
-
-        if (!isset($lineupSlotByPlayer[$playerOutId])) {
-            throw new InvalidArgumentException('Speler UIT staat niet op het veld.');
-        }
-
-        $isFieldSwap = isset($lineupSlotByPlayer[$playerInId]);
-        $isBenchSubstitution = isset($benchLookup[$playerInId]);
-        if (!$isFieldSwap && !$isBenchSubstitution) {
-            throw new InvalidArgumentException('Speler IN moet op het veld of op de bank staan.');
-        }
-
-        $actualSlotCode = $lineupSlotByPlayer[$playerOutId];
-        if ($resolvedSlotCode !== '' && $resolvedSlotCode !== $actualSlotCode) {
-            throw new InvalidArgumentException('Slotcode komt niet overeen met de huidige opstelling.');
-        }
-        if ($resolvedSlotCode === '') {
-            $resolvedSlotCode = $actualSlotCode;
-        }
-
-        $swapSlotCode = $isFieldSwap ? (string)$lineupSlotByPlayer[$playerInId] : '';
+        $lineupMap = is_array($liveState['lineup_map'] ?? null) ? $liveState['lineup_map'] : [];
+        $bench = is_array($liveState['bench'] ?? null) ? $liveState['bench'] : [];
+        $changeContext = $this->resolveLineupChangeContext($lineupMap, $bench, $playerOutId, $playerInId, $slotCode);
+        $resolvedSlotCode = (string)$changeContext['resolved_slot_code'];
+        $isFieldSwap = !empty($changeContext['is_field_swap']);
+        $swapSlotCode = (string)($changeContext['swap_slot_code'] ?? '');
 
         $this->pdo->beginTransaction();
         try {
@@ -164,6 +151,125 @@ class MatchSubstitutionService {
             'minutes_summary' => $newLiveState['minutes_summary'],
             'events' => $this->gameModel->getEvents($matchId),
         ];
+    }
+
+    private function applyNextPeriodLineupChange(
+        int $matchId,
+        int $playerOutId,
+        int $playerInId,
+        ?string $slotCode,
+        int $userId,
+        array $timerState
+    ): array {
+        $currentPeriod = (int)($timerState['current_period'] ?? 0);
+        $displayPeriod = $currentPeriod > 0 ? $currentPeriod : 1;
+        $targetPeriod = $currentPeriod > 0 ? ($currentPeriod + 1) : 1;
+        $clockSeconds = max(0, (int)($timerState['total_seconds'] ?? 0));
+
+        $nextPeriodState = $this->liveStateService->getLiveStateAt($matchId, $targetPeriod, $clockSeconds, $timerState);
+        $lineupMap = is_array($nextPeriodState['lineup_map'] ?? null) ? $nextPeriodState['lineup_map'] : [];
+        $bench = is_array($nextPeriodState['bench'] ?? null) ? $nextPeriodState['bench'] : [];
+        $changeContext = $this->resolveLineupChangeContext($lineupMap, $bench, $playerOutId, $playerInId, $slotCode);
+        $resolvedSlotCode = (string)$changeContext['resolved_slot_code'];
+        $isFieldSwap = !empty($changeContext['is_field_swap']);
+        $swapSlotCode = (string)($changeContext['swap_slot_code'] ?? '');
+
+        if ($isFieldSwap && $swapSlotCode !== '' && isset($lineupMap[$swapSlotCode])) {
+            $lineupMap[$resolvedSlotCode] = $playerInId;
+            $lineupMap[$swapSlotCode] = $playerOutId;
+        } else {
+            $lineupMap[$resolvedSlotCode] = $playerInId;
+        }
+
+        $slots = $this->buildSlotsFromLineupMap($lineupMap);
+        if (empty($slots)) {
+            throw new RuntimeException('Nieuwe periode-opstelling kon niet worden opgebouwd.');
+        }
+
+        $this->liveStateService->savePeriodLineup($matchId, $targetPeriod, $slots, $userId);
+        $updatedNextPeriodState = $this->liveStateService->getLiveStateAt($matchId, $targetPeriod, $clockSeconds, $timerState);
+
+        return [
+            'substitution' => null,
+            'active_lineup' => $updatedNextPeriodState['active_lineup'],
+            'bench' => $updatedNextPeriodState['bench'],
+            'period' => $displayPeriod,
+            'clock_seconds' => $clockSeconds,
+            'period_lineup_saved' => !empty($updatedNextPeriodState['period_lineup_saved']),
+            'minutes_summary' => $updatedNextPeriodState['minutes_summary'],
+            'events' => $this->gameModel->getEvents($matchId),
+            'lineup_mode' => 'next_period_planning',
+            'planned_period' => $targetPeriod,
+        ];
+    }
+
+    private function resolveLineupChangeContext(
+        array $lineupMap,
+        array $bench,
+        int $playerOutId,
+        int $playerInId,
+        ?string $slotCode
+    ): array {
+        $benchLookup = [];
+        foreach ($bench as $benchPlayer) {
+            if (!is_array($benchPlayer)) {
+                continue;
+            }
+            $benchLookup[(int)($benchPlayer['player_id'] ?? 0)] = true;
+        }
+
+        $resolvedSlotCode = MatchSlotCode::sanitize((string)($slotCode ?? ''));
+        $lineupSlotByPlayer = [];
+        foreach ($lineupMap as $mapSlotCode => $mapPlayerId) {
+            $lineupSlotByPlayer[(int)$mapPlayerId] = (string)$mapSlotCode;
+        }
+
+        if (!isset($lineupSlotByPlayer[$playerOutId])) {
+            throw new InvalidArgumentException('Speler UIT staat niet op het veld.');
+        }
+
+        $isFieldSwap = isset($lineupSlotByPlayer[$playerInId]);
+        $isBenchSubstitution = isset($benchLookup[$playerInId]);
+        if (!$isFieldSwap && !$isBenchSubstitution) {
+            throw new InvalidArgumentException('Speler IN moet op het veld of op de bank staan.');
+        }
+
+        $actualSlotCode = (string)$lineupSlotByPlayer[$playerOutId];
+        if ($resolvedSlotCode !== '' && $resolvedSlotCode !== $actualSlotCode) {
+            throw new InvalidArgumentException('Slotcode komt niet overeen met de huidige opstelling.');
+        }
+        if ($resolvedSlotCode === '') {
+            $resolvedSlotCode = $actualSlotCode;
+        }
+
+        $swapSlotCode = $isFieldSwap ? (string)$lineupSlotByPlayer[$playerInId] : '';
+
+        return [
+            'resolved_slot_code' => $resolvedSlotCode,
+            'is_field_swap' => $isFieldSwap,
+            'swap_slot_code' => $swapSlotCode,
+        ];
+    }
+
+    private function buildSlotsFromLineupMap(array $lineupMap): array {
+        $slots = [];
+        foreach ($lineupMap as $slotCode => $playerId) {
+            $normalizedSlotCode = MatchSlotCode::sanitize((string)$slotCode);
+            $normalizedPlayerId = (int)$playerId;
+            if ($normalizedSlotCode === '' || $normalizedPlayerId <= 0) {
+                continue;
+            }
+            $slots[] = [
+                'slot_code' => $normalizedSlotCode,
+                'player_id' => $normalizedPlayerId,
+            ];
+        }
+
+        usort($slots, static function (array $a, array $b): int {
+            return strcmp((string)$a['slot_code'], (string)$b['slot_code']);
+        });
+
+        return $slots;
     }
 
 }

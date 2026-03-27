@@ -389,7 +389,8 @@ function createLiveSchema(PDO $pdo): void {
             match_id INTEGER NOT NULL,
             period INTEGER NOT NULL,
             slot_code TEXT NOT NULL,
-            player_id INTEGER NOT NULL
+            player_id INTEGER NOT NULL,
+            created_by INTEGER NULL
         )
     ");
 
@@ -657,6 +658,11 @@ $tests['live mode supports back-to-back field swaps and undo order'] = function 
         $liveStateService = new MatchLiveStateService($pdo, $gameModel);
         $substitutionService = new MatchSubstitutionService($pdo, $gameModel, $liveStateService);
 
+        $pdo->exec("
+            INSERT INTO match_events (match_id, minute, type, player_id, description, period, created_at)
+            VALUES (1, 0, 'whistle', NULL, 'start_period', 1, datetime('now', '-10 seconds'))
+        ");
+
         $initial = $liveStateService->getLiveState(1);
         assertSame('S01', slotForPlayer($initial['lineup_map'], 2), 'Player A should start at S01');
         assertSame('S02', slotForPlayer($initial['lineup_map'], 3), 'Player B should start at S02');
@@ -672,7 +678,7 @@ $tests['live mode supports back-to-back field swaps and undo order'] = function 
         assertSame('S03', slotForPlayer($afterSecondSwap['lineup_map'], 3), 'After second swap, B should be at S03');
         assertSame('S01', slotForPlayer($afterSecondSwap['lineup_map'], 4), 'After second swap, C should be at S01');
         assertSame(2, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1"), 'Expected two substitution records');
-        assertSame(2, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1 AND minute_display = 1"), 'Both swaps should share minute_display=1');
+        assertSame(1, (int)fetchValue($pdo, "SELECT COUNT(DISTINCT minute_display) FROM match_substitutions WHERE match_id = 1"), 'Both swaps should share one minute_display value');
 
         $substitutionService->undoLastSubstitution(1);
         $afterUndoOne = $liveStateService->getLiveState(1);
@@ -686,6 +692,89 @@ $tests['live mode supports back-to-back field swaps and undo order'] = function 
         assertSame('S02', slotForPlayer($afterUndoTwo['lineup_map'], 3), 'After second undo, B should be back at S02');
         assertSame('S03', slotForPlayer($afterUndoTwo['lineup_map'], 4), 'After second undo, C should be back at S03');
         assertSame(0, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1"), 'After second undo no substitutions should remain');
+    });
+};
+
+$tests['live mode plans next period lineup while clock is stopped'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        $gameModel = new Game($pdo);
+        $liveStateService = new MatchLiveStateService($pdo, $gameModel);
+        $substitutionService = new MatchSubstitutionService($pdo, $gameModel, $liveStateService);
+
+        $pdo->exec("
+            INSERT INTO match_events (match_id, minute, type, player_id, description, period, created_at)
+            VALUES
+                (1, 0, 'whistle', NULL, 'start_period', 1, datetime('now', '-300 seconds')),
+                (1, 5, 'whistle', NULL, 'end_period', 1, datetime('now', '-60 seconds'))
+        ");
+
+        $timerState = $gameModel->getTimerState(1);
+        assertTrue(empty($timerState['is_playing']), 'Timer should be stopped for planning flow.');
+
+        $result = $substitutionService->applyManualSubstitution(1, 2, 7, null, 1);
+        assertSame(null, $result['substitution'] ?? null, 'Paused lineup change should not create a substitution payload.');
+        assertSame(2, (int)($result['planned_period'] ?? 0), 'Paused lineup change should target the next period.');
+
+        assertSame(0, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1"), 'No substitution rows should be written while clock is stopped.');
+        assertSame(0, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_events WHERE match_id = 1 AND type = 'sub'"), 'No substitution timeline events should be written while clock is stopped.');
+
+        $clockSeconds = max(0, (int)($timerState['total_seconds'] ?? 0));
+        $plannedState = $liveStateService->getLiveStateAt(1, 2, $clockSeconds, $timerState);
+        assertSame('S01', slotForPlayer($plannedState['lineup_map'], 7), 'Bench player should be placed in the outgoing slot for next period.');
+        assertSame(null, slotForPlayer($plannedState['lineup_map'], 2), 'Outgoing player should no longer be in the planned next-period lineup.');
+    });
+};
+
+$tests['live timer start reuses planned period lineup without overwrite'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        loginAs(1, 'Trainer User', false);
+        setCurrentTeam(1, 'Team A');
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/matches/timer-action';
+
+        $pdo->exec("
+            INSERT INTO match_events (match_id, minute, type, player_id, description, period, created_at)
+            VALUES
+                (1, 0, 'whistle', NULL, 'start_period', 1, datetime('now', '-300 seconds')),
+                (1, 5, 'whistle', NULL, 'end_period', 1, datetime('now', '-60 seconds'))
+        ");
+
+        $gameModel = new Game($pdo);
+        $liveStateService = new MatchLiveStateService($pdo, $gameModel);
+        $substitutionService = new MatchSubstitutionService($pdo, $gameModel, $liveStateService);
+        $substitutionService->applyManualSubstitution(1, 2, 7, null, 1);
+
+        $controller = new TestGameController($pdo);
+        $controller->setJsonRequest(true);
+        $controller->setJsonBody([
+            'match_id' => 1,
+            'action' => 'start',
+            'csrf_token' => Csrf::getToken(),
+        ]);
+
+        ob_start();
+        try {
+            $controller->timerAction();
+            $response = (string)ob_get_clean();
+        } catch (Throwable $e) {
+            ob_end_clean();
+            throw $e;
+        }
+
+        $payload = json_decode($response, true);
+        assertTrue(is_array($payload), 'Timer response should be valid JSON.');
+        assertTrue(!empty($payload['success']), 'Timer start should succeed.');
+        assertTrue(!empty($payload['period_snapshot_reused']), 'Existing planned lineup should be reused.');
+        assertTrue(empty($payload['period_snapshot_saved']), 'No auto-snapshot write is needed when lineup already exists.');
+
+        assertSame(7, (int)fetchValue(
+            $pdo,
+            "SELECT player_id FROM match_period_lineups WHERE match_id = 1 AND period = 2 AND slot_code = 'S01' LIMIT 1"
+        ), 'Pre-planned period lineup should remain untouched when starting the period.');
+
+        $timerState = $gameModel->getTimerState(1);
+        assertTrue(!empty($timerState['is_playing']), 'Timer should be running after start.');
+        assertSame(2, (int)($timerState['current_period'] ?? 0), 'Timer should advance to period 2.');
     });
 };
 

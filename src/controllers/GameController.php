@@ -298,6 +298,7 @@ class GameController extends BaseController {
         $autoSnapshotPeriod = null;
         $autoSnapshotSlots = [];
         $autoSnapshotSaved = false;
+        $periodSnapshotReused = false;
 
         if ($action === 'start') {
             if ($isPlaying) {
@@ -311,17 +312,26 @@ class GameController extends BaseController {
 
             // Start of a new period: capture current lineup and snapshot it into the new period.
             $nextPeriod = max(1, $currentPeriod + 1);
-            $autoSnapshotPeriod = $nextPeriod;
-
             $sourcePeriod = $currentPeriod > 0 ? $currentPeriod : 1;
             $sourceClockSeconds = max(0, (int)($timerState['total_seconds'] ?? 0));
-            $sourceLiveState = $this->matchLiveStateService->getLiveStateAt(
+            $nextPeriodLiveState = $this->matchLiveStateService->getLiveStateAt(
                 $matchId,
-                $sourcePeriod,
+                $nextPeriod,
                 $sourceClockSeconds,
                 $timerState
             );
-            $autoSnapshotSlots = $this->extractPeriodSlotsFromLiveState($sourceLiveState);
+            if (!empty($nextPeriodLiveState['period_lineup_saved'])) {
+                $periodSnapshotReused = true;
+            } else {
+                $sourceLiveState = $this->matchLiveStateService->getLiveStateAt(
+                    $matchId,
+                    $sourcePeriod,
+                    $sourceClockSeconds,
+                    $timerState
+                );
+                $autoSnapshotPeriod = $nextPeriod;
+                $autoSnapshotSlots = $this->extractPeriodSlotsFromLiveState($sourceLiveState);
+            }
             $this->gameModel->addEvent($matchId, $minute, 'whistle', null, 'start_period', $nextPeriod);
         } else {
             if (!$isPlaying) {
@@ -358,6 +368,7 @@ class GameController extends BaseController {
             'timerState' => $newState,
             'period_snapshot_saved' => $autoSnapshotSaved,
             'period_snapshot_period' => $autoSnapshotSaved ? $autoSnapshotPeriod : null,
+            'period_snapshot_reused' => $periodSnapshotReused,
         ]);
     }
 

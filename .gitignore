@@ -14,5 +14,4 @@ COPILOT_GUIDLINES.md
 server.log
 public/uploads/*
 git_update.sh
-.deploy.conf
 
