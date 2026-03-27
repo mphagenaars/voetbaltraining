@@ -166,18 +166,14 @@ Bij elke geslaagde wissel kan optioneel ook een `sub` event toegevoegd worden al
 
 ## 6.1 Live opstelling en wissels
 
-### `POST /matches/live/save-period-lineup`
-Slaat periode-startopstelling op.
+### Periode-startopstelling (autosnapshot)
+Er is geen apart publiek endpoint meer voor `save-period-lineup`.
+De periode-startopstelling wordt server-side automatisch opgeslagen bij:
+- `POST /matches/timer-action` met `action = start`
 
-Request (JSON):
-- `match_id`
-- `period`
-- `slots`: array `{ slot_code, player_id }`
-
-Response:
-- `success`
-- `period`
-- `lineup`
+Response bevat:
+- `period_snapshot_saved` (boolean)
+- `period_snapshot_period` (periodenummer bij succesvolle snapshot)
 
 ### `POST /matches/live/substitute`
 Voert handmatige gerichte wissel uit.
@@ -450,8 +446,10 @@ Operationele KPI's (eerste 4 weken):
 
 ## Fase 1 - Gestructureerde wissels zonder spraak (1-2 dagen)
 - Nieuwe tabellen en endpoint `substitute` + `undo`.
+- Periode-startopstelling via autosnapshot bij `timer-action/start` (geen apart `save-period-lineup` endpoint).
 - Actieve opstelling in live view.
 - Minutencalculatie basis.
+- Status (2026-03-27): afgerond in codebase, regressietests groen.
 
 ## Fase 2 - Spraak in MVP-vorm (1-2 dagen)
 - Push-to-talk frontend.

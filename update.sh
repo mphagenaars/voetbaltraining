@@ -113,17 +113,17 @@ else
     exit 1
 fi
 
-# Zorg dat runtime config bestaat voor encryptie (nodig voor AI module)
-CONFIG_FILE="$PROJECT_DIR/data/config.php"
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "    - data/config.php ontbreekt, aanmaken..."
-    ENCRYPTION_KEY=$(php -r "if (!function_exists('sodium_crypto_secretbox_keygen')) { fwrite(STDERR, 'Sodium-extensie ontbreekt.\n'); exit(1); } echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen());")
-    cat > "$CONFIG_FILE" <<EOF
-<?php
-return [
-    'encryption_key' => '$ENCRYPTION_KEY',
-];
-EOF
+# Controleer of encryptiesleutel beschikbaar is (via SetEnv of data/config.php)
+if ! php -r "
+    require_once '$PROJECT_DIR/src/Config.php';
+    exit(Config::hasEncryptionKey() ? 0 : 1);
+" 2>/dev/null; then
+    echo ""
+    echo "⚠️  Waarschuwing: encryptiesleutel ontbreekt."
+    echo "    Stel APP_ENCRYPTION_KEY in als SetEnv in de Apache vhost-configuratie,"
+    echo "    of maak data/config.php aan op basis van data/config.php.example."
+    echo "    Zie: scripts/rotate_encryption_key.php voor hulp."
+    echo ""
 fi
 
 # 6. Rechten Herstellen
@@ -158,9 +158,6 @@ chmod -R 770 "$PROJECT_DIR/public/uploads"
 # Database file specifiek
 if [ -f "$DB_FILE" ]; then
     chmod 660 "$DB_FILE"
-fi
-if [ -f "$PROJECT_DIR/data/config.php" ]; then
-    chmod 640 "$PROJECT_DIR/data/config.php"
 fi
 chmod 770 "$PROJECT_DIR/data"
 

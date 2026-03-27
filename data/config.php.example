@@ -1,0 +1,16 @@
+<?php
+// Sjabloon voor data/config.php
+//
+// AANBEVOLEN: gebruik in plaats hiervan de omgevingsvariabele APP_ENCRYPTION_KEY,
+// bijvoorbeeld via Apache SetEnv in de vhost-configuratie:
+//
+//   SetEnv APP_ENCRYPTION_KEY "base64:..."
+//
+// Genereer een nieuwe sleutel met:
+//   php -r "echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen()) . PHP_EOL;"
+//
+// Dit bestand (data/config.php) staat in .gitignore en mag NOOIT in versiebeheer.
+
+return [
+    'encryption_key' => 'base64:VERVANG_DIT_MET_EEN_GEGENEREERDE_SLEUTEL',
+];

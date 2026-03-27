@@ -6,6 +6,8 @@ class GameController extends BaseController {
     private Player $playerModel;
     private MatchTactic $matchTacticModel;
     private MatchTacticInputValidator $matchTacticInputValidator;
+    private MatchLiveStateService $matchLiveStateService;
+    private MatchSubstitutionService $matchSubstitutionService;
 
     public function __construct(PDO $pdo) {
         parent::__construct($pdo);
@@ -13,6 +15,8 @@ class GameController extends BaseController {
         $this->playerModel = new Player($pdo);
         $this->matchTacticModel = new MatchTactic($pdo);
         $this->matchTacticInputValidator = new MatchTacticInputValidator();
+        $this->matchLiveStateService = new MatchLiveStateService($pdo, $this->gameModel);
+        $this->matchSubstitutionService = new MatchSubstitutionService($pdo, $this->gameModel, $this->matchLiveStateService);
     }
 
     public function index(): void {
@@ -226,16 +230,16 @@ class GameController extends BaseController {
         }
 
         $players = $this->playerModel->getAllForTeam(Session::get('current_team')['id'], 'name ASC');
-        $matchPlayers = $this->gameModel->getPlayers($id);
         $events = $this->gameModel->getEvents($id);
         $timerState = $this->gameModel->getTimerState($id);
+        $liveState = $this->matchLiveStateService->getLiveState($id);
 
         View::render('matches/live', [
             'match' => $match, 
             'players' => $players, 
-            'matchPlayers' => $matchPlayers,
             'events' => $events,
             'timerState' => $timerState,
+            'liveState' => $liveState,
             'bodyClass' => 'page-match-live',
             'viewportContent' => 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
             'pageTitle' => 'Live Wedstrijd - Trainer Bobby'
@@ -243,129 +247,220 @@ class GameController extends BaseController {
     }
 
     public function timerAction(): void {
+        header('Content-Type: application/json');
+
         if (!Session::has('user_id') || !Session::has('current_team')) {
             http_response_code(403);
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
             exit;
         }
-        
-        $json = json_decode(file_get_contents('php://input'), true);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Methode niet toegestaan.']);
+            exit;
+        }
+
+        $json = $this->decodeJsonBody();
+        if (!is_array($json)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige requestdata.']);
+            exit;
+        }
+
+        $csrfToken = $json['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+            exit;
+        }
+
         $matchId = (int)($json['match_id'] ?? 0);
-        $action = $json['action'] ?? ''; // start, stop
-        
+        $action = strtolower(trim((string)($json['action'] ?? ''))); // start, stop
+        if ($matchId <= 0 || !in_array($action, ['start', 'stop'], true)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige timer-actie.']);
+            exit;
+        }
+
         $match = $this->gameModel->getById($matchId);
         if (!$this->canAccessMatchInCurrentTeam($match)) {
             http_response_code(403);
+            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
             exit;
         }
 
         $timerState = $this->gameModel->getTimerState($matchId);
-        $minute = (int)$timerState['total_minutes'];
-        $currentPeriod = $timerState['current_period'];
-        
+        $isPlaying = (bool)($timerState['is_playing'] ?? false);
+        $minute = (int)($timerState['total_minutes'] ?? 0);
+        $currentPeriod = (int)($timerState['current_period'] ?? 0);
+
+        $autoSnapshotPeriod = null;
+        $autoSnapshotSlots = [];
+        $autoSnapshotSaved = false;
+
         if ($action === 'start') {
-            // New period starts if not playing
-            $addPeriod = 0;
-            if (!$timerState['is_playing']) {
-                 $addPeriod = 1;
-            }
-            // Use currentPeriod + addPeriod. If it was 0, it becomes 1. If it was 1 and stopped, it becomes 2?
-            // Wait, if I stop period 1, currentPeriod remains 1 in my logic?
-            // "end_period" logic in GameModel: currentPeriod = $period.
-            // If I stop, isPlaying becomes false. currentPeriod remains what it was.
-            // So if I start again, I should increment period.
-            // UNLESS it's a resume? The requirement said "periodes afzonderlijk starten/stoppen" (quarters).
-            // So Start -> Period 1. Stop. Start -> Period 2.
-            $nextPeriod = $currentPeriod + $addPeriod;
-            if ($timerState['is_playing']) {
-                $nextPeriod = $currentPeriod; // Already playing
+            if ($isPlaying) {
+                echo json_encode([
+                    'success' => true,
+                    'timerState' => $timerState,
+                    'noop' => true,
+                ]);
+                return;
             }
 
+            // Start of a new period: capture current lineup and snapshot it into the new period.
+            $nextPeriod = max(1, $currentPeriod + 1);
+            $autoSnapshotPeriod = $nextPeriod;
+
+            $sourcePeriod = $currentPeriod > 0 ? $currentPeriod : 1;
+            $sourceClockSeconds = max(0, (int)($timerState['total_seconds'] ?? 0));
+            $sourceLiveState = $this->matchLiveStateService->getLiveStateAt(
+                $matchId,
+                $sourcePeriod,
+                $sourceClockSeconds,
+                $timerState
+            );
+            $autoSnapshotSlots = $this->extractPeriodSlotsFromLiveState($sourceLiveState);
             $this->gameModel->addEvent($matchId, $minute, 'whistle', null, 'start_period', $nextPeriod);
-        } elseif ($action === 'stop') {
-             $this->gameModel->addEvent($matchId, $minute, 'whistle', null, 'end_period', $currentPeriod);
+        } else {
+            if (!$isPlaying) {
+                echo json_encode([
+                    'success' => true,
+                    'timerState' => $timerState,
+                    'noop' => true,
+                ]);
+                return;
+            }
+
+            $stopPeriod = max(1, $currentPeriod);
+            $this->gameModel->addEvent($matchId, $minute, 'whistle', null, 'end_period', $stopPeriod);
+        }
+
+        if ($autoSnapshotPeriod !== null && !empty($autoSnapshotSlots)) {
+            try {
+                $this->matchLiveStateService->savePeriodLineup(
+                    $matchId,
+                    $autoSnapshotPeriod,
+                    $autoSnapshotSlots,
+                    (int)Session::get('user_id')
+                );
+                $autoSnapshotSaved = true;
+                $this->logActivity('autosave_period_lineup', $matchId, 'periode ' . $autoSnapshotPeriod);
+            } catch (Throwable $e) {
+                $autoSnapshotSaved = false;
+            }
         }
 
         $newState = $this->gameModel->getTimerState($matchId);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'timerState' => $newState]);
+        echo json_encode([
+            'success' => true,
+            'timerState' => $newState,
+            'period_snapshot_saved' => $autoSnapshotSaved,
+            'period_snapshot_period' => $autoSnapshotSaved ? $autoSnapshotPeriod : null,
+        ]);
     }
 
     public function addEvent(): void {
         $this->requireAuth();
+        $isJson = $this->isJsonRequest();
+
         if (!Session::has('current_team')) {
-            if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+            if ($isJson) {
                 http_response_code(403); 
                 echo json_encode(['error' => 'Auth required']);
                 exit;
             }
             $this->redirect('/');
         }
-        
-        $input = $_POST;
-        $isJson = false;
 
-        if (($_SERVER['CONTENT_TYPE'] ?? '') === 'application/json') {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $isJson = true;
+        $input = $_POST;
+        if ($isJson) {
+            $input = $this->decodeJsonBody();
+            if (!is_array($input)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Ongeldige requestdata.']);
+                exit;
+            }
+            $csrfToken = $input['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+            if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+                exit;
+            }
         } else {
             $this->verifyCsrf('/matches');
         }
-        
+
         $matchId = (int)($input['match_id'] ?? 0);
         $type = $input['type'] ?? '';
-        
+
         if ($matchId && $type) {
-             $match = $this->gameModel->getById($matchId);
-             if ($this->canAccessMatchInCurrentTeam($match)) {
-                 
-                 $minute = isset($input['minute']) && $input['minute'] !== '' ? (int)$input['minute'] : null;
-                 $period = (int)($input['period'] ?? 1);
+            $match = $this->gameModel->getById($matchId);
+            if ($this->canAccessMatchInCurrentTeam($match)) {
+                $minute = isset($input['minute']) && $input['minute'] !== '' ? (int)$input['minute'] : null;
+                $rawPeriod = $input['period'] ?? null;
+                $period = (is_numeric($rawPeriod) && (int)$rawPeriod > 0) ? (int)$rawPeriod : 0;
 
-                 if ($minute === null) {
-                     $state = $this->gameModel->getTimerState($matchId);
-                     $minute = (int)$state['total_minutes'];
-                     // If we are live, use the period from the timer state
-                     // If playing, use current_period. If stopped, maybe use current_period (e.g. goal after whistle?)
-                     $period = $state['current_period'] > 0 ? $state['current_period'] : 1;
-                 }
+                // Always derive period from live timer state when caller omits/invalidates period.
+                $state = $this->gameModel->getTimerState($matchId);
+                $derivedPeriod = (int)($state['current_period'] ?? 0);
+                if ($derivedPeriod <= 0) {
+                    $derivedPeriod = 1;
+                }
+                if ($period <= 0) {
+                    $period = $derivedPeriod;
+                }
+                if ($minute === null) {
+                    $minute = (int)($state['total_minutes'] ?? 0);
+                }
 
-                 // Sanitation: Ensure playerId is a positive integer or null
-                 $rawPlayerId = $input['player_id'] ?? '';
-                 $playerId = (is_numeric($rawPlayerId) && (int)$rawPlayerId > 0) ? (int)$rawPlayerId : null;
+                // Sanitation: Ensure playerId is a positive integer or null.
+                $rawPlayerId = $input['player_id'] ?? '';
+                $playerId = (is_numeric($rawPlayerId) && (int)$rawPlayerId > 0) ? (int)$rawPlayerId : null;
+                if ($playerId !== null && !$this->gameModel->allPlayersBelongToTeam([$playerId], (int)$match['team_id'])) {
+                    if ($isJson) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'Ongeldige speler voor deze wedstrijd.']);
+                        return;
+                    }
+                    Session::flash('error', 'Ongeldige speler voor deze wedstrijd.');
+                    $this->redirect('/matches/view?id=' . $matchId);
+                }
 
-                 $description = $input['description'] ?? '';
-                 
-                 $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description, $period);
-                 
-                 if ($type === 'goal') {
-                     if ($playerId) {
-                         if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
-                     } else {
-                         if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
-                     }
-                     $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
-                 } elseif ($type === 'goal_unknown') {
-                     // Goal for us, but no specific player (Overig)
-                     // Treat as own team goal
-                     if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
-                     $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
-                 }
+                $description = $input['description'] ?? '';
 
-                 if ($isJson) {
+                $this->gameModel->addEvent($matchId, $minute, $type, $playerId, $description, $period);
+
+                if ($type === 'goal') {
+                    if ($playerId) {
+                        if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
+                    } else {
+                        if ($match['is_home']) $match['score_away']++; else $match['score_home']++;
+                    }
+                    $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
+                } elseif ($type === 'goal_unknown') {
+                    // Goal for us, but no specific player (Overig)
+                    // Treat as own team goal
+                    if ($match['is_home']) $match['score_home']++; else $match['score_away']++;
+                    $this->gameModel->updateScore($matchId, (int)$match['score_home'], (int)$match['score_away']);
+                }
+
+                if ($isJson) {
                     header('Content-Type: application/json');
                     echo json_encode([
-                        'success' => true, 
+                        'success' => true,
                         'events' => $this->gameModel->getEvents($matchId),
                         'score_home' => $match['score_home'],
                         'score_away' => $match['score_away']
                     ]);
                     return;
-                 }
-                 
-                 Session::flash('success', 'Gebeurtenis toegevoegd.');
-             }
+                }
+
+                Session::flash('success', 'Gebeurtenis toegevoegd.');
+            }
         }
-        
+
         if ($isJson) {
             http_response_code(400); 
             echo json_encode(['error' => 'Invalid request']);
@@ -498,6 +593,154 @@ class GameController extends BaseController {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function substitute(): void {
+        header('Content-Type: application/json');
+
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
+            exit;
+        }
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Methode niet toegestaan.']);
+            exit;
+        }
+
+        $data = $this->decodeJsonBody();
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige requestdata.']);
+            exit;
+        }
+
+        $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+            exit;
+        }
+
+        $matchId = (int)($data['match_id'] ?? 0);
+        $playerOutId = (int)($data['player_out_id'] ?? 0);
+        $playerInId = (int)($data['player_in_id'] ?? 0);
+        $slotCode = isset($data['slot_code']) ? (string)$data['slot_code'] : null;
+
+        if ($matchId <= 0 || $playerOutId <= 0 || $playerInId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Match en spelergegevens zijn verplicht.']);
+            exit;
+        }
+
+        $match = $this->gameModel->getById($matchId);
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            exit;
+        }
+
+        try {
+            $result = $this->matchSubstitutionService->applyManualSubstitution(
+                $matchId,
+                $playerOutId,
+                $playerInId,
+                $slotCode,
+                (int)Session::get('user_id')
+            );
+
+            $sub = $result['substitution'] ?? null;
+            if (is_array($sub)) {
+                $this->logActivity('live_substitute', $matchId, (string)($sub['player_out_name'] ?? '') . ' -> ' . (string)($sub['player_in_name'] ?? ''));
+            }
+
+            echo json_encode([
+                'success' => true,
+                'substitution' => $result['substitution'],
+                'active_lineup' => $result['active_lineup'],
+                'bench' => $result['bench'],
+                'period' => (int)$result['period'],
+                'clock_seconds' => (int)$result['clock_seconds'],
+                'period_lineup_saved' => !empty($result['period_lineup_saved']),
+                'minutes_summary' => $result['minutes_summary'],
+                'events' => $result['events'],
+            ]);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Wissel verwerken mislukt.']);
+        }
+    }
+
+    public function undoSubstitution(): void {
+        header('Content-Type: application/json');
+
+        if (!Session::has('user_id') || !Session::has('current_team')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Niet geautoriseerd.']);
+            exit;
+        }
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Methode niet toegestaan.']);
+            exit;
+        }
+
+        $data = $this->decodeJsonBody();
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Ongeldige requestdata.']);
+            exit;
+        }
+
+        $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+        if (!Csrf::verifyToken(is_string($csrfToken) ? $csrfToken : null)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ongeldig CSRF-token.']);
+            exit;
+        }
+
+        $matchId = (int)($data['match_id'] ?? 0);
+        if ($matchId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Match-ID is verplicht.']);
+            exit;
+        }
+
+        $match = $this->gameModel->getById($matchId);
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Geen toegang tot deze wedstrijd.']);
+            exit;
+        }
+
+        try {
+            $result = $this->matchSubstitutionService->undoLastSubstitution($matchId);
+            $this->logActivity('live_substitute_undo', $matchId, 'substitution_id=' . (int)$result['undone_substitution_id']);
+
+            echo json_encode([
+                'success' => true,
+                'undone_substitution_id' => (int)$result['undone_substitution_id'],
+                'active_lineup' => $result['active_lineup'],
+                'bench' => $result['bench'],
+                'period' => (int)$result['period'],
+                'clock_seconds' => (int)$result['clock_seconds'],
+                'period_lineup_saved' => !empty($result['period_lineup_saved']),
+                'minutes_summary' => $result['minutes_summary'],
+                'events' => $result['events'],
+            ]);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Undo van wissel mislukt.']);
         }
     }
 
@@ -865,7 +1108,7 @@ class GameController extends BaseController {
         exit;
     }
 
-    private function decodeJsonBody(): ?array {
+    protected function decodeJsonBody(): ?array {
         $raw = file_get_contents('php://input');
         if (!is_string($raw) || trim($raw) === '') {
             return null;
@@ -873,6 +1116,51 @@ class GameController extends BaseController {
 
         $decoded = json_decode($raw, true);
         return is_array($decoded) ? $decoded : null;
+    }
+
+    protected function isJsonRequest(): bool {
+        $contentType = strtolower(trim((string)($_SERVER['CONTENT_TYPE'] ?? '')));
+        if ($contentType === '') {
+            return false;
+        }
+
+        $mimeType = trim((string)explode(';', $contentType, 2)[0]);
+        return $mimeType === 'application/json';
+    }
+
+    private function extractPeriodSlotsFromLiveState(array $liveState): array {
+        $activeLineup = is_array($liveState['active_lineup'] ?? null) ? $liveState['active_lineup'] : [];
+        $slots = [];
+        $seenSlots = [];
+        $seenPlayers = [];
+
+        foreach ($activeLineup as $lineupItem) {
+            if (!is_array($lineupItem)) {
+                continue;
+            }
+
+            $slotCode = MatchSlotCode::sanitize((string)($lineupItem['slot_code'] ?? ''));
+            $playerId = (int)($lineupItem['player_id'] ?? 0);
+            if ($slotCode === '' || $playerId <= 0) {
+                continue;
+            }
+            if (isset($seenSlots[$slotCode]) || isset($seenPlayers[$playerId])) {
+                continue;
+            }
+
+            $slots[] = [
+                'slot_code' => $slotCode,
+                'player_id' => $playerId,
+            ];
+            $seenSlots[$slotCode] = true;
+            $seenPlayers[$playerId] = true;
+        }
+
+        usort($slots, static function (array $a, array $b): int {
+            return strcmp((string)$a['slot_code'], (string)$b['slot_code']);
+        });
+
+        return $slots;
     }
 
     private function canAccessMatchInCurrentTeam(?array $match): bool {

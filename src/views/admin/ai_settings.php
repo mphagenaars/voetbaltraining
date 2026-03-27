@@ -23,7 +23,9 @@
 
 <?php if (empty($hasEncryptionKey)): ?>
     <div class="alert alert-danger">
-        Encryptiesleutel ontbreekt. Voeg <code>data/config.php</code> toe met een geldige <code>encryption_key</code>.
+        Encryptiesleutel ontbreekt. Stel de omgevingsvariabele <code>APP_ENCRYPTION_KEY</code> in (aanbevolen),
+        of voeg <code>data/config.php</code> toe met een geldige <code>encryption_key</code>.
+        Zie <code>data/config.php.example</code> voor een sjabloon.
     </div>
 <?php endif; ?>
 

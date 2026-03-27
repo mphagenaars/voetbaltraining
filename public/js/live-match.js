@@ -9,22 +9,98 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('action-modal');
     const actionForm = document.getElementById('action-form');
     const timelineList = document.getElementById('timeline-list');
+    const timelineFilterControlsEl = document.getElementById('timeline-filter-controls');
+    const liveFieldEl = document.getElementById('live-football-field');
+    const liveBenchTokenListEl = document.getElementById('live-bench-token-list');
+    const playerOutSelect = document.getElementById('player_out');
+    const playerInSelect = document.getElementById('player_in');
+    const fieldPlayersEl = document.getElementById('live-field-players');
+    const fieldEmptyEl = document.getElementById('live-field-empty');
+    const minutesSummaryContainerEl = document.getElementById('minutes-summary-container');
+    const undoSubBtn = document.getElementById('undo-sub-btn');
     const orientationOverlay = document.getElementById('orientation-overlay');
     const viewportMeta = document.querySelector('meta[name="viewport"]');
-    
-    // Initial State
-    let state = JSON.parse(document.getElementById('initial_timer_state').value);
+
+    let state = parseJsonFromInput('initial_timer_state', {
+        is_playing: false,
+        current_period: 0,
+        total_seconds: 0,
+        total_minutes: 0,
+        start_time: null
+    });
+    let liveState = parseJsonFromInput('initial_live_state', {
+        period: 1,
+        clock_seconds: 0,
+        active_lineup: [],
+        bench: [],
+        minutes_summary: []
+    });
     let scoreState = {
         home: Number.parseInt(scoreHomeDisplay ? scoreHomeDisplay.textContent : '0', 10) || 0,
         away: Number.parseInt(scoreAwayDisplay ? scoreAwayDisplay.textContent : '0', 10) || 0
     };
+    let timelineEvents = parseJsonFromInput('initial_events', []);
+    let timelineFilter = 'all';
+
     let timerInterval = null;
     let orientationRefreshTimeout = null;
+    let dragPayload = null;
+    let activeTouchDrag = null;
+    let timerActionInFlight = false;
+    let minutesSortState = {
+        key: 'total',
+        direction: 'desc'
+    };
 
     const liveViewportContent = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
 
+    normalizeLiveState();
+    normalizeTimelineState();
+    markTimerStateSynced();
+
+    function parseJsonFromInput(inputId, fallbackValue) {
+        const el = document.getElementById(inputId);
+        if (!el || !el.value) {
+            return fallbackValue;
+        }
+        try {
+            return JSON.parse(el.value);
+        } catch (error) {
+            return fallbackValue;
+        }
+    }
+
+    function normalizeLiveState() {
+        if (!liveState || typeof liveState !== 'object') {
+            liveState = {};
+        }
+        liveState.period = Number.parseInt(liveState.period, 10) || 1;
+        liveState.clock_seconds = Number.parseInt(liveState.clock_seconds, 10) || 0;
+        if (!Array.isArray(liveState.active_lineup)) {
+            liveState.active_lineup = [];
+        }
+        if (!Array.isArray(liveState.bench)) {
+            liveState.bench = [];
+        }
+        if (!Array.isArray(liveState.minutes_summary)) {
+            liveState.minutes_summary = [];
+        }
+    }
+
+    function normalizeTimelineState() {
+        if (!Array.isArray(timelineEvents)) {
+            timelineEvents = [];
+        }
+        const allowedFilters = ['all', 'goals', 'subs'];
+        if (!allowedFilters.includes(timelineFilter)) {
+            timelineFilter = 'all';
+        }
+    }
+
     function enforceLiveViewport() {
-        if (!viewportMeta) return;
+        if (!viewportMeta) {
+            return;
+        }
         if (viewportMeta.getAttribute('content') !== liveViewportContent) {
             viewportMeta.setAttribute('content', liveViewportContent);
         }
@@ -45,13 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateOrientationOverlay() {
-        if (!orientationOverlay) return;
+        if (!orientationOverlay) {
+            return;
+        }
         if (!shouldEnforcePortraitMode()) {
             orientationOverlay.classList.remove('is-visible');
             orientationOverlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('live-landscape-blocked');
             return;
         }
+
         const landscape = isLandscapeMode();
         orientationOverlay.classList.toggle('is-visible', landscape);
         orientationOverlay.setAttribute('aria-hidden', landscape ? 'false' : 'true');
@@ -68,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await screen.orientation.lock('portrait');
         } catch (error) {
-            // Some browsers only allow this in fullscreen/PWA mode.
+            // Browser can block orientation lock outside fullscreen/PWA.
         }
     }
 
@@ -89,11 +168,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
+    function markTimerStateSynced() {
+        state._client_synced_at = Math.floor(Date.now() / 1000);
+    }
+
+    function getDisplayedTotalSeconds() {
+        const baseSeconds = Number.parseInt(state.total_seconds, 10) || 0;
+        if (!state.is_playing) {
+            return baseSeconds;
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        const syncedAt = Number.parseInt(state._client_synced_at, 10) || now;
+        const delta = Math.max(0, now - syncedAt);
+        return baseSeconds + delta;
+    }
+
     function updateTimerUI() {
         if (state.is_playing) {
-            const now = Math.floor(Date.now() / 1000);
-            const currentSessionSeconds = now - state.start_time;
-            const totalSeconds = state.total_seconds + currentSessionSeconds;
+            const totalSeconds = getDisplayedTotalSeconds();
             timerDisplay.textContent = formatTime(totalSeconds);
             timerBtn.textContent = 'Stop Tijd';
             timerBtn.classList.remove('btn-primary');
@@ -104,9 +197,9 @@ document.addEventListener('DOMContentLoaded', () => {
             timerBtn.textContent = state.total_seconds > 0 ? 'Hervat Tijd' : 'Start Wedstrijd';
             timerBtn.classList.add('btn-primary');
             timerBtn.classList.remove('btn-danger');
-            timerBtn.style.backgroundColor = ''; // Reset
+            timerBtn.style.backgroundColor = '';
         }
-        
+
         periodDisplay.textContent = state.current_period > 0 ? `Periode ${state.current_period}` : 'Nog niet gestart';
     }
 
@@ -120,12 +213,934 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startTicker() {
-        if (timerInterval) clearInterval(timerInterval);
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
         if (state.is_playing) {
             timerInterval = setInterval(updateTimerUI, 1000);
         }
         updateTimerUI();
     }
+
+    function getEffectivePeriod() {
+        if (state.current_period && Number.parseInt(state.current_period, 10) > 0) {
+            return Number.parseInt(state.current_period, 10);
+        }
+        if (liveState.period && Number.parseInt(liveState.period, 10) > 0) {
+            return Number.parseInt(liveState.period, 10);
+        }
+        return 1;
+    }
+
+    function cleanEventDescription(rawDescription) {
+        const description = String(rawDescription || '');
+        return description.replace(/^\[\[sub:\d+\]\]\s*/, '').trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function clampFieldPosition(value, fallback) {
+        const parsed = Number.parseFloat(value);
+        const candidate = Number.isFinite(parsed) ? parsed : fallback;
+        return Math.min(98, Math.max(2, candidate));
+    }
+
+    function buildPlayerMarkerText(item) {
+        const name = String(item.player_name || '').trim();
+        if (!name) {
+            return '?';
+        }
+        return name.charAt(0).toUpperCase();
+    }
+
+    function isGoalkeeperSlot(slotCode) {
+        const normalized = String(slotCode || '').trim().toUpperCase();
+        return normalized === 'GK' || normalized === 'K';
+    }
+
+    function buildPlayerTokenInnerHtml(item) {
+        const markerText = escapeHtml(buildPlayerMarkerText(item));
+        const playerName = escapeHtml(item.player_name || '');
+        return `<div class="player-jersey"><svg viewBox="0 0 100 100" width="50" height="50"><path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="url(#striped-jersey)" stroke="white" stroke-width="2"></path><text x="50" y="65" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold">${markerText}</text></svg></div><div class="player-name">${playerName}</div>`;
+    }
+
+    function renderFieldPlayers() {
+        if (!fieldPlayersEl) {
+            return;
+        }
+
+        fieldPlayersEl.innerHTML = '';
+        const activeLineup = Array.isArray(liveState.active_lineup) ? liveState.active_lineup : [];
+
+        if (fieldEmptyEl) {
+            fieldEmptyEl.style.display = activeLineup.length > 0 ? 'none' : 'flex';
+        }
+
+        activeLineup.forEach((item, index) => {
+            const fallbackX = 20 + ((index % 3) * 30);
+            const fallbackY = 12 + (Math.floor(index / 3) * 14);
+            const x = clampFieldPosition(item.position_x, fallbackX);
+            const y = clampFieldPosition(item.position_y, fallbackY);
+
+            const marker = document.createElement('div');
+            const goalkeeperClass = isGoalkeeperSlot(item.slot_code) ? ' is-goalkeeper' : '';
+            marker.className = `player-token on-field live-dnd-token${goalkeeperClass}`;
+            marker.style.left = `${x}%`;
+            marker.style.top = `${y}%`;
+            marker.setAttribute('draggable', 'true');
+            marker.dataset.source = 'field';
+            marker.dataset.playerId = String(item.player_id || '');
+            marker.dataset.slotCode = String(item.slot_code || '');
+            marker.innerHTML = buildPlayerTokenInnerHtml(item);
+            fieldPlayersEl.appendChild(marker);
+        });
+    }
+
+    function renderBenchTokens() {
+        if (!liveBenchTokenListEl) {
+            return;
+        }
+
+        liveBenchTokenListEl.innerHTML = '';
+        const benchPlayers = Array.isArray(liveState.bench) ? liveState.bench : [];
+        if (benchPlayers.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'drop-placeholder';
+            placeholder.textContent = 'Geen bank';
+            liveBenchTokenListEl.appendChild(placeholder);
+            return;
+        }
+
+        benchPlayers.forEach((item) => {
+            const token = document.createElement('div');
+            token.className = 'player-token live-dnd-token';
+            token.setAttribute('draggable', 'true');
+            token.dataset.source = 'bench';
+            token.dataset.playerId = String(item.player_id || '');
+            token.innerHTML = buildPlayerTokenInnerHtml(item);
+            liveBenchTokenListEl.appendChild(token);
+        });
+    }
+
+    function formatMinutesValue(totalMinutesPlayed, totalSecondsPlayed) {
+        const minutes = Number(totalMinutesPlayed);
+        if (Number.isFinite(minutes) && minutes >= 0) {
+            return `${minutes.toFixed(1)} min`;
+        }
+        const seconds = Number.parseInt(totalSecondsPlayed, 10) || 0;
+        return `${(seconds / 60).toFixed(1)} min`;
+    }
+
+    function formatSecondsAsMinutes(seconds) {
+        const totalSeconds = Number.parseInt(seconds, 10) || 0;
+        return `${(totalSeconds / 60).toFixed(1)} min`;
+    }
+
+    function getPeriodSeconds(item, period) {
+        if (!item || typeof item.seconds_per_period !== 'object') {
+            return 0;
+        }
+        const perPeriod = item.seconds_per_period;
+        return Number.parseInt(perPeriod[period] || perPeriod[String(period)] || 0, 10) || 0;
+    }
+
+    function getSortableMinutesValue(item, sortKey) {
+        if (sortKey === 'player') {
+            return String(item && item.player_name ? item.player_name : '').toLocaleLowerCase();
+        }
+        if (sortKey === 'total') {
+            return Number.parseInt(item && item.total_seconds_played ? item.total_seconds_played : 0, 10) || 0;
+        }
+        if (sortKey.startsWith('q:')) {
+            const period = Number.parseInt(sortKey.slice(2), 10) || 0;
+            if (period <= 0) {
+                return 0;
+            }
+            return getPeriodSeconds(item, period);
+        }
+        return 0;
+    }
+
+    function compareMinutesSummaryRows(a, b, sortKey, direction) {
+        const aValue = getSortableMinutesValue(a, sortKey);
+        const bValue = getSortableMinutesValue(b, sortKey);
+
+        let cmp = 0;
+        if (sortKey === 'player') {
+            cmp = String(aValue).localeCompare(String(bValue), 'nl', { sensitivity: 'base' });
+        } else {
+            cmp = Number(aValue) - Number(bValue);
+        }
+
+        if (cmp === 0) {
+            const nameCmp = String(a && a.player_name ? a.player_name : '').localeCompare(
+                String(b && b.player_name ? b.player_name : ''),
+                'nl',
+                { sensitivity: 'base' }
+            );
+            return nameCmp;
+        }
+
+        return direction === 'asc' ? cmp : -cmp;
+    }
+
+    function setMinutesSort(sortKey) {
+        if (minutesSortState.key === sortKey) {
+            minutesSortState.direction = minutesSortState.direction === 'asc' ? 'desc' : 'asc';
+            return;
+        }
+
+        minutesSortState.key = sortKey;
+        minutesSortState.direction = sortKey === 'player' ? 'asc' : 'desc';
+    }
+
+    function buildMinutesSortHeader(label, sortKey) {
+        const th = document.createElement('th');
+        th.scope = 'col';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'live-minutes-sort-btn';
+        button.textContent = label;
+        button.addEventListener('click', () => {
+            setMinutesSort(sortKey);
+            renderLiveState();
+        });
+
+        if (minutesSortState.key === sortKey) {
+            button.classList.add('is-active');
+            button.classList.add(minutesSortState.direction === 'asc' ? 'is-asc' : 'is-desc');
+            th.setAttribute('aria-sort', minutesSortState.direction === 'asc' ? 'ascending' : 'descending');
+        } else {
+            th.setAttribute('aria-sort', 'none');
+        }
+
+        th.appendChild(button);
+        return th;
+    }
+
+    function applyLiveStateFromResponse(responseData) {
+        if (Array.isArray(responseData.active_lineup)) {
+            liveState.active_lineup = responseData.active_lineup;
+        }
+        if (Array.isArray(responseData.bench)) {
+            liveState.bench = responseData.bench;
+        }
+        if (Array.isArray(responseData.minutes_summary)) {
+            liveState.minutes_summary = responseData.minutes_summary;
+        }
+        if (typeof responseData.period !== 'undefined') {
+            const parsedPeriod = Number.parseInt(responseData.period, 10);
+            if (parsedPeriod > 0) {
+                liveState.period = parsedPeriod;
+            }
+        }
+        if (typeof responseData.clock_seconds !== 'undefined') {
+            const parsedClock = Number.parseInt(responseData.clock_seconds, 10);
+            if (parsedClock >= 0) {
+                liveState.clock_seconds = parsedClock;
+            }
+        }
+        normalizeLiveState();
+        renderLiveState();
+
+        if (Array.isArray(responseData.events)) {
+            renderTimeline(responseData.events);
+        }
+    }
+
+    function renderLiveState() {
+        normalizeLiveState();
+        renderFieldPlayers();
+        renderBenchTokens();
+
+        if (minutesSummaryContainerEl) {
+            minutesSummaryContainerEl.innerHTML = '';
+            if (liveState.minutes_summary.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'live-minutes-empty';
+                empty.textContent = 'Nog geen speeltijdgegevens beschikbaar.';
+                minutesSummaryContainerEl.appendChild(empty);
+            } else {
+                let maxPeriod = Number.parseInt(liveState.period, 10) || 1;
+                liveState.minutes_summary.forEach((item) => {
+                    if (!item || typeof item !== 'object' || typeof item.seconds_per_period !== 'object') {
+                        return;
+                    }
+                    Object.keys(item.seconds_per_period).forEach((periodKey) => {
+                        const parsedPeriod = Number.parseInt(periodKey, 10);
+                        if (parsedPeriod > maxPeriod) {
+                            maxPeriod = parsedPeriod;
+                        }
+                    });
+                });
+                if (maxPeriod < 1) {
+                    maxPeriod = 1;
+                }
+
+                if (minutesSortState.key.startsWith('q:')) {
+                    const requestedPeriod = Number.parseInt(minutesSortState.key.slice(2), 10) || 0;
+                    if (requestedPeriod <= 0 || requestedPeriod > maxPeriod) {
+                        minutesSortState = {
+                            key: 'total',
+                            direction: 'desc'
+                        };
+                    }
+                }
+
+                const sortedSummary = liveState.minutes_summary.slice().sort((a, b) => (
+                    compareMinutesSummaryRows(a, b, minutesSortState.key, minutesSortState.direction)
+                ));
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'live-minutes-summary-wrap';
+
+                const table = document.createElement('table');
+                table.className = 'live-minutes-table';
+
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+
+                headRow.appendChild(buildMinutesSortHeader('Speler', 'player'));
+
+                for (let period = 1; period <= maxPeriod; period += 1) {
+                    headRow.appendChild(buildMinutesSortHeader(`Q${period}`, `q:${period}`));
+                }
+
+                headRow.appendChild(buildMinutesSortHeader('Totaal', 'total'));
+
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                sortedSummary.forEach((item) => {
+                    const row = document.createElement('tr');
+
+                    const playerCell = document.createElement('td');
+                    playerCell.textContent = String(item.player_name || '');
+                    row.appendChild(playerCell);
+
+                    for (let period = 1; period <= maxPeriod; period += 1) {
+                        const quarterCell = document.createElement('td');
+                        quarterCell.textContent = formatSecondsAsMinutes(getPeriodSeconds(item, period));
+                        row.appendChild(quarterCell);
+                    }
+
+                    const totalCell = document.createElement('td');
+                    totalCell.textContent = formatMinutesValue(item.total_minutes_played, item.total_seconds_played);
+                    row.appendChild(totalCell);
+
+                    tbody.appendChild(row);
+                });
+
+                table.appendChild(tbody);
+                wrapper.appendChild(table);
+                minutesSummaryContainerEl.appendChild(wrapper);
+            }
+        }
+
+        populateSubstitutionSelects();
+    }
+
+    function getClosestFieldToken(clientX, clientY) {
+        if (!fieldPlayersEl) {
+            return null;
+        }
+
+        const tokens = Array.from(fieldPlayersEl.querySelectorAll('.player-token.on-field'));
+        if (tokens.length === 0) {
+            return null;
+        }
+
+        let bestToken = null;
+        let bestDistance = Number.POSITIVE_INFINITY;
+        tokens.forEach((token) => {
+            const rect = token.getBoundingClientRect();
+            const centerX = rect.left + (rect.width / 2);
+            const centerY = rect.top + (rect.height / 2);
+            const dx = centerX - clientX;
+            const dy = centerY - clientY;
+            const distance = Math.sqrt((dx * dx) + (dy * dy));
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestToken = token;
+            }
+        });
+
+        return bestToken;
+    }
+
+    async function performSubstitution(playerOutId, playerInId, slotCode) {
+        if (playerOutId <= 0 || playerInId <= 0) {
+            throw new Error('Ongeldige spelers voor wissel.');
+        }
+
+        const responseData = await requestJson('/matches/live/substitute', {
+            match_id: Number.parseInt(matchId, 10),
+            player_out_id: playerOutId,
+            player_in_id: playerInId,
+            slot_code: slotCode || '',
+            csrf_token: csrfToken
+        });
+        applyLiveStateFromResponse(responseData);
+    }
+
+    function clearTouchDragState() {
+        if (!activeTouchDrag) {
+            return;
+        }
+
+        if (activeTouchDrag.sourceToken) {
+            activeTouchDrag.sourceToken.style.opacity = '1';
+        }
+        if (activeTouchDrag.ghostEl && activeTouchDrag.ghostEl.parentNode) {
+            activeTouchDrag.ghostEl.parentNode.removeChild(activeTouchDrag.ghostEl);
+        }
+        activeTouchDrag = null;
+    }
+
+    function populateSubstitutionSelects() {
+        if (!playerOutSelect || !playerInSelect) {
+            return;
+        }
+
+        playerOutSelect.innerHTML = '<option value="">-- Kies speler --</option>';
+        liveState.active_lineup.forEach((item) => {
+            const option = document.createElement('option');
+            option.value = String(item.player_id);
+            option.dataset.slotCode = String(item.slot_code || '');
+            const numberLabel = typeof item.number === 'number' ? ` #${item.number}` : '';
+            option.textContent = `${item.player_name}${numberLabel} (${item.slot_code})`;
+            playerOutSelect.appendChild(option);
+        });
+
+        playerInSelect.innerHTML = '<option value="">-- Kies speler --</option>';
+        liveState.bench.forEach((item) => {
+            const option = document.createElement('option');
+            option.value = String(item.player_id);
+            const numberLabel = typeof item.number === 'number' ? ` #${item.number}` : '';
+            option.textContent = `${item.player_name}${numberLabel}`;
+            playerInSelect.appendChild(option);
+        });
+    }
+
+    function isGoalEventType(eventType) {
+        return eventType === 'goal' || eventType === 'goal_unknown';
+    }
+
+    function matchesTimelineFilter(eventType) {
+        if (eventType === 'whistle') {
+            return false;
+        }
+        if (timelineFilter === 'all') {
+            return true;
+        }
+        if (timelineFilter === 'goals') {
+            return isGoalEventType(eventType);
+        }
+        if (timelineFilter === 'subs') {
+            return eventType === 'sub';
+        }
+        return true;
+    }
+
+    function updateTimelineFilterButtons() {
+        if (!timelineFilterControlsEl) {
+            return;
+        }
+
+        const buttons = Array.from(timelineFilterControlsEl.querySelectorAll('.timeline-filter-btn'));
+        buttons.forEach((button) => {
+            const buttonFilter = String(button.dataset.filter || 'all');
+            const isActive = buttonFilter === timelineFilter;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    function renderTimeline(events) {
+        if (!timelineList) {
+            return;
+        }
+
+        if (Array.isArray(events)) {
+            timelineEvents = events;
+        }
+        normalizeTimelineState();
+        updateTimelineFilterButtons();
+
+        timelineList.innerHTML = '';
+        const visibleEvents = timelineEvents.filter((event) => (
+            matchesTimelineFilter(String(event && event.type ? event.type : ''))
+        ));
+
+        if (visibleEvents.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'live-timeline-empty';
+            empty.textContent = 'Geen gebeurtenissen voor dit filter.';
+            timelineList.appendChild(empty);
+            return;
+        }
+
+        visibleEvents.forEach((event) => {
+            const eventType = String(event && event.type ? event.type : '');
+            if (eventType === 'whistle') {
+                return;
+            }
+
+            const li = document.createElement('li');
+            li.style.borderBottom = '1px solid #eee';
+            li.style.padding = '0.5rem 0';
+
+            let label = '🔹 Gebeurtenis';
+            if (eventType === 'goal') {
+                label = event.player_id ? '⚽ Doelpunt' : '⚽ Tegendoelpunt';
+            }
+            if (eventType === 'goal_unknown') {
+                label = '⚽ Doelpunt (Overig)';
+            }
+            if (eventType === 'card_yellow') {
+                label = '🟨 Gele kaart';
+            }
+            if (eventType === 'card_red') {
+                label = '🟥 Rode kaart';
+            }
+            if (eventType === 'sub') {
+                label = '🔄 Wissel';
+            }
+
+            const description = cleanEventDescription(event.description);
+            const descriptionText = description ? ` (${escapeHtml(description)})` : '';
+            const playerText = event.player_name ? ` door <strong>${escapeHtml(event.player_name)}</strong>` : '';
+            const minuteValue = Number.parseInt(event.minute, 10) || 0;
+            li.innerHTML = `<strong>${minuteValue}'</strong> ${label}${playerText}${descriptionText}`;
+            timelineList.appendChild(li);
+        });
+    }
+
+    async function requestJson(url, payload) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const responseText = await response.text();
+        let responseData = null;
+        try {
+            responseData = responseText ? JSON.parse(responseText) : {};
+        } catch (error) {
+            responseData = {};
+        }
+
+        if (!response.ok || !responseData || responseData.success === false) {
+            throw new Error((responseData && responseData.error) ? responseData.error : 'Onbekende fout');
+        }
+
+        return responseData;
+    }
+
+    async function handleTimerToggle() {
+        if (timerActionInFlight) {
+            return;
+        }
+
+        timerActionInFlight = true;
+        timerBtn.disabled = true;
+        const action = state.is_playing ? 'stop' : 'start';
+        try {
+            const responseData = await requestJson('/matches/timer-action', {
+                match_id: matchId,
+                action,
+                csrf_token: csrfToken
+            });
+            if (responseData.timerState) {
+                state = responseData.timerState;
+                markTimerStateSynced();
+                startTicker();
+
+                const effectivePeriod = getEffectivePeriod();
+                if (liveState.period !== effectivePeriod) {
+                    liveState.period = effectivePeriod;
+                    renderLiveState();
+                }
+            }
+        } catch (error) {
+            alert(`Fout: ${error.message}`);
+        } finally {
+            timerActionInFlight = false;
+            timerBtn.disabled = false;
+        }
+    }
+
+    async function handleUndoSubstitution() {
+        try {
+            const responseData = await requestJson('/matches/live/substitute/undo', {
+                match_id: Number.parseInt(matchId, 10),
+                csrf_token: csrfToken
+            });
+            applyLiveStateFromResponse(responseData);
+        } catch (error) {
+            alert(`Fout: ${error.message}`);
+        }
+    }
+
+    function getCurrentMinuteDisplay() {
+        const currentMinute = Math.floor(getDisplayedTotalSeconds() / 60);
+        return currentMinute + 1;
+    }
+
+    window.openActionModal = function openActionModal(type) {
+        document.getElementById('modal-type').value = type;
+
+        const typeLabels = {
+            goal: 'Doelpunt Toevoegen',
+            card: 'Kaart Geven',
+            sub: 'Wissel Doorvoeren',
+            other: 'Notitie Maken'
+        };
+        document.getElementById('modal-title').textContent = typeLabels[type] || 'Actie Toevoegen';
+
+        const playerSelectGroup = document.getElementById('player-select-group');
+        const subGroup = document.getElementById('sub-group');
+
+        if (type === 'sub') {
+            playerSelectGroup.style.display = 'none';
+            subGroup.style.display = 'block';
+            populateSubstitutionSelects();
+        } else {
+            playerSelectGroup.style.display = 'block';
+            subGroup.style.display = 'none';
+        }
+
+        document.getElementById('modal-minute').value = getCurrentMinuteDisplay();
+        modal.style.display = 'flex';
+    };
+
+    window.closeModal = function closeModal() {
+        modal.style.display = 'none';
+        actionForm.reset();
+        populateSubstitutionSelects();
+    };
+
+    actionForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(actionForm);
+        const data = Object.fromEntries(formData.entries());
+
+        if (data.type === 'goal') {
+            const playerSelect = actionForm.querySelector('select[name="player_id"]');
+            if (playerSelect) {
+                if (playerSelect.value === 'unknown') {
+                    data.type = 'goal_unknown';
+                    data.player_id = '';
+                } else if (playerSelect.value === 'opponent') {
+                    data.type = 'goal';
+                    data.player_id = '';
+                }
+            }
+        }
+
+        if (data.type === 'card') {
+            data.type = 'card_yellow';
+            if (confirm('Is het een rode kaart? Klik OK voor Rood, Annuleren voor Geel.')) {
+                data.type = 'card_red';
+            }
+        }
+
+        if (data.type === 'sub') {
+            const outPlayerId = Number.parseInt(playerOutSelect.value, 10) || 0;
+            const inPlayerId = Number.parseInt(playerInSelect.value, 10) || 0;
+            const selectedOutOption = playerOutSelect.options[playerOutSelect.selectedIndex];
+            const slotCode = selectedOutOption ? String(selectedOutOption.dataset.slotCode || '') : '';
+
+            if (outPlayerId <= 0 || inPlayerId <= 0) {
+                alert('Kies een speler UIT en een speler IN.');
+                return;
+            }
+
+            try {
+                await performSubstitution(outPlayerId, inPlayerId, slotCode);
+                closeModal();
+            } catch (error) {
+                alert(`Fout: ${error.message}`);
+            }
+            return;
+        }
+
+        data.action = 'add';
+        data.period = getEffectivePeriod();
+        data.csrf_token = csrfToken;
+
+        try {
+            const responseData = await requestJson('/matches/add-event', data);
+            closeModal();
+            if (typeof responseData.score_home !== 'undefined' && typeof responseData.score_away !== 'undefined') {
+                scoreState.home = Number.parseInt(responseData.score_home, 10) || 0;
+                scoreState.away = Number.parseInt(responseData.score_away, 10) || 0;
+                updateScoreUI();
+            }
+            if (Array.isArray(responseData.events)) {
+                renderTimeline(responseData.events);
+            }
+        } catch (error) {
+            alert(`Fout: ${error.message}`);
+        }
+    });
+
+    timerBtn.addEventListener('click', handleTimerToggle);
+    if (undoSubBtn) {
+        undoSubBtn.addEventListener('click', handleUndoSubstitution);
+    }
+    if (timelineFilterControlsEl) {
+        timelineFilterControlsEl.addEventListener('click', (event) => {
+            const target = event.target.closest('.timeline-filter-btn');
+            if (!target) {
+                return;
+            }
+
+            const nextFilter = String(target.dataset.filter || 'all');
+            if (nextFilter === timelineFilter) {
+                return;
+            }
+
+            timelineFilter = nextFilter;
+            renderTimeline();
+        });
+    }
+
+    document.addEventListener('dragstart', (event) => {
+        const token = event.target.closest('.live-dnd-token');
+        if (!token) {
+            return;
+        }
+
+        const source = String(token.dataset.source || '');
+        const playerId = Number.parseInt(token.dataset.playerId, 10) || 0;
+        if (!source || playerId <= 0 || !event.dataTransfer) {
+            return;
+        }
+
+        dragPayload = {
+            source,
+            playerId,
+            slotCode: String(token.dataset.slotCode || '')
+        };
+
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(playerId));
+        token.style.opacity = '0.5';
+    });
+
+    document.addEventListener('dragend', (event) => {
+        const token = event.target.closest('.live-dnd-token');
+        if (token) {
+            token.style.opacity = '1';
+        }
+        dragPayload = null;
+    });
+
+    if (liveFieldEl) {
+        liveFieldEl.addEventListener('dragover', (event) => {
+            if (!dragPayload || (dragPayload.source !== 'bench' && dragPayload.source !== 'field')) {
+                return;
+            }
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'move';
+            }
+        });
+
+        liveFieldEl.addEventListener('drop', async (event) => {
+            if (!dragPayload || (dragPayload.source !== 'bench' && dragPayload.source !== 'field')) {
+                return;
+            }
+            event.preventDefault();
+
+            const dropTarget = event.target.closest('.player-token.on-field');
+            const targetToken = dropTarget || getClosestFieldToken(event.clientX, event.clientY);
+            if (!targetToken) {
+                return;
+            }
+
+            try {
+                if (dragPayload.source === 'bench') {
+                    const playerOutId = Number.parseInt(targetToken.dataset.playerId, 10) || 0;
+                    const playerInId = dragPayload.playerId;
+                    const slotCode = String(targetToken.dataset.slotCode || '');
+                    await performSubstitution(playerOutId, playerInId, slotCode);
+                    return;
+                }
+
+                const playerOutId = dragPayload.playerId;
+                const playerInId = Number.parseInt(targetToken.dataset.playerId, 10) || 0;
+                const slotCode = dragPayload.slotCode || '';
+                if (playerOutId <= 0 || playerInId <= 0 || playerOutId === playerInId) {
+                    return;
+                }
+                await performSubstitution(playerOutId, playerInId, slotCode);
+            } catch (error) {
+                alert(`Fout: ${error.message}`);
+            }
+        });
+    }
+
+    if (liveBenchTokenListEl) {
+        liveBenchTokenListEl.addEventListener('dragover', (event) => {
+            if (!dragPayload || dragPayload.source !== 'field') {
+                return;
+            }
+            const tokenTarget = event.target.closest('.player-token[data-source="bench"]');
+            if (!tokenTarget) {
+                return;
+            }
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'move';
+            }
+        });
+
+        liveBenchTokenListEl.addEventListener('drop', async (event) => {
+            if (!dragPayload || dragPayload.source !== 'field') {
+                return;
+            }
+            const benchToken = event.target.closest('.player-token[data-source="bench"]');
+            if (!benchToken) {
+                return;
+            }
+            event.preventDefault();
+
+            const playerOutId = dragPayload.playerId;
+            const playerInId = Number.parseInt(benchToken.dataset.playerId, 10) || 0;
+            const slotCode = dragPayload.slotCode || '';
+            try {
+                await performSubstitution(playerOutId, playerInId, slotCode);
+            } catch (error) {
+                alert(`Fout: ${error.message}`);
+            }
+        });
+    }
+
+    document.addEventListener('touchstart', (event) => {
+        const token = event.target.closest('.live-dnd-token');
+        if (!token) {
+            return;
+        }
+
+        const source = String(token.dataset.source || '');
+        const playerId = Number.parseInt(token.dataset.playerId, 10) || 0;
+        if (!source || playerId <= 0) {
+            return;
+        }
+
+        event.preventDefault();
+        const touch = event.touches[0];
+        if (!touch) {
+            return;
+        }
+
+        const rect = token.getBoundingClientRect();
+        const ghost = token.cloneNode(true);
+        ghost.style.position = 'fixed';
+        ghost.style.left = `${rect.left}px`;
+        ghost.style.top = `${rect.top}px`;
+        ghost.style.width = `${rect.width}px`;
+        ghost.style.zIndex = '5000';
+        ghost.style.pointerEvents = 'none';
+        ghost.style.opacity = '0.9';
+        ghost.style.transform = 'scale(1.08)';
+        document.body.appendChild(ghost);
+
+        token.style.opacity = '0.3';
+        activeTouchDrag = {
+            source,
+            playerId,
+            slotCode: String(token.dataset.slotCode || ''),
+            sourceToken: token,
+            ghostEl: ghost,
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top
+        };
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (event) => {
+        if (!activeTouchDrag) {
+            return;
+        }
+        event.preventDefault();
+        const touch = event.touches[0];
+        if (!touch) {
+            return;
+        }
+
+        activeTouchDrag.ghostEl.style.left = `${touch.clientX - activeTouchDrag.offsetX}px`;
+        activeTouchDrag.ghostEl.style.top = `${touch.clientY - activeTouchDrag.offsetY}px`;
+    }, { passive: false });
+
+    document.addEventListener('touchend', async (event) => {
+        if (!activeTouchDrag) {
+            return;
+        }
+
+        const touch = event.changedTouches[0];
+        if (!touch) {
+            clearTouchDragState();
+            return;
+        }
+
+        const dropElements = document.elementsFromPoint(touch.clientX, touch.clientY);
+        try {
+            if (activeTouchDrag.source === 'bench') {
+                const dropTarget = dropElements.find((element) => element.classList && element.classList.contains('on-field') && element.dataset && element.dataset.source === 'field');
+                const targetToken = dropTarget || getClosestFieldToken(touch.clientX, touch.clientY);
+                if (targetToken) {
+                    const playerOutId = Number.parseInt(targetToken.dataset.playerId, 10) || 0;
+                    const slotCode = String(targetToken.dataset.slotCode || '');
+                    await performSubstitution(playerOutId, activeTouchDrag.playerId, slotCode);
+                }
+            } else if (activeTouchDrag.source === 'field') {
+                const fieldToken = dropElements.find((element) => (
+                    element.classList &&
+                    element.classList.contains('on-field') &&
+                    element.dataset &&
+                    element.dataset.source === 'field'
+                ));
+                if (fieldToken) {
+                    const playerOutId = activeTouchDrag.playerId;
+                    const playerInId = Number.parseInt(fieldToken.dataset.playerId, 10) || 0;
+                    if (playerOutId > 0 && playerInId > 0 && playerOutId !== playerInId) {
+                        await performSubstitution(playerOutId, playerInId, activeTouchDrag.slotCode || '');
+                    }
+                    return;
+                }
+
+                const benchToken = dropElements.find((element) => element.classList && element.classList.contains('player-token') && element.dataset && element.dataset.source === 'bench');
+                if (benchToken) {
+                    const playerInId = Number.parseInt(benchToken.dataset.playerId, 10) || 0;
+                    await performSubstitution(activeTouchDrag.playerId, playerInId, activeTouchDrag.slotCode || '');
+                }
+            }
+        } catch (error) {
+            alert(`Fout: ${error.message}`);
+        } finally {
+            clearTouchDragState();
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchcancel', () => {
+        clearTouchDragState();
+    }, { passive: false });
 
     enforceLiveViewport();
     updateOrientationOverlay();
@@ -142,193 +1157,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    timerBtn.addEventListener('click', () => {
-        // Optimization: immediately toggle UI state for responsiveness? 
-        // Better wait for server confirmation to avoid de-sync.
-        
-        const action = state.is_playing ? 'stop' : 'start';
-        
-        fetch('/matches/timer-action', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken
-            },
-            body: JSON.stringify({
-                match_id: matchId,
-                action: action
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                state = data.timerState;
-                startTicker();
-            }
-        });
-    });
-
-    // Start ticker on load
     startTicker();
     updateScoreUI();
-
-    // --- Modal Logic ---
-    window.openActionModal = function(type) {
-        document.getElementById('modal-type').value = type;
-        
-        const typeLabels = {
-            'goal': 'Doelpunt Toevoegen',
-            'card': 'Kaart Geven',
-            'sub': 'Wissel Doorvoeren',
-            'other': 'Notitie Maken'
-        };
-        document.getElementById('modal-title').textContent = typeLabels[type] || 'Actie Toevoegen';
-
-        // Toggle visibility of fields based on type
-        const playerSelectGroup = document.getElementById('player-select-group');
-        const subGroup = document.getElementById('sub-group');
-        
-        if (type === 'sub') {
-            playerSelectGroup.style.display = 'none';
-            subGroup.style.display = 'block';
-            
-            // Required attribute toggle for HTML5 validation would be nice but not strictly required if we validate in JS
-        } else {
-            playerSelectGroup.style.display = 'block';
-            subGroup.style.display = 'none';
-        }
-        
-        // Calculate current minute
-        let currentMinute = Math.floor(state.total_seconds / 60);
-        if (state.is_playing) {
-            const now = Math.floor(Date.now() / 1000);
-            currentMinute = Math.floor((state.total_seconds + (now - state.start_time)) / 60);
-        }
-        // Always round up to next minute for display (0:01 = 1st minute)
-        currentMinute += 1; 
-
-        document.getElementById('modal-minute').value = currentMinute;
-        
-        // Toggle player select for 'card'
-        if (type === 'card') {
-             // Maybe show radio buttons for yellow/red?
-             // For simplicity, just use description or assume user selects type in specific buttons if I split them.
-             // The view has one "Kaart" button. I should probably let them choose Yellow/Red in the modal?
-             // Or update modal to have a sub-type selector?
-             // Existing code uses 'card_yellow', 'card_red'.
-             // Simplification: Let's assume the user selects correct type via description or I add a selector.
-             // But 'type' is hidden input. 
-             // To fix: Split buttons in View or Add selector in Modal.
-             // View has "Kaart" button which passes 'card'.
-             // Let's change hidden input to a select for cards.
-        }
-        
-        modal.style.display = 'flex';
-    };
-
-    window.closeModal = function() {
-        modal.style.display = 'none';
-        actionForm.reset();
-    };
-
-    actionForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(actionForm);
-        const data = Object.fromEntries(formData.entries());
-        
-        // Handle special player values for Goal
-        if (data.type === 'goal') {
-             const playerSelect = actionForm.querySelector('select[name="player_id"]');
-             if (playerSelect) {
-                 if (playerSelect.value === 'unknown') {
-                     data.type = 'goal_unknown';
-                     data.player_id = ''; 
-                 } else if (playerSelect.value === 'opponent') {
-                     data.type = 'goal'; 
-                     data.player_id = '';
-                 }
-             }
-        }
-
-        // Handle 'card' generic type -> prompt or default to yellow?
-        // Ideally I should have added buttons for Yellow/Red.
-        // Let's rely on description for now or hardcode specific logic not implemented completely.
-        // Actually, Controller expects 'card_yellow' or 'card_red' in enum?
-        // Views/matches/view.php select options: card_yellow, card_red.
-        // If I send 'card', it might fail validation or just be 'card'.
-        // Let's assume 'card_yellow' as default if 'card' is passed, or user types "Rood" in desc.
-        // Better: Add select in modal if type is 'card'.
-        
-        // Quick fix: Map 'card' to 'card_yellow' by default.
-        if (data.type === 'card') {
-             // Ask user or default?
-             data.type = 'card_yellow'; // Default
-             if (confirm("Is het een Rode kaart? Klik OK voor Rood, Annuleren voor Geel.")) {
-                 data.type = 'card_red';
-             }
-        }
-
-        if (data.type === 'sub') {
-             const inPlayer = document.getElementById('player_in').options[document.getElementById('player_in').selectedIndex].text;
-             const outPlayer = document.getElementById('player_out').options[document.getElementById('player_out').selectedIndex].text;
-             data.description = `UIT: ${outPlayer} -> IN: ${inPlayer}`;
-             
-             // Optionally send player_id as the one coming IN? Or just use description.
-             // Let's set player_id to the incoming player so it's linked to him in stats if needed
-             data.player_id = document.getElementById('player_in').value;
-        }
-        
-        data.action = 'add';
-        data.csrf_token = csrfToken;
-        
-        fetch('/matches/add-event', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken
-            },
-            body: JSON.stringify(data)
-        })
-        .then(res => res.json())
-        .then(resData => {
-            if (resData.success) {
-                closeModal();
-                if (typeof resData.score_home !== 'undefined' && typeof resData.score_away !== 'undefined') {
-                    scoreState.home = Number.parseInt(resData.score_home, 10) || 0;
-                    scoreState.away = Number.parseInt(resData.score_away, 10) || 0;
-                    updateScoreUI();
-                }
-                // Refresh timeline
-                // Simplified: just reload list mostly or append.
-                // Since `resData.events` returns full list, simpler to rebuild list.
-                renderTimeline(resData.events);
-            } else {
-                alert('Fout: ' + (resData.error || 'Onbekend'));
-            }
-        });
-    });
-
-    function renderTimeline(events) {
-        timelineList.innerHTML = '';
-        events.forEach(event => {
-            if (event.type === 'whistle') return;
-            
-            const li = document.createElement('li');
-            li.style.borderBottom = '1px solid #eee';
-            li.style.padding = '0.5rem 0';
-            
-            let icon = '🔹';
-            if(event.type === 'goal') {
-                icon = event.player_id ? '⚽ Doelpunt' : '⚽ Tegendoelpunt';
-            }
-            if(event.type === 'goal_unknown') icon = '⚽ Doelpunt (Overig)';
-            if(event.type === 'card_yellow') icon = '🟨 Gele kaart';
-            if(event.type === 'card_red') icon = '🟥 Rode kaart';
-            if(event.type === 'sub') icon = '🔄 Wissel';
-            
-            li.innerHTML = `<strong>${event.minute}'</strong> ${icon} ${event.player_name ? 'door <strong>' + event.player_name + '</strong>' : ''}`;
-            timelineList.appendChild(li);
-        });
-    }
+    renderLiveState();
+    renderTimeline(timelineEvents);
 });

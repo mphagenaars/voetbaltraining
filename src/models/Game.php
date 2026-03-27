@@ -98,6 +98,27 @@ class Game extends Model {
         return $stmt->fetchAll();
     }
 
+    public function getMatchPlayersForLive(int $matchId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                mp.match_id,
+                mp.player_id,
+                mp.position_x,
+                mp.position_y,
+                mp.is_substitute,
+                mp.is_keeper,
+                mp.is_absent,
+                p.name AS player_name,
+                p.number
+            FROM match_players mp
+            JOIN players p ON p.id = mp.player_id
+            WHERE mp.match_id = :match_id
+            ORDER BY p.name ASC
+        ");
+        $stmt->execute([':match_id' => $matchId]);
+        return $stmt->fetchAll();
+    }
+
     public function addEvent(int $matchId, int $minute, string $type, ?int $playerId, ?string $description, int $period = 1): void {
         $stmt = $this->pdo->prepare("INSERT INTO match_events (match_id, minute, type, player_id, description, period) VALUES (:match_id, :minute, :type, :player_id, :description, :period)");
         $stmt->execute([
@@ -120,6 +141,210 @@ class Game extends Model {
         ");
         $stmt->execute([':match_id' => $matchId]);
         return $stmt->fetchAll();
+    }
+
+    public function getWhistleEvents(int $matchId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, period, description, created_at
+            FROM match_events
+            WHERE match_id = :match_id
+              AND type = 'whistle'
+            ORDER BY created_at ASC, id ASC
+        ");
+        $stmt->execute([':match_id' => $matchId]);
+        return $stmt->fetchAll();
+    }
+
+    public function getPeriodLineups(int $matchId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                mpl.*,
+                p.name AS player_name
+            FROM match_period_lineups mpl
+            LEFT JOIN players p ON p.id = mpl.player_id
+            WHERE mpl.match_id = :match_id
+            ORDER BY mpl.period ASC, mpl.slot_code ASC
+        ");
+        $stmt->execute([':match_id' => $matchId]);
+        return $stmt->fetchAll();
+    }
+
+    public function replacePeriodLineup(int $matchId, int $period, array $slots, ?int $createdBy): void {
+        $this->pdo->beginTransaction();
+        try {
+            $deleteStmt = $this->pdo->prepare("
+                DELETE FROM match_period_lineups
+                WHERE match_id = :match_id
+                  AND period = :period
+            ");
+            $deleteStmt->execute([
+                ':match_id' => $matchId,
+                ':period' => $period,
+            ]);
+
+            if (!empty($slots)) {
+                $insertStmt = $this->pdo->prepare("
+                    INSERT INTO match_period_lineups (match_id, period, slot_code, player_id, created_by)
+                    VALUES (:match_id, :period, :slot_code, :player_id, :created_by)
+                ");
+                foreach ($slots as $slot) {
+                    $insertStmt->execute([
+                        ':match_id' => $matchId,
+                        ':period' => $period,
+                        ':slot_code' => (string)$slot['slot_code'],
+                        ':player_id' => (int)$slot['player_id'],
+                        ':created_by' => $createdBy,
+                    ]);
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    public function getSubstitutions(int $matchId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                ms.*,
+                po.name AS player_out_name,
+                pi.name AS player_in_name
+            FROM match_substitutions ms
+            JOIN players po ON po.id = ms.player_out_id
+            JOIN players pi ON pi.id = ms.player_in_id
+            WHERE ms.match_id = :match_id
+            ORDER BY ms.period ASC, ms.clock_seconds ASC, ms.id ASC
+        ");
+        $stmt->execute([':match_id' => $matchId]);
+        return $stmt->fetchAll();
+    }
+
+    public function createSubstitution(array $data): int {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO match_substitutions (
+                match_id,
+                period,
+                clock_seconds,
+                minute_display,
+                slot_code,
+                player_out_id,
+                player_in_id,
+                source,
+                raw_transcript,
+                transcript_confidence,
+                stt_model_id,
+                created_by
+            ) VALUES (
+                :match_id,
+                :period,
+                :clock_seconds,
+                :minute_display,
+                :slot_code,
+                :player_out_id,
+                :player_in_id,
+                :source,
+                :raw_transcript,
+                :transcript_confidence,
+                :stt_model_id,
+                :created_by
+            )
+        ");
+        $stmt->execute([
+            ':match_id' => (int)$data['match_id'],
+            ':period' => (int)$data['period'],
+            ':clock_seconds' => (int)$data['clock_seconds'],
+            ':minute_display' => (int)$data['minute_display'],
+            ':slot_code' => (string)$data['slot_code'],
+            ':player_out_id' => (int)$data['player_out_id'],
+            ':player_in_id' => (int)$data['player_in_id'],
+            ':source' => (string)($data['source'] ?? 'manual'),
+            ':raw_transcript' => $data['raw_transcript'] ?? null,
+            ':transcript_confidence' => $data['transcript_confidence'] ?? null,
+            ':stt_model_id' => $data['stt_model_id'] ?? null,
+            ':created_by' => $data['created_by'] ?? null,
+        ]);
+
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    public function getSubstitutionById(int $matchId, int $substitutionId): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                ms.*,
+                po.name AS player_out_name,
+                pi.name AS player_in_name
+            FROM match_substitutions ms
+            JOIN players po ON po.id = ms.player_out_id
+            JOIN players pi ON pi.id = ms.player_in_id
+            WHERE ms.match_id = :match_id
+              AND ms.id = :id
+            LIMIT 1
+        ");
+        $stmt->execute([
+            ':match_id' => $matchId,
+            ':id' => $substitutionId,
+        ]);
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
+    public function getLatestSubstitution(int $matchId): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                ms.*,
+                po.name AS player_out_name,
+                pi.name AS player_in_name
+            FROM match_substitutions ms
+            JOIN players po ON po.id = ms.player_out_id
+            JOIN players pi ON pi.id = ms.player_in_id
+            WHERE ms.match_id = :match_id
+            ORDER BY ms.id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':match_id' => $matchId]);
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
+    public function deleteSubstitution(int $matchId, int $substitutionId): void {
+        $stmt = $this->pdo->prepare("
+            DELETE FROM match_substitutions
+            WHERE match_id = :match_id
+              AND id = :id
+        ");
+        $stmt->execute([
+            ':match_id' => $matchId,
+            ':id' => $substitutionId,
+        ]);
+    }
+
+    public function addSubstitutionEvent(
+        int $matchId,
+        int $minute,
+        int $period,
+        int $playerInId,
+        int $substitutionId,
+        string $description
+    ): void {
+        $eventDescription = '[[sub:' . $substitutionId . ']] ' . trim($description);
+        $this->addEvent($matchId, $minute, 'sub', $playerInId, $eventDescription, $period);
+    }
+
+    public function deleteSubstitutionEventBySubstitutionId(int $matchId, int $substitutionId): void {
+        $stmt = $this->pdo->prepare("
+            DELETE FROM match_events
+            WHERE match_id = :match_id
+              AND type = 'sub'
+              AND description LIKE :description_marker
+        ");
+        $stmt->execute([
+            ':match_id' => $matchId,
+            ':description_marker' => '[[sub:' . $substitutionId . ']]%',
+        ]);
     }
 
     public function getPlayerReportStats(int $teamId, string $sortBy = 'matches', string $sortDir = 'desc'): array {

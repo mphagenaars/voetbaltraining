@@ -219,6 +219,12 @@
 
             <ul class="timeline" style="list-style: none; padding: 0;">
                 <?php foreach ($events as $event): ?>
+                    <?php
+                        $eventDescription = (string)($event['description'] ?? '');
+                        if ($event['type'] === 'sub') {
+                            $eventDescription = preg_replace('/^\[\[sub:\d+\]\]\s*/', '', $eventDescription) ?? $eventDescription;
+                        }
+                    ?>
                     <li style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
                         <strong><?= $event['minute'] ?>'</strong> 
                         
@@ -238,8 +244,8 @@
                             door <strong><?= e($event['player_name']) ?></strong>
                         <?php endif; ?>
                         
-                        <?php if ($event['description']): ?>
-                            (<?= e($event['description']) ?>)
+                        <?php if ($eventDescription !== ''): ?>
+                            (<?= e($eventDescription) ?>)
                         <?php endif; ?>
                     </li>
                 <?php endforeach; ?>

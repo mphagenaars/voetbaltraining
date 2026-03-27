@@ -1,0 +1,21 @@
+# Deploy configuratie
+# Kopieer dit bestand naar .deploy.conf en vul je eigen gegevens in:
+#   cp .deploy.conf.example .deploy.conf
+#
+# .deploy.conf staat in .gitignore en komt nooit in de repository.
+
+# SSH-gebruiker op de productieserver
+DEPLOY_USER="ubuntu"
+
+# Hostname of IP-adres van de productieserver
+DEPLOY_HOST="jouw-server.example.com"
+
+# Volledig pad naar de projectmap op de server
+DEPLOY_PATH="/home/ubuntu/voetbaltraining/voetbaltraining"
+
+# Git branch om naar te deployen (standaard: main)
+DEPLOY_BRANCH="main"
+
+# Pad naar de Apache vhost-configuratie op de server (standaard hieronder)
+# Alleen nodig als je een afwijkende locatie hebt.
+# DEPLOY_VHOST_FILE="/etc/apache2/sites-available/voetbaltraining.conf"

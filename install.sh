@@ -55,9 +55,28 @@ fi
 echo "    - yt-dlp geïnstalleerd op $YT_DLP_PATH en uitvoerbaar voor $WEB_USER."
 echo "    - ffmpeg beschikbaar."
 
-# 4. Apache Configuratie
+# 4. Encryptiesleutel genereren
 echo ""
-echo "🔧  [3/9] Apache configureren..."
+echo "🔑  [3/9] Encryptiesleutel genereren..."
+
+ENCRYPTION_KEY=$(php -r "
+    if (!function_exists('sodium_crypto_secretbox_keygen')) {
+        fwrite(STDERR, 'Sodium-extensie ontbreekt.\n');
+        exit(1);
+    }
+    echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen());
+")
+
+if [ -z "$ENCRYPTION_KEY" ]; then
+    echo "❌  Fout: Kon geen encryptiesleutel genereren."
+    exit 1
+fi
+
+echo "    - Encryptiesleutel gegenereerd."
+
+# 5. Apache Configuratie
+echo ""
+echo "🔧  [4/9] Apache configureren..."
 
 # Enable mod_rewrite
 a2enmod rewrite
@@ -71,6 +90,9 @@ cat > $CONF_FILE <<EOF
     ServerAdmin webmaster@localhost
     DocumentRoot $PROJECT_DIR/public
 
+    # Encryptiesleutel — bewaar deze goed, verlies = verlies van alle API-sleutels
+    SetEnv APP_ENCRYPTION_KEY "$ENCRYPTION_KEY"
+
     <Directory $PROJECT_DIR/public>
         Options Indexes FollowSymLinks
         AllowOverride All
@@ -82,37 +104,22 @@ cat > $CONF_FILE <<EOF
 </VirtualHost>
 EOF
 
+echo "    - Encryptiesleutel opgeslagen als SetEnv in $CONF_FILE"
+echo "    - Niet opgeslagen in data/config.php (veiliger: staat niet in de code)."
+
 # Schakel default site uit en nieuwe site in
 if [ -f /etc/apache2/sites-enabled/000-default.conf ]; then
     a2dissite 000-default.conf > /dev/null
 fi
 a2ensite voetbaltraining.conf > /dev/null
 
-# 5. Mappen Structuur
+# 6. Mappen Structuur
 echo ""
-echo "📂  [4/9] Mappen aanmaken..."
+echo "📂  [5/9] Mappen aanmaken..."
 mkdir -p data
 mkdir -p public/uploads
 echo "    - Map 'data' gecontroleerd."
 echo "    - Map 'public/uploads' gecontroleerd."
-
-# 6. Runtime configuratie
-echo ""
-echo "🧩  [5/9] Runtime configuratie genereren..."
-CONFIG_FILE="$PROJECT_DIR/data/config.php"
-if [ ! -f "$CONFIG_FILE" ]; then
-    ENCRYPTION_KEY=$(php -r "if (!function_exists('sodium_crypto_secretbox_keygen')) { fwrite(STDERR, 'Sodium-extensie ontbreekt.\n'); exit(1); } echo 'base64:' . base64_encode(sodium_crypto_secretbox_keygen());")
-    cat > "$CONFIG_FILE" <<EOF
-<?php
-return [
-    'encryption_key' => '$ENCRYPTION_KEY',
-];
-EOF
-    chmod 640 "$CONFIG_FILE"
-    echo "    - data/config.php aangemaakt met encryptiesleutel."
-else
-    echo "    - data/config.php bestaat al, overslaan."
-fi
 
 # 7. Database Initialisatie
 echo ""
@@ -163,9 +170,6 @@ fi
 
 # Zorg dat de map zelf ook schrijfbaar is voor SQLite (voor lock files etc)
 chmod 770 "$PROJECT_DIR/data"
-if [ -f "$PROJECT_DIR/data/config.php" ]; then
-    chmod 640 "$PROJECT_DIR/data/config.php"
-fi
 
 echo "    - Bestandsrechten ingesteld (Owner: $OWNER, Group: $WEB_USER)."
 
@@ -207,6 +211,16 @@ echo "=========================================="
 echo "✅  Installatie Voltooid!"
 echo "=========================================="
 echo "Je applicatie is nu bereikbaar."
+echo ""
+echo "🔑  BEWAAR DEZE SLEUTEL OP EEN VEILIGE PLEK:"
+echo "    $ENCRYPTION_KEY"
+echo ""
+echo "    De sleutel staat in $CONF_FILE als SetEnv."
+echo "    Verlies je de sleutel? Dan kun je de opgeslagen API-keys"
+echo "    niet meer ontsleutelen en moet je ze opnieuw invoeren."
+echo ""
+echo "🔄  Sleutel later rouleren?"
+echo "    php scripts/rotate_encryption_key.php"
 echo ""
 echo "⚠️  BELANGRIJK: Je verbinding is nog HTTP (onveilig)."
 echo "    Zorg z.s.m. voor een SSL certificaat (bijv. met Certbot)."

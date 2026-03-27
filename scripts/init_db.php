@@ -453,6 +453,60 @@ try {
         echo "- Kolom 'period' toegevoegd aan 'match_events'.\n";
     }
 
+    // Indexen voor live timeline/timer queries
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_events_match_type_created ON match_events (match_id, type, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_events_match_minute_created ON match_events (match_id, minute, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_events_match_created ON match_events (match_id, created_at)");
+    echo "- Indexen voor 'match_events' gecontroleerd/aangemaakt.\n";
+
+    // Match period lineups (startopstelling per periode + slot)
+    $db->exec("CREATE TABLE IF NOT EXISTS match_period_lineups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        period INTEGER NOT NULL,
+        slot_code TEXT NOT NULL,
+        player_id INTEGER NOT NULL,
+        created_by INTEGER NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+        FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE (match_id, period, slot_code)
+    )");
+    echo "- Tabel 'match_period_lineups' aangemaakt (of bestond al).\n";
+
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_period_lineups_match_period ON match_period_lineups (match_id, period)");
+    echo "- Indexen voor 'match_period_lineups' gecontroleerd/aangemaakt.\n";
+
+    // Match substitutions (gestructureerde wisselregistratie)
+    $db->exec("CREATE TABLE IF NOT EXISTS match_substitutions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        period INTEGER NOT NULL,
+        clock_seconds INTEGER NOT NULL,
+        minute_display INTEGER NOT NULL,
+        slot_code TEXT NOT NULL,
+        player_out_id INTEGER NOT NULL,
+        player_in_id INTEGER NOT NULL,
+        source TEXT NOT NULL DEFAULT 'manual',
+        raw_transcript TEXT NULL,
+        transcript_confidence REAL NULL,
+        stt_model_id TEXT NULL,
+        created_by INTEGER NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CHECK (player_out_id <> player_in_id),
+        CHECK (source IN ('manual', 'voice')),
+        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+        FOREIGN KEY (player_out_id) REFERENCES players(id) ON DELETE CASCADE,
+        FOREIGN KEY (player_in_id) REFERENCES players(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    )");
+    echo "- Tabel 'match_substitutions' aangemaakt (of bestond al).\n";
+
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_substitutions_match_clock_created ON match_substitutions (match_id, clock_seconds, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_substitutions_match_period ON match_substitutions (match_id, period)");
+    echo "- Indexen voor 'match_substitutions' gecontroleerd/aangemaakt.\n";
+
     // Match tactics (wedstrijdsituaties op tactiekbord)
     $db->exec("CREATE TABLE IF NOT EXISTS match_tactics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

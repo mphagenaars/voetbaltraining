@@ -27,6 +27,9 @@ if (is_dir('/tmp')) {
     session_save_path('/tmp');
 }
 Session::start();
+if (ob_get_level() === 0) {
+    ob_start();
+}
 
 class RedirectIntercept extends RuntimeException {
     public function __construct(public string $path) {
@@ -35,6 +38,41 @@ class RedirectIntercept extends RuntimeException {
 }
 
 class TestExerciseController extends ExerciseController {
+    protected function redirect(string $path): void {
+        throw new RedirectIntercept($path);
+    }
+
+    protected function logActivity(string $action, ?int $entityId = null, ?string $details = null): void {
+        // No-op in tests.
+    }
+}
+
+class TestGameController extends GameController {
+    private ?array $forcedJsonBody = null;
+    private bool $forceJsonRequest = false;
+
+    public function setJsonBody(?array $body): void {
+        $this->forcedJsonBody = $body;
+    }
+
+    public function setJsonRequest(bool $isJson): void {
+        $this->forceJsonRequest = $isJson;
+    }
+
+    protected function decodeJsonBody(): ?array {
+        if ($this->forcedJsonBody !== null || $this->forceJsonRequest) {
+            return $this->forcedJsonBody;
+        }
+        return parent::decodeJsonBody();
+    }
+
+    protected function isJsonRequest(): bool {
+        if ($this->forceJsonRequest) {
+            return true;
+        }
+        return parent::isJsonRequest();
+    }
+
     protected function redirect(string $path): void {
         throw new RedirectIntercept($path);
     }
@@ -220,6 +258,13 @@ function loginAs(int $userId, string $name, bool $isAdmin = false): void {
     Session::set('is_admin', $isAdmin);
 }
 
+function setCurrentTeam(int $teamId, string $teamName = 'Team A'): void {
+    Session::set('current_team', [
+        'id' => $teamId,
+        'name' => $teamName,
+    ]);
+}
+
 function setPost(array $data): void {
     $_SERVER['REQUEST_METHOD'] = 'POST';
     $_POST = $data;
@@ -259,6 +304,216 @@ function withFreshContext(callable $fn): void {
     createSchema($pdo);
     seedData($pdo);
     $fn($pdo);
+}
+
+function createLiveSchema(PDO $pdo): void {
+    $pdo->exec("
+        CREATE TABLE users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL,
+            is_admin INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE team_members (
+            user_id INTEGER NOT NULL,
+            team_id INTEGER NOT NULL,
+            is_coach INTEGER DEFAULT 0,
+            is_trainer INTEGER DEFAULT 0,
+            PRIMARY KEY (user_id, team_id)
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            opponent TEXT NOT NULL,
+            date TEXT,
+            is_home INTEGER DEFAULT 1,
+            score_home INTEGER DEFAULT 0,
+            score_away INTEGER DEFAULT 0,
+            formation TEXT DEFAULT ''
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE players (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            number INTEGER
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE match_players (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            player_id INTEGER NOT NULL,
+            position_x REAL DEFAULT 0,
+            position_y REAL DEFAULT 0,
+            is_substitute INTEGER DEFAULT 0,
+            is_keeper INTEGER DEFAULT 0,
+            is_absent INTEGER DEFAULT 0
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE match_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            minute INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            player_id INTEGER,
+            description TEXT,
+            period INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE match_period_lineups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            period INTEGER NOT NULL,
+            slot_code TEXT NOT NULL,
+            player_id INTEGER NOT NULL
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE match_substitutions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            period INTEGER NOT NULL,
+            clock_seconds INTEGER NOT NULL,
+            minute_display INTEGER NOT NULL,
+            slot_code TEXT NOT NULL,
+            player_out_id INTEGER NOT NULL,
+            player_in_id INTEGER NOT NULL,
+            source TEXT NOT NULL DEFAULT 'manual',
+            raw_transcript TEXT NULL,
+            transcript_confidence REAL NULL,
+            stt_model_id TEXT NULL,
+            created_by INTEGER NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+}
+
+function seedLiveData(PDO $pdo): void {
+    $pdo->exec("
+        INSERT INTO users (id, username, password_hash, name, is_admin) VALUES
+        (1, 'trainer', 'x', 'Trainer User', 0)
+    ");
+
+    $pdo->exec("
+        INSERT INTO teams (id, name) VALUES
+        (1, 'Team A'),
+        (2, 'Team B')
+    ");
+
+    $pdo->exec("
+        INSERT INTO team_members (user_id, team_id, is_coach, is_trainer) VALUES
+        (1, 1, 1, 1)
+    ");
+
+    $pdo->exec("
+        INSERT INTO matches (id, team_id, opponent, date, is_home, formation)
+        VALUES (1, 1, 'Test Opponent', '2026-03-27', 1, '')
+    ");
+
+    $pdo->exec("
+        INSERT INTO players (id, team_id, name, number) VALUES
+        (1, 1, 'GK', 1),
+        (2, 1, 'A', 2),
+        (3, 1, 'B', 3),
+        (4, 1, 'C', 4),
+        (5, 1, 'D', 5),
+        (6, 1, 'E', 6),
+        (7, 1, 'F', 7)
+    ");
+
+    $pdo->exec("
+        INSERT INTO match_players (match_id, player_id, position_x, position_y, is_substitute, is_keeper, is_absent) VALUES
+        (1, 1, 50, 92, 0, 1, 0),
+        (1, 2, 20, 20, 0, 0, 0),
+        (1, 3, 80, 20, 0, 0, 0),
+        (1, 4, 50, 45, 0, 0, 0),
+        (1, 5, 20, 70, 0, 0, 0),
+        (1, 6, 80, 70, 0, 0, 0),
+        (1, 7, 50, 50, 1, 0, 0)
+    ");
+}
+
+function withFreshLiveContext(callable $fn): void {
+    resetRequestState();
+    $pdo = createTestPdo();
+    createLiveSchema($pdo);
+    seedLiveData($pdo);
+    $fn($pdo);
+}
+
+function slotForPlayer(array $lineupMap, int $playerId): ?string {
+    foreach ($lineupMap as $slotCode => $mappedPlayerId) {
+        if ((int)$mappedPlayerId === $playerId) {
+            return (string)$slotCode;
+        }
+    }
+    return null;
+}
+
+function activePositionForPlayer(array $activeLineup, int $playerId): ?array {
+    foreach ($activeLineup as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        if ((int)($row['player_id'] ?? 0) !== $playerId) {
+            continue;
+        }
+        return [
+            'x' => isset($row['position_x']) ? (float)$row['position_x'] : 0.0,
+            'y' => isset($row['position_y']) ? (float)$row['position_y'] : 0.0,
+        ];
+    }
+    return null;
+}
+
+function expectedSixVsSixAnchor(string $slotCode): ?array {
+    $normalized = strtoupper(trim($slotCode));
+    $alias = [
+        'K' => 'GK',
+        'S01' => 'LV',
+        'S02' => 'RV',
+        'S03' => 'M',
+        'S04' => 'LA',
+        'S05' => 'RA',
+        'S06' => 'GK',
+    ];
+    $canonicalSlot = $alias[$normalized] ?? $normalized;
+
+    $anchors = [
+        'GK' => ['x' => 50.0, 'y' => 88.0],
+        'LA' => ['x' => 20.0, 'y' => 65.0],
+        'RA' => ['x' => 80.0, 'y' => 65.0],
+        'M' => ['x' => 50.0, 'y' => 45.0],
+        'LV' => ['x' => 20.0, 'y' => 20.0],
+        'RV' => ['x' => 80.0, 'y' => 20.0],
+    ];
+
+    return $anchors[$canonicalSlot] ?? null;
 }
 
 $tests = [];
@@ -393,6 +648,217 @@ $tests['non-POST reaction route has safe fallback redirect'] = function (): void
         $controller = new TestExerciseController($pdo);
         $redirect = captureRedirect(fn() => $controller->toggleReaction());
         assertSame('/exercises/view?id=1&from_training=1', $redirect, 'Non-POST reaction route should redirect safely');
+    });
+};
+
+$tests['live mode supports back-to-back field swaps and undo order'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        $gameModel = new Game($pdo);
+        $liveStateService = new MatchLiveStateService($pdo, $gameModel);
+        $substitutionService = new MatchSubstitutionService($pdo, $gameModel, $liveStateService);
+
+        $initial = $liveStateService->getLiveState(1);
+        assertSame('S01', slotForPlayer($initial['lineup_map'], 2), 'Player A should start at S01');
+        assertSame('S02', slotForPlayer($initial['lineup_map'], 3), 'Player B should start at S02');
+        assertSame('S03', slotForPlayer($initial['lineup_map'], 4), 'Player C should start at S03');
+
+        $substitutionService->applyManualSubstitution(1, 2, 3, null, 1);
+        $afterFirstSwap = $liveStateService->getLiveState(1);
+        assertSame('S02', slotForPlayer($afterFirstSwap['lineup_map'], 2), 'After first swap, A should be at S02');
+        assertSame('S01', slotForPlayer($afterFirstSwap['lineup_map'], 3), 'After first swap, B should be at S01');
+
+        $substitutionService->applyManualSubstitution(1, 3, 4, null, 1);
+        $afterSecondSwap = $liveStateService->getLiveState(1);
+        assertSame('S03', slotForPlayer($afterSecondSwap['lineup_map'], 3), 'After second swap, B should be at S03');
+        assertSame('S01', slotForPlayer($afterSecondSwap['lineup_map'], 4), 'After second swap, C should be at S01');
+        assertSame(2, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1"), 'Expected two substitution records');
+        assertSame(2, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1 AND minute_display = 1"), 'Both swaps should share minute_display=1');
+
+        $substitutionService->undoLastSubstitution(1);
+        $afterUndoOne = $liveStateService->getLiveState(1);
+        assertSame('S01', slotForPlayer($afterUndoOne['lineup_map'], 3), 'After first undo, B should return to S01');
+        assertSame('S03', slotForPlayer($afterUndoOne['lineup_map'], 4), 'After first undo, C should return to S03');
+        assertSame(1, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1"), 'After first undo one substitution should remain');
+
+        $substitutionService->undoLastSubstitution(1);
+        $afterUndoTwo = $liveStateService->getLiveState(1);
+        assertSame('S01', slotForPlayer($afterUndoTwo['lineup_map'], 2), 'After second undo, A should be back at S01');
+        assertSame('S02', slotForPlayer($afterUndoTwo['lineup_map'], 3), 'After second undo, B should be back at S02');
+        assertSame('S03', slotForPlayer($afterUndoTwo['lineup_map'], 4), 'After second undo, C should be back at S03');
+        assertSame(0, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_substitutions WHERE match_id = 1"), 'After second undo no substitutions should remain');
+    });
+};
+
+$tests['live mode fallback slot positioning uses canonical six-vs-six anchor'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        // Create one invalid field coordinate so this slot must use fallback positioning.
+        $pdo->exec("
+            UPDATE match_players
+            SET position_x = 100, position_y = 60
+            WHERE match_id = 1
+              AND player_id = 5
+        ");
+
+        $gameModel = new Game($pdo);
+        $liveStateService = new MatchLiveStateService($pdo, $gameModel);
+        $liveState = $liveStateService->getLiveState(1);
+
+        $playerPosition = activePositionForPlayer($liveState['active_lineup'] ?? [], 5);
+        assertTrue(is_array($playerPosition), 'Fallback-positioned player should be present in active lineup');
+
+        $slotCode = slotForPlayer($liveState['lineup_map'] ?? [], 5);
+        assertTrue(is_string($slotCode) && $slotCode !== '', 'Player should still be mapped to a live slot');
+        $expectedAnchor = expectedSixVsSixAnchor((string)$slotCode);
+        assertTrue(is_array($expectedAnchor), 'Expected canonical six-vs-six anchor for slot ' . (string)$slotCode);
+
+        $xDiff = abs(((float)$playerPosition['x']) - ((float)$expectedAnchor['x']));
+        $yDiff = abs(((float)$playerPosition['y']) - ((float)$expectedAnchor['y']));
+        assertTrue($xDiff < 0.001, 'Fallback X should match canonical anchor for slot ' . (string)$slotCode);
+        assertTrue($yDiff < 0.001, 'Fallback Y should match canonical anchor for slot ' . (string)$slotCode);
+    });
+};
+
+$tests['live mode keeps six-vs-six slot positions valid and unique with legacy slot mix'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        $pdo->exec("UPDATE matches SET formation = '6-vs-6' WHERE id = 1");
+        $pdo->exec("
+            UPDATE match_players
+            SET position_x = 0, position_y = 0
+            WHERE match_id = 1
+              AND player_id IN (2, 3, 4, 5, 6)
+        ");
+
+        $pdo->exec("DELETE FROM match_period_lineups WHERE match_id = 1");
+        $pdo->exec("
+            INSERT INTO match_period_lineups (match_id, period, slot_code, player_id) VALUES
+            (1, 1, 'GK', 1),
+            (1, 1, 'S01', 2),
+            (1, 1, 'S02', 3),
+            (1, 1, 'S03', 4),
+            (1, 1, 'S04', 5),
+            (1, 1, 'S06', 6)
+        ");
+
+        $gameModel = new Game($pdo);
+        $liveStateService = new MatchLiveStateService($pdo, $gameModel);
+        $liveState = $liveStateService->getLiveStateAt(1, 1, 0, [
+            'current_period' => 1,
+            'total_seconds' => 0,
+        ]);
+
+        $seenPositionKeys = [];
+        foreach (($liveState['active_lineup'] ?? []) as $row) {
+            $slotCode = (string)($row['slot_code'] ?? '');
+            $x = isset($row['position_x']) ? (float)$row['position_x'] : -1.0;
+            $y = isset($row['position_y']) ? (float)$row['position_y'] : -1.0;
+
+            assertTrue($x >= 1.0 && $x <= 99.0, 'X should stay within field bounds for slot ' . $slotCode);
+            assertTrue($y >= 1.0 && $y <= 99.0, 'Y should stay within field bounds for slot ' . $slotCode);
+
+            $positionKey = sprintf('%.2f:%.2f', $x, $y);
+            assertTrue(!isset($seenPositionKeys[$positionKey]), 'Each live slot must map to a unique position');
+            $seenPositionKeys[$positionKey] = true;
+
+            if (in_array($slotCode, ['GK', 'S01', 'S02', 'S03', 'S04'], true)) {
+                $expectedAnchor = expectedSixVsSixAnchor($slotCode);
+                assertTrue(is_array($expectedAnchor), 'Expected anchor for six-vs-six slot ' . $slotCode);
+                $xDiff = abs($x - (float)$expectedAnchor['x']);
+                $yDiff = abs($y - (float)$expectedAnchor['y']);
+                assertTrue($xDiff < 0.001, 'Slot ' . $slotCode . ' should stay on canonical X anchor');
+                assertTrue($yDiff < 0.001, 'Slot ' . $slotCode . ' should stay on canonical Y anchor');
+            }
+        }
+    });
+};
+
+$tests['live timer start is noop when timer already runs'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        loginAs(1, 'Trainer User', false);
+        setCurrentTeam(1, 'Team A');
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/matches/timer-action';
+
+        $pdo->exec("
+            INSERT INTO match_events (match_id, minute, type, player_id, description, period, created_at)
+            VALUES (1, 0, 'whistle', NULL, 'start_period', 1, datetime('now', '-120 seconds'))
+        ");
+
+        $controller = new TestGameController($pdo);
+        $controller->setJsonRequest(true);
+        $controller->setJsonBody([
+            'match_id' => 1,
+            'action' => 'start',
+            'csrf_token' => Csrf::getToken(),
+        ]);
+
+        ob_start();
+        try {
+            $controller->timerAction();
+            $response = (string)ob_get_clean();
+        } catch (Throwable $e) {
+            ob_end_clean();
+            throw $e;
+        }
+
+        $payload = json_decode($response, true);
+        assertTrue(is_array($payload), 'Timer response should be valid JSON');
+        assertTrue(!empty($payload['success']), 'Timer response should indicate success');
+        assertTrue(!empty($payload['noop']), 'Re-entrant start should be returned as noop');
+        assertSame(1, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_events WHERE match_id = 1 AND type = 'whistle' AND description = 'start_period'"), 'No extra start_period whistle should be inserted');
+    });
+};
+
+$tests['live addEvent derives active period when period missing'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        loginAs(1, 'Trainer User', false);
+        setCurrentTeam(1, 'Team A');
+
+        $pdo->exec("
+            INSERT INTO match_events (match_id, minute, type, player_id, description, period, created_at)
+            VALUES (1, 0, 'whistle', NULL, 'start_period', 2, datetime('now', '-90 seconds'))
+        ");
+
+        setPost([
+            'match_id' => '1',
+            'type' => 'other',
+            'minute' => '17',
+            'description' => 'Notitie',
+        ]);
+        $_SERVER['REQUEST_URI'] = '/matches/add-event';
+
+        $controller = new TestGameController($pdo);
+        $redirect = captureRedirect(fn() => $controller->addEvent());
+        assertSame('/matches/view?id=1', $redirect, 'addEvent should redirect back to match view');
+
+        $period = (int)fetchValue($pdo, "SELECT period FROM match_events WHERE match_id = 1 AND type = 'other' ORDER BY id DESC LIMIT 1");
+        assertSame(2, $period, 'Event period should follow active timer period when request omits period');
+    });
+};
+
+$tests['live addEvent blocks player from another team'] = function (): void {
+    withFreshLiveContext(function (PDO $pdo): void {
+        loginAs(1, 'Trainer User', false);
+        setCurrentTeam(1, 'Team A');
+
+        $pdo->exec("
+            INSERT INTO players (id, team_id, name, number) VALUES
+            (99, 2, 'Other Team Player', 99)
+        ");
+
+        setPost([
+            'match_id' => '1',
+            'type' => 'other',
+            'minute' => '5',
+            'player_id' => '99',
+            'description' => 'Invalid player test',
+        ]);
+        $_SERVER['REQUEST_URI'] = '/matches/add-event';
+
+        $controller = new TestGameController($pdo);
+        $redirect = captureRedirect(fn() => $controller->addEvent());
+        assertSame('/matches/view?id=1', $redirect, 'Invalid player should redirect back to match view');
+        assertTrue(Session::hasFlash('error'), 'Invalid player should set an error flash');
+        assertSame(0, (int)fetchValue($pdo, "SELECT COUNT(*) FROM match_events WHERE match_id = 1 AND type = 'other'"), 'Invalid player must not create an event');
     });
 };
 

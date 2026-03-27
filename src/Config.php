@@ -25,12 +25,17 @@ class Config {
         }
 
         $configPath = __DIR__ . '/../data/config.php';
-        if (!file_exists($configPath)) {
+        if (file_exists($configPath)) {
+            $loaded = require $configPath;
+            self::$config = is_array($loaded) ? $loaded : [];
+        } else {
             self::$config = [];
-            return;
         }
 
-        $loaded = require $configPath;
-        self::$config = is_array($loaded) ? $loaded : [];
+        // Environment variable takes precedence over file (preferred for production)
+        $envKey = getenv('APP_ENCRYPTION_KEY');
+        if ($envKey !== false && $envKey !== '') {
+            self::$config['encryption_key'] = $envKey;
+        }
     }
 }
