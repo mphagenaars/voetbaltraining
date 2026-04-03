@@ -24,7 +24,7 @@
         <button type="submit" class="btn btn-primary" style="width: 100%;">Inloggen</button>
     </form>
 
-    <div class="text-center mt-2">
-        <a href="/" style="font-size: 0.875rem;">Terug naar home</a>
+    <div class="text-center mt-2" style="font-size: 0.875rem; color: #6c757d;">
+        Wachtwoord vergeten? Neem contact op met je beheerder.
     </div>
 </div>

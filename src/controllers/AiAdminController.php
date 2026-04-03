@@ -419,6 +419,21 @@ class AiAdminController extends BaseController {
         $this->redirect('/admin/ai/settings');
     }
 
+    public function updateLiveVoiceSettings(): void {
+        $this->requireAdmin();
+        $this->verifyCsrf('/admin/ai/settings');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/ai/settings');
+        }
+
+        $liveVoiceEnabled = !empty($_POST['live_voice_enabled']) ? '1' : '0';
+        $this->settings->set('live_voice_enabled', $liveVoiceEnabled);
+
+        Session::flash('success', 'Spraakinstelling opgeslagen.');
+        $this->redirect('/admin/ai/settings');
+    }
+
     public function usageReport(): void {
         $this->requireAdmin();
 
@@ -569,6 +584,7 @@ class AiAdminController extends BaseController {
             'ai_retrieval_min_youtube_sources' => '2',
             'ai_retrieval_internal_limit' => '2',
             'ai_ytdlp_cookies_path' => '',
+            'live_voice_enabled' => '0',
         ];
 
         $stored = $this->settings->getMany(array_keys($defaults));

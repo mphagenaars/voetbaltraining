@@ -55,7 +55,7 @@
 
             <div class="lineup-editor">
                 <div class="field-container">
-                    <div id="football-field" class="football-field" data-formation="<?= e($match['formation']) ?>">
+                    <div id="football-field" class="football-field" data-formation="<?= e($match['formation']) ?>"<?php if (!empty($templatePositions)): ?> data-template-positions="<?= e(json_encode($templatePositions)) ?>"<?php endif; ?>>
                         <!-- Field Markings -->
                         <div class="field-line center-line"></div>
                         <div class="field-circle center-circle"></div>

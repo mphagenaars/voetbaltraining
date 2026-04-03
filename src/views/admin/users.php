@@ -5,6 +5,12 @@
         </a>
         <h1 class="app-bar-title">Gebruikersbeheer</h1>
     </div>
+    <div class="app-bar-end">
+        <button type="button" class="btn btn-outline btn-inline-icon" onclick="document.getElementById('new-user-form').classList.toggle('hidden')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Nieuwe gebruiker
+        </button>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -14,6 +20,35 @@
 <?php if (!empty($error)): ?>
     <div class="alert alert-danger"><?= e($error) ?></div>
 <?php endif; ?>
+
+<div id="new-user-form" class="card hidden" style="margin-bottom: 1rem;">
+    <h2 style="margin-top: 0;">Nieuwe gebruiker aanmaken</h2>
+    <form action="/admin/create-user" method="POST">
+        <?= Csrf::renderInput() ?>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: flex-end;">
+            <div class="form-group" style="margin: 0;">
+                <label>Naam</label>
+                <input type="text" name="name" class="form-control" required placeholder="Voor- en achternaam">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label>Gebruikersnaam</label>
+                <input type="text" name="username" class="form-control" required placeholder="Inlognaam" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label>Wachtwoord</label>
+                <input type="password" name="password" class="form-control" required placeholder="Minimaal 8 tekens" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-outline btn-inline-icon" style="white-space: nowrap;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Aanmaken
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.hidden { display: none !important; }
+</style>
 
 <div class="card">
     <table style="width: 100%; border-collapse: collapse;">
@@ -73,6 +108,11 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             </a>
 
+                            <button type="button" class="btn-icon" title="Wachtwoord resetten"
+                                onclick="document.getElementById('reset-pw-<?= $user['id'] ?>').classList.toggle('hidden')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            </button>
+
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                                 <form action="/admin/delete-user" method="POST" onsubmit="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?');" style="margin:0;">
                                     <?= Csrf::renderInput() ?>
@@ -83,6 +123,22 @@
                                 </form>
                             <?php endif; ?>
                         </div>
+                    </td>
+                </tr>
+                <tr id="reset-pw-<?= $user['id'] ?>" class="hidden">
+                    <td colspan="6" style="padding: 0.75rem 10px; background: #f8f9fa;">
+                        <form action="/admin/reset-user-password" method="POST"
+                              style="display: flex; align-items: center; gap: 0.75rem;">
+                            <?= Csrf::renderInput() ?>
+                            <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                            <span style="font-size: 0.875rem; color: #6c757d;">
+                                Nieuw wachtwoord voor <strong><?= e($user['name']) ?></strong>:
+                            </span>
+                            <input type="password" name="new_password" class="form-control"
+                                   placeholder="Minimaal 8 tekens" autocomplete="new-password"
+                                   style="max-width: 220px; margin: 0;">
+                            <button type="submit" class="btn btn-outline btn-sm">Instellen</button>
+                        </form>
                     </td>
                 </tr>
             <?php endforeach; ?>

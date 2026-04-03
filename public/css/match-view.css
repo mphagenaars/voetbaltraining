@@ -27,27 +27,30 @@
 .field-container {
     position: relative;
     width: 100%;
-    background: #45a049; /* Grass green */
-    border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    max-width: 420px;
+    background: #3f9f4c;
+    border-radius: 4px;
+    padding: 6%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .football-field {
     width: 100%;
-    padding-bottom: 140%; /* Vertical Aspect Ratio */
+    padding-bottom: 142%;
     position: relative;
-    border: 2px solid rgba(255,255,255,0.8);
-    overflow: hidden;
-    background-color: #4CAF50;
-    /* Subtle grass pattern */
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0,0,0,0.03) 20px, rgba(0,0,0,0.03) 40px);
+    border: 2px solid rgba(255,255,255,0.9);
+    overflow: visible;
+    background-color: #3f9f4c;
+    /* Subtle grass stripe pattern */
+    background-image: repeating-linear-gradient(0deg,
+        rgba(255,255,255,0.045), rgba(255,255,255,0.045) 10%,
+        rgba(0,0,0,0.03) 10%, rgba(0,0,0,0.03) 20%);
 }
 
 /* Field Markings */
 .field-line, .field-circle, .field-area, .field-goal, .corner {
     position: absolute;
-    border: 2px solid rgba(255,255,255,0.7);
+    border: 2px solid rgba(255,255,255,0.9);
 }
 
 .center-line {
@@ -55,14 +58,14 @@
     left: 0;
     right: 0;
     height: 0;
-    border-top: 2px solid rgba(255,255,255,0.7);
+    border-top: 2px solid rgba(255,255,255,0.9);
 }
 
 .center-circle {
     top: 50%;
     left: 50%;
     width: 20%;
-    padding-bottom: 20%; /* Make it a circle based on width */
+    padding-bottom: 20%;
     height: 0;
     border-radius: 50%;
     transform: translate(-50%, -50%);

@@ -53,15 +53,17 @@
     <!-- Quick Actions -->
     <div class="card" style="margin-bottom: 1rem;">
         <h3>Snelle Actie</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div style="display: grid; grid-template-columns: <?= !empty($liveVoiceEnabled) ? '1fr 1fr' : '1fr' ?>; gap: 1rem;">
             <button class="action-btn goal-btn" onclick="openActionModal('goal')" style="background-color: #4caf50; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 2rem;">⚽</span>
-                Doelpunt
+                <span style="font-size: 2rem;">✏️</span>
+                Handmatig
             </button>
-            <button class="action-btn note-btn" onclick="openActionModal('other')" style="background-color: #9e9e9e; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 2rem;">📝</span>
-                Notitie
+            <?php if (!empty($liveVoiceEnabled)): ?>
+            <button id="voice-btn" class="action-btn voice-btn" style="background-color: #1565c0; color: white; padding: 1.5rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 2rem;">🎤</span>
+                Spraak
             </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -130,9 +132,18 @@
     <div class="card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
         <h3 id="modal-title">Actie Toevoegen</h3>
         <form id="action-form">
-            <input type="hidden" name="type" id="modal-type">
             <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
-            
+
+            <div class="form-group">
+                <label>Type event</label>
+                <select name="type" id="modal-type-select" class="form-control" style="width: 100%; padding: 0.5rem;">
+                    <option value="goal">Doelpunt</option>
+                    <option value="sub">Wissel</option>
+                    <option value="card">Kaart</option>
+                    <option value="other">Notitie</option>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label>Minuut (automatisch)</label>
                 <input type="number" name="minute" id="modal-minute" class="form-control" style="width: 100%;">
@@ -183,6 +194,36 @@
         </form>
     </div>
 </div>
+
+<!-- Voice Recording Overlay -->
+<div id="voice-overlay" class="voice-overlay" aria-hidden="true">
+    <div class="voice-overlay-backdrop"></div>
+    <div class="voice-overlay-content">
+        <div id="voice-status-icon" class="voice-status-icon is-idle">
+            <svg id="voice-icon-mic" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+            <div id="voice-spinner" class="voice-spinner" style="display:none;"></div>
+        </div>
+        <p id="voice-status-text" class="voice-status-text">Houd ingedrukt om te spreken</p>
+        <button id="voice-cancel-btn" type="button" class="btn btn-secondary" style="margin-top:1rem; display:none;">Annuleren</button>
+    </div>
+</div>
+
+<!-- Voice Confirmation Sheet -->
+<div id="voice-confirm-sheet" class="voice-confirm-sheet" aria-hidden="true">
+    <div class="voice-confirm-sheet-backdrop"></div>
+    <div class="voice-confirm-sheet-content card">
+        <h3 style="margin-top:0;">Herkende events</h3>
+        <p id="voice-transcript" class="voice-transcript"></p>
+        <div id="voice-events-list" class="voice-events-list"></div>
+        <div class="voice-confirm-actions">
+            <button id="voice-reject-btn" type="button" class="btn btn-secondary">Verwerp</button>
+            <button id="voice-accept-btn" type="button" class="btn btn-primary">Bevestig</button>
+        </div>
+    </div>
+</div>
+
+<!-- Voice Toast -->
+<div id="voice-toast" class="voice-toast" aria-live="polite"></div>
 
 <div id="orientation-overlay" class="orientation-lock-overlay" aria-hidden="true">
     <div class="orientation-lock-overlay-card">

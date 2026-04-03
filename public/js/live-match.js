@@ -800,9 +800,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return currentMinute + 1;
     }
 
-    window.openActionModal = function openActionModal(type) {
-        document.getElementById('modal-type').value = type;
+    const modalTypeSelect = document.getElementById('modal-type-select');
 
+    function updateModalForType(type) {
         const typeLabels = {
             goal: 'Doelpunt Toevoegen',
             card: 'Kaart Geven',
@@ -819,10 +819,22 @@ document.addEventListener('DOMContentLoaded', () => {
             subGroup.style.display = 'block';
             populateSubstitutionSelects();
         } else {
-            playerSelectGroup.style.display = 'block';
+            playerSelectGroup.style.display = type === 'other' ? 'none' : 'block';
             subGroup.style.display = 'none';
         }
+    }
 
+    if (modalTypeSelect) {
+        modalTypeSelect.addEventListener('change', () => {
+            updateModalForType(modalTypeSelect.value);
+        });
+    }
+
+    window.openActionModal = function openActionModal(type) {
+        if (modalTypeSelect) {
+            modalTypeSelect.value = type || 'goal';
+        }
+        updateModalForType(type || 'goal');
         document.getElementById('modal-minute').value = getCurrentMinuteDisplay();
         modal.style.display = 'flex';
     };
@@ -1156,6 +1168,413 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshViewportAndOrientation();
         }
     });
+
+    // ── Voice command (push-to-talk) ──
+
+    const voiceBtn = document.getElementById('voice-btn');
+    const voiceOverlay = document.getElementById('voice-overlay');
+    const voiceStatusIcon = document.getElementById('voice-status-icon');
+    const voiceIconMic = document.getElementById('voice-icon-mic');
+    const voiceSpinner = document.getElementById('voice-spinner');
+    const voiceStatusText = document.getElementById('voice-status-text');
+    const voiceCancelBtn = document.getElementById('voice-cancel-btn');
+    const voiceConfirmSheet = document.getElementById('voice-confirm-sheet');
+    const voiceTranscriptEl = document.getElementById('voice-transcript');
+    const voiceEventsListEl = document.getElementById('voice-events-list');
+    const voiceAcceptBtn = document.getElementById('voice-accept-btn');
+    const voiceRejectBtn = document.getElementById('voice-reject-btn');
+    const voiceToast = document.getElementById('voice-toast');
+
+    let voiceMediaRecorder = null;
+    let voiceAudioChunks = [];
+    let voiceRecording = false;
+    let voiceProcessing = false;
+    let voicePendingResult = null;
+    let voiceToastTimeout = null;
+
+    function showVoiceToast(message, type, durationMs) {
+        if (!voiceToast) {
+            return;
+        }
+        clearTimeout(voiceToastTimeout);
+        voiceToast.textContent = message;
+        voiceToast.className = 'voice-toast is-visible' + (type ? ' is-' + type : '');
+        voiceToastTimeout = setTimeout(() => {
+            voiceToast.classList.remove('is-visible');
+        }, durationMs || 3000);
+    }
+
+    function setVoiceOverlayState(visibleState) {
+        if (!voiceOverlay) {
+            return;
+        }
+
+        if (visibleState === 'hidden') {
+            voiceOverlay.classList.remove('is-visible');
+            voiceOverlay.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
+        voiceOverlay.classList.add('is-visible');
+        voiceOverlay.setAttribute('aria-hidden', 'false');
+
+        voiceStatusIcon.className = 'voice-status-icon';
+        voiceIconMic.style.display = 'none';
+        voiceSpinner.style.display = 'none';
+        voiceCancelBtn.style.display = 'none';
+
+        if (visibleState === 'recording') {
+            voiceStatusIcon.classList.add('is-recording');
+            voiceIconMic.style.display = '';
+            voiceStatusText.textContent = 'Opname loopt... Laat los om te stoppen';
+        } else if (visibleState === 'processing') {
+            voiceStatusIcon.classList.add('is-processing');
+            voiceSpinner.style.display = '';
+            voiceCancelBtn.style.display = '';
+            voiceStatusText.textContent = 'Verwerken...';
+        }
+    }
+
+    function setVoiceConfirmSheet(visible) {
+        if (!voiceConfirmSheet) {
+            return;
+        }
+        voiceConfirmSheet.classList.toggle('is-visible', visible);
+        voiceConfirmSheet.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    }
+
+    function getEventIcon(type) {
+        const icons = {
+            substitution: '🔄',
+            goal: '⚽',
+            card: '🟨',
+            chance: '🎯',
+            note: '📝'
+        };
+        return icons[type] || '🔹';
+    }
+
+    function getEventLabel(event) {
+        const type = String(event.type || '');
+        if (type === 'substitution') {
+            const outName = escapeHtml(event.player_out_name || '?');
+            const inName = escapeHtml(event.player_in_name || '?');
+            return `Wissel: ${outName} eruit, ${inName} erin`;
+        }
+        if (type === 'goal') {
+            const name = escapeHtml(event.player_name || '?');
+            const assist = event.assist_player_name ? ` (assist: ${escapeHtml(event.assist_player_name)})` : '';
+            return `Doelpunt: ${name}${assist}`;
+        }
+        if (type === 'card') {
+            const cardType = event.card_type === 'red' ? 'Rode' : 'Gele';
+            return `${cardType} kaart: ${escapeHtml(event.player_name || '?')}`;
+        }
+        if (type === 'chance') {
+            return `Kans: ${escapeHtml(event.player_name || '?')}${event.detail ? ' - ' + escapeHtml(event.detail) : ''}`;
+        }
+        if (type === 'note') {
+            return `Notitie: ${escapeHtml(event.text || '')}`;
+        }
+        return `Event: ${type}`;
+    }
+
+    function getConfidenceClass(confidence) {
+        const c = Number.parseFloat(confidence) || 0;
+        if (c >= 0.90) {
+            return 'is-high';
+        }
+        if (c >= 0.75) {
+            return 'is-medium';
+        }
+        return 'is-low';
+    }
+
+    function renderVoiceEvents(events) {
+        if (!voiceEventsListEl) {
+            return;
+        }
+        voiceEventsListEl.innerHTML = '';
+
+        if (!Array.isArray(events) || events.length === 0) {
+            voiceEventsListEl.innerHTML = '<p style="color:#999;">Geen events herkend.</p>';
+            return;
+        }
+
+        events.forEach((event) => {
+            const card = document.createElement('div');
+            card.className = 'voice-event-card';
+
+            const valid = event.valid !== false;
+            if (!valid) {
+                card.style.opacity = '0.5';
+                card.style.borderColor = '#ef9a9a';
+            }
+
+            const confidence = Number.parseFloat(event.confidence) || 0;
+
+            card.innerHTML = `<div class="voice-event-icon">${getEventIcon(event.type)}</div>`
+                + `<div class="voice-event-details">${getEventLabel(event)}${!valid ? '<br><small style="color:#c62828;">' + escapeHtml(event.validation_error || 'Ongeldig') + '</small>' : ''}</div>`
+                + `<div class="voice-event-confidence ${getConfidenceClass(confidence)}">${Math.round(confidence * 100)}%</div>`;
+
+            voiceEventsListEl.appendChild(card);
+        });
+    }
+
+    async function startVoiceRecording() {
+        if (voiceRecording || voiceProcessing) {
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            voiceAudioChunks = [];
+
+            let mimeType = 'audio/webm';
+            if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                mimeType = 'audio/mp4';
+            } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                mimeType = 'audio/webm;codecs=opus';
+            }
+
+            voiceMediaRecorder = new MediaRecorder(stream, { mimeType });
+
+            voiceMediaRecorder.addEventListener('dataavailable', (e) => {
+                if (e.data && e.data.size > 0) {
+                    voiceAudioChunks.push(e.data);
+                }
+            });
+
+            voiceMediaRecorder.addEventListener('stop', () => {
+                stream.getTracks().forEach((t) => t.stop());
+                if (voiceAudioChunks.length > 0 && voiceRecording) {
+                    voiceRecording = false;
+                    const blob = new Blob(voiceAudioChunks, { type: mimeType });
+                    sendVoiceAudio(blob);
+                } else {
+                    voiceRecording = false;
+                    setVoiceOverlayState('hidden');
+                }
+            });
+
+            voiceMediaRecorder.start();
+            voiceRecording = true;
+            setVoiceOverlayState('recording');
+            if (voiceBtn) {
+                voiceBtn.classList.add('is-recording');
+            }
+        } catch (err) {
+            showVoiceToast('Microfoon niet beschikbaar: ' + err.message, 'error', 4000);
+        }
+    }
+
+    function stopVoiceRecording() {
+        if (!voiceMediaRecorder || voiceMediaRecorder.state !== 'recording') {
+            voiceRecording = false;
+            setVoiceOverlayState('hidden');
+            return;
+        }
+        voiceMediaRecorder.stop();
+        if (voiceBtn) {
+            voiceBtn.classList.remove('is-recording');
+        }
+    }
+
+    function cancelVoiceProcessing() {
+        voiceProcessing = false;
+        voicePendingResult = null;
+        setVoiceOverlayState('hidden');
+    }
+
+    async function sendVoiceAudio(blob) {
+        voiceProcessing = true;
+        setVoiceOverlayState('processing');
+
+        const formData = new FormData();
+        formData.append('match_id', matchId);
+        formData.append('csrf_token', csrfToken);
+        formData.append('audio_file', blob, 'recording.webm');
+
+        try {
+            const response = await fetch('/matches/live/voice-command', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken },
+                body: formData
+            });
+
+            const data = await response.json();
+            voiceProcessing = false;
+            setVoiceOverlayState('hidden');
+
+            if (!data.success) {
+                showVoiceToast(data.error || 'Spraakherkenning mislukt.', 'error', 4000);
+                return;
+            }
+
+            if (!Array.isArray(data.events) || data.events.length === 0) {
+                showVoiceToast('Geen events herkend in opname.', 'error', 3000);
+                return;
+            }
+
+            const validEvents = data.events.filter((e) => e.valid !== false);
+            if (validEvents.length === 0) {
+                showVoiceToast('Alle herkende events zijn ongeldig.', 'error', 3000);
+                return;
+            }
+
+            voicePendingResult = {
+                voiceLogId: data.voice_log_id,
+                transcript: data.transcript || '',
+                events: data.events,
+                requiresConfirmation: data.requires_confirmation
+            };
+
+            showVoiceConfirmation();
+        } catch (err) {
+            voiceProcessing = false;
+            setVoiceOverlayState('hidden');
+            showVoiceToast('Netwerkfout: ' + err.message, 'error', 4000);
+        }
+    }
+
+    function showVoiceConfirmation() {
+        if (!voicePendingResult) {
+            return;
+        }
+
+        if (voiceTranscriptEl) {
+            voiceTranscriptEl.textContent = voicePendingResult.transcript
+                ? `"${voicePendingResult.transcript}"`
+                : '';
+        }
+
+        renderVoiceEvents(voicePendingResult.events);
+        setVoiceConfirmSheet(true);
+    }
+
+    async function confirmVoiceEvents() {
+        if (!voicePendingResult) {
+            return;
+        }
+
+        const validEvents = voicePendingResult.events.filter((e) => e.valid !== false);
+        if (validEvents.length === 0) {
+            showVoiceToast('Geen geldige events om te bevestigen.', 'error', 3000);
+            setVoiceConfirmSheet(false);
+            voicePendingResult = null;
+            return;
+        }
+
+        setVoiceConfirmSheet(false);
+
+        try {
+            const responseData = await requestJson('/matches/live/voice-command/confirm', {
+                match_id: Number.parseInt(matchId, 10),
+                voice_log_id: voicePendingResult.voiceLogId,
+                events: validEvents,
+                csrf_token: csrfToken
+            });
+
+            applyLiveStateFromResponse(responseData);
+
+            if (typeof responseData.score_home !== 'undefined' && typeof responseData.score_away !== 'undefined') {
+                scoreState.home = Number.parseInt(responseData.score_home, 10) || 0;
+                scoreState.away = Number.parseInt(responseData.score_away, 10) || 0;
+                updateScoreUI();
+            }
+
+            const count = Array.isArray(responseData.applied_events) ? responseData.applied_events.length : validEvents.length;
+            showVoiceToast(`${count} event${count !== 1 ? 's' : ''} toegepast`, 'success', 3000);
+
+            if (responseData.warning) {
+                setTimeout(() => {
+                    showVoiceToast(responseData.warning, 'error', 4000);
+                }, 3200);
+            }
+        } catch (err) {
+            showVoiceToast('Bevestiging mislukt: ' + err.message, 'error', 4000);
+        }
+
+        voicePendingResult = null;
+    }
+
+    function rejectVoiceEvents() {
+        setVoiceConfirmSheet(false);
+        voicePendingResult = null;
+        showVoiceToast('Events verworpen', '', 2000);
+    }
+
+    // Push-to-talk: press and hold
+    if (voiceBtn) {
+        let voicePressTimer = null;
+        let voiceStarted = false;
+
+        function handleVoiceDown(e) {
+            e.preventDefault();
+            voiceStarted = false;
+            voicePressTimer = setTimeout(() => {
+                voiceStarted = true;
+                startVoiceRecording();
+            }, 150);
+        }
+
+        function handleVoiceUp(e) {
+            e.preventDefault();
+            clearTimeout(voicePressTimer);
+            if (voiceStarted && voiceRecording) {
+                stopVoiceRecording();
+            } else if (!voiceStarted && !voiceRecording && !voiceProcessing) {
+                // Short tap: toggle recording with tap-to-start / tap-to-stop
+                startVoiceRecording();
+            }
+        }
+
+        voiceBtn.addEventListener('mousedown', handleVoiceDown);
+        voiceBtn.addEventListener('mouseup', handleVoiceUp);
+        voiceBtn.addEventListener('mouseleave', () => {
+            clearTimeout(voicePressTimer);
+        });
+
+        voiceBtn.addEventListener('touchstart', handleVoiceDown, { passive: false });
+        voiceBtn.addEventListener('touchend', handleVoiceUp, { passive: false });
+        voiceBtn.addEventListener('touchcancel', () => {
+            clearTimeout(voicePressTimer);
+            if (voiceRecording) {
+                stopVoiceRecording();
+            }
+        }, { passive: false });
+    }
+
+    // Tap overlay while recording to stop
+    if (voiceOverlay) {
+        voiceOverlay.addEventListener('click', () => {
+            if (voiceRecording) {
+                stopVoiceRecording();
+            }
+        });
+    }
+
+    if (voiceCancelBtn) {
+        voiceCancelBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cancelVoiceProcessing();
+        });
+    }
+
+    if (voiceAcceptBtn) {
+        voiceAcceptBtn.addEventListener('click', confirmVoiceEvents);
+    }
+
+    if (voiceRejectBtn) {
+        voiceRejectBtn.addEventListener('click', rejectVoiceEvents);
+    }
+
+    if (voiceConfirmSheet) {
+        const backdrop = voiceConfirmSheet.querySelector('.voice-confirm-sheet-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', rejectVoiceEvents);
+        }
+    }
 
     startTicker();
     updateScoreUI();

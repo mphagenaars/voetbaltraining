@@ -43,6 +43,7 @@ $retrievalMaxCandidates = (int)($settings['ai_retrieval_max_candidates'] ?? 10);
 $retrievalMinYoutubeSources = (int)($settings['ai_retrieval_min_youtube_sources'] ?? 2);
 $retrievalInternalLimit = (int)($settings['ai_retrieval_internal_limit'] ?? 2);
 $ytDlpCookiesPath = (string)($settings['ai_ytdlp_cookies_path'] ?? '');
+$liveVoiceEnabled = (string)($settings['live_voice_enabled'] ?? '0') === '1';
 ?>
 
 <div class="card">
@@ -447,6 +448,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
         <div class="admin-form-actions-full">
             <button type="submit" class="btn-icon-square" title="Retrievalinstellingen opslaan" aria-label="Retrievalinstellingen opslaan">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2 class="ai-admin-card-title">Live spraakcommando's</h2>
+    <form action="/admin/ai/live-voice" method="POST" class="admin-grid-form admin-grid-form-budget">
+        <?= Csrf::renderInput() ?>
+
+        <div class="admin-budget-toggle">
+            <label class="admin-budget-toggle-label" for="live_voice_enabled">
+                <input type="hidden" name="live_voice_enabled" value="0">
+                <input id="live_voice_enabled" type="checkbox" name="live_voice_enabled" value="1" <?= $liveVoiceEnabled ? 'checked' : '' ?>>
+                Spraakgestuurde events inschakelen
+            </label>
+            <p class="admin-budget-toggle-help">Toont een spraakknop in de live wedstrijdweergave waarmee events via microfoon kunnen worden geregistreerd. Vereist een geconfigureerd audiomodel met <code>supports_audio = 1</code>.</p>
+        </div>
+
+        <div class="admin-form-actions-full">
+            <button type="submit" class="btn-icon-square" title="Spraakinstelling opslaan" aria-label="Spraakinstelling opslaan">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
             </button>
         </div>

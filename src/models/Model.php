@@ -22,14 +22,24 @@ abstract class Model {
     }
 
     public function getAll(string $orderBy = 'id ASC'): array {
+        $orderBy = self::sanitizeOrderBy($orderBy, 'id ASC');
         $stmt = $this->pdo->query("SELECT * FROM {$this->table} ORDER BY $orderBy");
         return $stmt->fetchAll();
     }
-    
+
     public function getAllForTeam(int $teamId, string $orderBy = 'created_at DESC'): array {
+        $orderBy = self::sanitizeOrderBy($orderBy, 'created_at DESC');
         $stmt = $this->pdo->prepare("SELECT * FROM {$this->table} WHERE team_id = :team_id ORDER BY $orderBy");
         $stmt->execute([':team_id' => $teamId]);
         return $stmt->fetchAll();
+    }
+
+    protected static function sanitizeOrderBy(string $orderBy, string $default): string {
+        // Sta alleen kolomnamen (optioneel met tabelalias) + richting toe
+        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_.]*(\s+(ASC|DESC))?$/i', trim($orderBy))) {
+            return $orderBy;
+        }
+        return $default;
     }
 
     public function count(): int {

@@ -42,9 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     };
 
-    // Render slots for current formation
+    // Render slots for current formation (template positions override hardcoded)
     const currentFormation = field.dataset.formation;
-    const slots = formations[currentFormation] || [];
+    let slots;
+    try {
+        const tpl = JSON.parse(field.dataset.templatePositions || 'null');
+        slots = tpl ? tpl.map(p => ({ x: p.x, y: p.y, label: p.slot_code })) : null;
+    } catch (_) { slots = null; }
+    if (!slots) {
+        slots = formations[currentFormation] || [];
+    }
     
     slots.forEach(slot => {
         const slotEl = document.createElement('div');

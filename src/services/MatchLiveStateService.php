@@ -30,7 +30,10 @@ class MatchLiveStateService {
         $savedLineups = $this->groupSavedLineupsByPeriod($this->gameModel->getPeriodLineups($matchId), $catalog);
         $substitutions = $this->gameModel->getSubstitutions($matchId);
         $lineupMap = $this->resolveLineupMap($catalog, $savedLineups, $substitutions, $period, $clockSeconds);
-        $slotPositions = $this->buildSlotPositionMap($lineupMap, $catalog, $savedLineups, $period);
+
+        // Load template positions if a formation template is linked
+        $templatePositionMap = $this->loadTemplatePositionsForMatch($matchId);
+        $slotPositions = $this->buildSlotPositionMap($lineupMap, $catalog, $savedLineups, $period, $templatePositionMap);
 
         $activeLineup = $this->buildActiveLineupList($lineupMap, $catalog['players_by_id'], $slotPositions);
         $bench = $this->buildBenchList($lineupMap, $catalog['players_by_id'], $catalog['eligible_player_ids']);
@@ -781,7 +784,7 @@ class MatchLiveStateService {
         return $result;
     }
 
-    private function buildSlotPositionMap(array $lineupMap, array $catalog, array $savedLineups, int $targetPeriod): array {
+    private function buildSlotPositionMap(array $lineupMap, array $catalog, array $savedLineups, int $targetPeriod, ?array $templatePositionMap = null): array {
         $slotCodes = array_keys($lineupMap);
         sort($slotCodes);
         $slotCount = max(1, count($slotCodes));
@@ -794,7 +797,11 @@ class MatchLiveStateService {
         foreach ($slotCodes as $slotCode) {
             $slotCode = (string)$slotCode;
             $position = null;
-            if ($useSixVsSixGridFallback) {
+
+            // Template positions take priority over all other resolution methods
+            if ($templatePositionMap !== null && isset($templatePositionMap[$slotCode])) {
+                $position = $templatePositionMap[$slotCode];
+            } elseif ($useSixVsSixGridFallback) {
                 // Live 6v6 view must follow slot anchors, not historical player coordinates.
                 $position = $this->resolveCanonicalSlotPosition($slotCode, true);
                 if ($position === null) {
@@ -905,6 +912,42 @@ class MatchLiveStateService {
         }
 
         return $hasGoalkeeperSlot;
+    }
+
+    /**
+     * Load template positions for a match, keyed by slot_code.
+     * Returns null if no template is linked, or an associative array of slot_code => ['x' => float, 'y' => float].
+     */
+    private function loadTemplatePositionsForMatch(int $matchId): ?array {
+        $match = $this->gameModel->getById($matchId);
+        $templateId = (int)($match['formation_template_id'] ?? 0);
+        if ($templateId <= 0) {
+            return null;
+        }
+
+        $ftModel = new FormationTemplate($this->pdo);
+        $template = $ftModel->getById($templateId);
+        if (!$template) {
+            return null;
+        }
+
+        $positions = json_decode($template['positions'], true);
+        if (!is_array($positions)) {
+            return null;
+        }
+
+        $map = [];
+        foreach ($positions as $pos) {
+            $code = (string)($pos['slot_code'] ?? '');
+            if ($code !== '') {
+                $map[$code] = [
+                    'x' => (float)($pos['x'] ?? 50),
+                    'y' => (float)($pos['y'] ?? 50),
+                ];
+            }
+        }
+
+        return !empty($map) ? $map : null;
     }
 
     private function resolveCanonicalSlotPosition(string $slotCode, bool $useSixVsSixGridFallback): ?array {

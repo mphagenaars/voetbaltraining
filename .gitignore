@@ -4,9 +4,13 @@
 /data/config.php
 /data/tmp/
 /vendor/
+/design/*
+!/design/implementatie_design.md
+!/design/bronset_freeze_manifest.md
 .DS_Store
 .copilot/
 .github/*
+.claude/
 !.github/workflows/
 !.github/workflows/**
 PRD
@@ -14,4 +18,3 @@ COPILOT_GUIDLINES.md
 server.log
 public/uploads/*
 git_update.sh
-

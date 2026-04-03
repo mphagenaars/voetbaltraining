@@ -5,10 +5,6 @@ class AuthController extends BaseController {
 
     public function login(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // DEBUGGING LOGIN REDIRECT
-            error_log("Login POST request received.");
-            error_log("GET params: " . print_r($_GET, true));
-
             if (!Csrf::verifyToken($_POST['csrf_token'] ?? '')) {
                 $error = "Ongeldige sessie. Probeer het opnieuw.";
             } else {
@@ -47,9 +43,6 @@ class AuthController extends BaseController {
                                 ]);
                             }
                             
-                            // Debug logging
-                            error_log("Login successful. GET params: " . print_r($_GET, true));
-
                             // Log login
                             $logModel = new ActivityLog($this->pdo);
                             $logModel->log((int)$user['id'], 'login');
@@ -73,16 +66,15 @@ class AuthController extends BaseController {
                                 ]);
                             }
 
-                            // Check for redirect param
+                            // Valideer redirect: alleen relatieve paden op dezelfde server toegestaan
                             $redirect = $_GET['redirect'] ?? '/';
-                            error_log("Raw redirect param: " . $redirect);
-                            
-                            // Basic security check: ensure it starts with / and not // (to prevent open redirects)
-                            if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
-                                error_log("Redirect validation failed or default used. Redirecting to /");
+                            $parsed = parse_url($redirect);
+                            if (
+                                isset($parsed['scheme']) || isset($parsed['host']) ||
+                                !isset($parsed['path']) ||
+                                !str_starts_with($parsed['path'], '/')
+                            ) {
                                 $redirect = '/';
-                            } else {
-                                error_log("Redirect validation passed. Redirecting to: " . $redirect);
                             }
 
                             $this->redirect($redirect);

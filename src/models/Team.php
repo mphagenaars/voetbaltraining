@@ -149,4 +149,16 @@ class Team extends Model {
         $stmt = $this->pdo->prepare("DELETE FROM team_members WHERE team_id = :team_id AND user_id = :user_id");
         $stmt->execute([':team_id' => $teamId, ':user_id' => $userId]);
     }
+
+    public function getTeamMembers(int $teamId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT u.id, u.username, u.name, tm.is_coach, tm.is_trainer
+            FROM team_members tm
+            JOIN users u ON tm.user_id = u.id
+            WHERE tm.team_id = :team_id
+            ORDER BY u.name ASC
+        ");
+        $stmt->execute([':team_id' => $teamId]);
+        return $stmt->fetchAll();
+    }
 }

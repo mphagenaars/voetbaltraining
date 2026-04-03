@@ -29,6 +29,10 @@ try {
         $db->exec("ALTER TABLE users ADD COLUMN ai_access_enabled INTEGER NOT NULL DEFAULT 0");
         echo "- Kolom 'ai_access_enabled' toegevoegd aan 'users'.\n";
     }
+    if (!in_array('email', $userColumns)) {
+        $db->exec("ALTER TABLE users ADD COLUMN email TEXT NULL");
+        echo "- Kolom 'email' toegevoegd aan 'users'.\n";
+    }
 
     // App settings tabel
     $db->exec("CREATE TABLE IF NOT EXISTS app_settings (
@@ -507,6 +511,48 @@ try {
     $db->exec("CREATE INDEX IF NOT EXISTS idx_match_substitutions_match_period ON match_substitutions (match_id, period)");
     echo "- Indexen voor 'match_substitutions' gecontroleerd/aangemaakt.\n";
 
+    // Player name aliases (team-specifieke naamsynoniemen voor STT-herkenning)
+    $db->exec("CREATE TABLE IF NOT EXISTS player_name_aliases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        team_id INTEGER NOT NULL,
+        player_id INTEGER NOT NULL,
+        alias TEXT NOT NULL,
+        normalized_alias TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (team_id, player_id, normalized_alias),
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+        FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'player_name_aliases' aangemaakt (of bestond al).\n";
+
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_player_name_aliases_team_normalized ON player_name_aliases (team_id, normalized_alias)");
+    echo "- Indexen voor 'player_name_aliases' gecontroleerd/aangemaakt.\n";
+
+    // Match voice command logs (audit + kwaliteitsverbetering STT)
+    $db->exec("CREATE TABLE IF NOT EXISTS match_voice_command_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        period INTEGER NULL,
+        clock_seconds INTEGER NULL,
+        audio_duration_ms INTEGER NULL,
+        stt_model_id TEXT NULL,
+        raw_transcript TEXT NULL,
+        normalized_transcript TEXT NULL,
+        parsed_json TEXT NULL,
+        status TEXT NOT NULL DEFAULT 'error',
+        error_code TEXT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CHECK (status IN ('accepted', 'needs_confirmation', 'rejected', 'error')),
+        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Tabel 'match_voice_command_logs' aangemaakt (of bestond al).\n";
+
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_voice_command_logs_match_created ON match_voice_command_logs (match_id, created_at)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_match_voice_command_logs_status_created ON match_voice_command_logs (status, created_at)");
+    echo "- Indexen voor 'match_voice_command_logs' gecontroleerd/aangemaakt.\n";
+
     // Match tactics (wedstrijdsituaties op tactiekbord)
     $db->exec("CREATE TABLE IF NOT EXISTS match_tactics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -752,6 +798,12 @@ try {
         echo "- Kolom 'supports_vision' toegevoegd aan ai_models.\n";
     }
 
+    // Migratie: supports_audio kolom toevoegen aan ai_models
+    if (!in_array('supports_audio', $aiModelColumns, true)) {
+        $db->exec("ALTER TABLE ai_models ADD COLUMN supports_audio INTEGER NOT NULL DEFAULT 0");
+        echo "- Kolom 'supports_audio' toegevoegd aan ai_models.\n";
+    }
+
     // AI chat sessies tabel
     $db->exec("CREATE TABLE IF NOT EXISTS ai_chat_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -889,6 +941,89 @@ try {
     $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_source_cache_provider_external ON ai_source_cache (provider, external_id)");
     $db->exec("CREATE INDEX IF NOT EXISTS idx_ai_source_cache_expires_at ON ai_source_cache (expires_at)");
     echo "- Indexen voor AI tabellen gecontroleerd/aangemaakt.\n";
+
+    // Formation templates (speelwijzen)
+    $db->exec("CREATE TABLE IF NOT EXISTS formation_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        team_id INTEGER NULL,
+        name TEXT NOT NULL,
+        format TEXT NOT NULL,
+        positions TEXT NOT NULL,
+        is_shared INTEGER DEFAULT 0,
+        created_by INTEGER NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    )");
+    echo "- Tabel 'formation_templates' aangemaakt (of bestond al).\n";
+
+    // Kolom formation_template_id op matches (migratie)
+    $mColumns2 = $db->query("PRAGMA table_info(matches)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('formation_template_id', $mColumns2)) {
+        $db->exec("ALTER TABLE matches ADD COLUMN formation_template_id INTEGER NULL REFERENCES formation_templates(id) ON DELETE SET NULL");
+        echo "- Kolom 'formation_template_id' toegevoegd aan 'matches'.\n";
+    }
+
+    // Seed standaard speelwijzen (gedeeld)
+    $ftCount = (int) $db->query("SELECT COUNT(*) FROM formation_templates WHERE is_shared = 1 AND team_id IS NULL")->fetchColumn();
+    if ($ftCount === 0) {
+        $defaultTemplates = [
+            [
+                'name' => '6 tegen 6 (2-1-2)',
+                'format' => '6-vs-6',
+                'positions' => json_encode([
+                    ['slot_code' => 'K',  'label' => 'Keeper',              'x' => 50, 'y' => 88],
+                    ['slot_code' => 'LV', 'label' => 'Links verdediger',    'x' => 20, 'y' => 65],
+                    ['slot_code' => 'RV', 'label' => 'Rechts verdediger',   'x' => 80, 'y' => 65],
+                    ['slot_code' => 'M',  'label' => 'Middenvelder',        'x' => 50, 'y' => 45],
+                    ['slot_code' => 'LA', 'label' => 'Links aanvaller',     'x' => 20, 'y' => 20],
+                    ['slot_code' => 'RA', 'label' => 'Rechts aanvaller',    'x' => 80, 'y' => 20],
+                ]),
+            ],
+            [
+                'name' => '8 tegen 8 (2-3-2)',
+                'format' => '8-vs-8',
+                'positions' => json_encode([
+                    ['slot_code' => 'K',  'label' => 'Keeper',              'x' => 50, 'y' => 88],
+                    ['slot_code' => 'LV', 'label' => 'Links verdediger',    'x' => 30, 'y' => 75],
+                    ['slot_code' => 'RV', 'label' => 'Rechts verdediger',   'x' => 70, 'y' => 75],
+                    ['slot_code' => 'LM', 'label' => 'Links midden',        'x' => 20, 'y' => 50],
+                    ['slot_code' => 'CM', 'label' => 'Centraal midden',     'x' => 50, 'y' => 50],
+                    ['slot_code' => 'RM', 'label' => 'Rechts midden',       'x' => 80, 'y' => 50],
+                    ['slot_code' => 'LA', 'label' => 'Links aanvaller',     'x' => 35, 'y' => 25],
+                    ['slot_code' => 'RA', 'label' => 'Rechts aanvaller',    'x' => 65, 'y' => 25],
+                ]),
+            ],
+            [
+                'name' => '4-3-3',
+                'format' => '11-vs-11',
+                'positions' => json_encode([
+                    ['slot_code' => 'K',   'label' => 'Keeper',                 'x' => 50, 'y' => 90],
+                    ['slot_code' => 'LAV', 'label' => 'Links achter',           'x' => 15, 'y' => 75],
+                    ['slot_code' => 'CV1', 'label' => 'Centraal verdediger',    'x' => 38, 'y' => 75],
+                    ['slot_code' => 'CV2', 'label' => 'Centraal verdediger',    'x' => 62, 'y' => 75],
+                    ['slot_code' => 'RAV', 'label' => 'Rechts achter',          'x' => 85, 'y' => 75],
+                    ['slot_code' => 'LM',  'label' => 'Links midden',           'x' => 30, 'y' => 50],
+                    ['slot_code' => 'VM',  'label' => 'Verdedigend midden',     'x' => 50, 'y' => 55],
+                    ['slot_code' => 'RM',  'label' => 'Rechts midden',          'x' => 70, 'y' => 50],
+                    ['slot_code' => 'LB',  'label' => 'Links buiten',           'x' => 15, 'y' => 25],
+                    ['slot_code' => 'SP',  'label' => 'Spits',                  'x' => 50, 'y' => 20],
+                    ['slot_code' => 'RB',  'label' => 'Rechts buiten',          'x' => 85, 'y' => 25],
+                ]),
+            ],
+        ];
+
+        $stmt = $db->prepare("INSERT INTO formation_templates (team_id, name, format, positions, is_shared, created_by) VALUES (NULL, :name, :format, :positions, 1, NULL)");
+        foreach ($defaultTemplates as $tpl) {
+            $stmt->execute([
+                'name' => $tpl['name'],
+                'format' => $tpl['format'],
+                'positions' => $tpl['positions'],
+            ]);
+        }
+        echo "- 3 standaard speelwijzen aangemaakt.\n";
+    }
 
     echo "Database succesvol geïnitialiseerd in data/database.sqlite\n";
 

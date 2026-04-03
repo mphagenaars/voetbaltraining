@@ -184,58 +184,130 @@ class AdminController extends BaseController {
 
     public function users(): void {
         $this->requireAdmin();
-        
+
         $userModel = new User($this->pdo);
         $users = $userModel->getAll('name ASC');
-        
+
         View::render('admin/users', [
             'users' => $users,
             'pageTitle' => 'Gebruikersbeheer - Trainer Bobby'
         ]);
     }
-    
+
+    public function createUser(): void {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/users');
+        }
+
+        $this->verifyCsrf('/admin/users');
+
+        $username = trim($_POST['username'] ?? '');
+        $name     = trim($_POST['name'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($username) || empty($name) || empty($password)) {
+            Session::flash('error', 'Alle velden zijn verplicht.');
+            $this->redirect('/admin/users');
+        }
+
+        if (strlen($password) < 8) {
+            Session::flash('error', 'Wachtwoord moet minimaal 8 tekens zijn.');
+            $this->redirect('/admin/users');
+        }
+
+        $userModel = new User($this->pdo);
+
+        if ($userModel->getByUsername($username) !== null) {
+            Session::flash('error', 'Gebruikersnaam is al in gebruik.');
+            $this->redirect('/admin/users');
+        }
+
+        $userModel->create($username, $password, $name);
+
+        Session::flash('success', 'Gebruiker "' . htmlspecialchars($username, ENT_QUOTES) . '" aangemaakt.');
+        $this->redirect('/admin/users');
+    }
+
+    public function resetUserPassword(): void {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/users');
+        }
+
+        $this->verifyCsrf('/admin/users');
+
+        $userId      = (int)($_POST['user_id'] ?? 0);
+        $newPassword = $_POST['new_password'] ?? '';
+
+        if ($userId <= 0) {
+            Session::flash('error', 'Ongeldige gebruiker.');
+            $this->redirect('/admin/users');
+        }
+
+        if (strlen($newPassword) < 8) {
+            Session::flash('error', 'Nieuw wachtwoord moet minimaal 8 tekens zijn.');
+            $this->redirect('/admin/users');
+        }
+
+        $userModel = new User($this->pdo);
+        $user = $userModel->getById($userId);
+
+        if (!$user) {
+            Session::flash('error', 'Gebruiker niet gevonden.');
+            $this->redirect('/admin/users');
+        }
+
+        $userModel->updatePassword($userId, password_hash($newPassword, PASSWORD_DEFAULT));
+
+        Session::flash('success', 'Wachtwoord van "' . htmlspecialchars($user['name'], ENT_QUOTES) . '" is opnieuw ingesteld.');
+        $this->redirect('/admin/users');
+    }
+
     public function deleteUser(): void {
         $this->requireAdmin();
-        
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-             $this->verifyCsrf('/admin');
-            
+            $this->verifyCsrf('/admin/users');
+
             $userId = (int)($_POST['user_id'] ?? 0);
-            
+
             // Prevent deleting yourself
             if ($userId === Session::get('user_id')) {
-                 Session::flash('error', 'Je kunt jezelf niet verwijderen.');
-                 $this->redirect('/admin');
+                Session::flash('error', 'Je kunt jezelf niet verwijderen.');
+                $this->redirect('/admin/users');
             }
 
             $userModel = new User($this->pdo);
             $userModel->delete($userId);
-            
+
             Session::flash('success', 'Gebruiker verwijderd.');
-            $this->redirect('/admin');
+            $this->redirect('/admin/users');
         }
     }
-    
+
     public function toggleAdmin(): void {
         $this->requireAdmin();
-         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-             $this->verifyCsrf('/admin');
-            
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf('/admin/users');
+
             $userId = (int)($_POST['user_id'] ?? 0);
             $isAdmin = (bool)($_POST['is_admin'] ?? false);
-            
-             // Prevent removing your own admin rights
+
+            // Prevent removing your own admin rights
             if ($userId === Session::get('user_id')) {
-                 Session::flash('error', 'Je kunt je eigen admin-rechten niet wijzigen.');
-                 $this->redirect('/admin');
+                Session::flash('error', 'Je kunt je eigen admin-rechten niet wijzigen.');
+                $this->redirect('/admin/users');
             }
-            
+
             $userModel = new User($this->pdo);
             $userModel->setAdminStatus($userId, $isAdmin);
-            
+
             Session::flash('success', 'Rechten aangepast.');
-            $this->redirect('/admin');
-         }
+            $this->redirect('/admin/users');
+        }
     }
 
     public function updateUserAiAccessEnabled(): void {
@@ -263,6 +335,37 @@ class AdminController extends BaseController {
 
         Session::flash('success', 'AI toegang bijgewerkt.');
         $this->redirect('/admin/users');
+    }
+
+    public function manageTeamMembers(): void {
+        $this->requireAdmin();
+
+        $teamId = (int)($_GET['team_id'] ?? 0);
+        if (!$teamId) {
+            $this->redirect('/admin/teams');
+        }
+
+        $teamModel = new Team($this->pdo);
+        $userModel = new User($this->pdo);
+
+        $team = $teamModel->getById($teamId);
+        if (!$team) {
+            Session::flash('error', 'Team niet gevonden.');
+            $this->redirect('/admin/teams');
+        }
+
+        $teamMembers   = $teamModel->getTeamMembers($teamId);
+        $allUsers      = $userModel->getAll('name ASC');
+        $memberUserIds = array_column($teamMembers, 'id');
+
+        $availableUsers = array_filter($allUsers, fn($u) => !in_array($u['id'], $memberUserIds));
+
+        View::render('admin/team_members', [
+            'team'           => $team,
+            'teamMembers'    => $teamMembers,
+            'availableUsers' => $availableUsers,
+            'pageTitle'      => 'Leden van ' . $team['name'],
+        ]);
     }
 
     public function manageTeams(): void {
@@ -301,21 +404,29 @@ class AdminController extends BaseController {
         ]);
     }
 
+    private function safeRedirectTo(string $fallback): string {
+        $to = $_POST['redirect_to'] ?? '';
+        if ($to !== '' && str_starts_with($to, '/admin/')) {
+            return $to;
+        }
+        return $fallback;
+    }
+
     public function addTeamMember(): void {
         $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/admin');
 
-            $userId = (int)$_POST['user_id'];
-            $teamId = (int)$_POST['team_id'];
-            $isCoach = isset($_POST['is_coach']);
+            $userId    = (int)$_POST['user_id'];
+            $teamId    = (int)$_POST['team_id'];
+            $isCoach   = isset($_POST['is_coach']);
             $isTrainer = isset($_POST['is_trainer']);
 
             $teamModel = new Team($this->pdo);
             $teamModel->addMember($teamId, $userId, $isCoach, $isTrainer);
 
             Session::flash('success', 'Toegevoegd aan team.');
-            $this->redirect('/admin/user-teams?user_id=' . $userId);
+            $this->redirect($this->safeRedirectTo('/admin/user-teams?user_id=' . $userId));
         }
     }
 
@@ -324,9 +435,9 @@ class AdminController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->verifyCsrf('/admin');
 
-            $userId = (int)$_POST['user_id'];
-            $teamId = (int)$_POST['team_id'];
-            $isCoach = isset($_POST['is_coach']);
+            $userId    = (int)$_POST['user_id'];
+            $teamId    = (int)$_POST['team_id'];
+            $isCoach   = isset($_POST['is_coach']);
             $isTrainer = isset($_POST['is_trainer']);
 
             $teamModel = new Team($this->pdo);
@@ -337,15 +448,13 @@ class AdminController extends BaseController {
                 $roleParts = [];
                 if ($isCoach) $roleParts[] = 'Coach';
                 if ($isTrainer) $roleParts[] = 'Trainer';
-                $roleString = implode(' & ', $roleParts);
-                
                 $currentTeam = Session::get('current_team');
-                $currentTeam['role'] = $roleString;
+                $currentTeam['role'] = implode(' & ', $roleParts);
                 Session::set('current_team', $currentTeam);
             }
 
             Session::flash('success', 'Rollen bijgewerkt.');
-            $this->redirect('/admin/user-teams?user_id=' . $userId);
+            $this->redirect($this->safeRedirectTo('/admin/user-teams?user_id=' . $userId));
         }
     }
 
@@ -366,7 +475,7 @@ class AdminController extends BaseController {
             }
 
             Session::flash('success', 'Verwijderd uit team.');
-            $this->redirect('/admin/user-teams?user_id=' . $userId);
+            $this->redirect($this->safeRedirectTo('/admin/user-teams?user_id=' . $userId));
         }
     }
 

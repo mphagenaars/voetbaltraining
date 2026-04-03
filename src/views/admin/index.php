@@ -50,6 +50,17 @@
         <p style="color: #666; margin-bottom: 1.5rem;">Beheer AI toegang, modellen, prijzen en API keys.</p>
     </div>
 
+    <!-- Mail Tile -->
+    <div class="card" style="cursor: pointer;" onclick="window.location.href='/admin/mail/settings'">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="background: #e3f2fd; padding: 1rem; border-radius: 50%; color: #0277bd;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <h2 style="margin: 0;">E-mail</h2>
+        </div>
+        <p style="color: #666; margin-bottom: 1.5rem;">SMTP-instellingen en wachtwoord reset.</p>
+    </div>
+
     <!-- System Tile -->
     <div class="card" style="cursor: pointer;" onclick="window.location.href='/admin/system'">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">

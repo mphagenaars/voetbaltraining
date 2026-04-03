@@ -52,6 +52,8 @@ return [
     '/matches/save-lineup' => ['GameController', 'saveLineup'],
     '/matches/live/substitute' => ['GameController', 'substitute'],
     '/matches/live/substitute/undo' => ['GameController', 'undoSubstitution'],
+    '/matches/live/voice-command' => ['GameController', 'voiceCommand'],
+    '/matches/live/voice-command/confirm' => ['GameController', 'voiceCommandConfirm'],
     '/matches/tactics/save' => ['GameController', 'saveTactic'],
     '/matches/tactics/delete' => ['GameController', 'deleteTactic'],
     '/matches/tactics/export-video' => ['GameController', 'exportTacticVideo'],
@@ -61,6 +63,11 @@ return [
     '/tactics/save' => ['GameController', 'saveTactic'],
     '/tactics/delete' => ['GameController', 'deleteTactic'],
     '/tactics/export-video' => ['GameController', 'exportTacticVideo'],
+
+    // Speelwijzen (Formation Templates)
+    '/tactics/speelwijzen/save' => ['TacticsController', 'saveSpeelwijze'],
+    '/tactics/speelwijzen/delete' => ['TacticsController', 'deleteSpeelwijze'],
+    '/tactics/speelwijzen/list' => ['TacticsController', 'listSpeelwijzen'],
 
     // Account
     '/account' => ['AccountController', 'index'],
@@ -80,9 +87,12 @@ return [
     '/admin/teams/edit' => ['AdminController', 'editTeam'],
     '/admin/teams/update' => ['AdminController', 'updateTeam'],
     '/admin/users' => ['AdminController', 'users'],
+    '/admin/create-user' => ['AdminController', 'createUser'],
     '/admin/delete-user' => ['AdminController', 'deleteUser'],
+    '/admin/reset-user-password' => ['AdminController', 'resetUserPassword'],
     '/admin/toggle-admin' => ['AdminController', 'toggleAdmin'],
     '/admin/update-user-ai-access' => ['AdminController', 'updateUserAiAccessEnabled'],
+    '/admin/team-members' => ['AdminController', 'manageTeamMembers'],
     '/admin/user-teams' => ['AdminController', 'manageTeams'],
     '/admin/add-team-member' => ['AdminController', 'addTeamMember'],
     '/admin/update-team-role' => ['AdminController', 'updateTeamRole'],
@@ -93,6 +103,12 @@ return [
     '/admin/options/delete' => ['AdminController', 'deleteOption'],
     '/admin/options/reorder' => ['AdminController', 'reorderOptions'],
     '/admin/system' => ['AdminController', 'system'],
+
+    // Admin Mail
+    '/admin/mail/settings'      => ['MailAdminController', 'settings'],
+    '/admin/mail/save'          => ['MailAdminController', 'saveSettings'],
+    '/admin/mail/delete-password' => ['MailAdminController', 'deletePassword'],
+    '/admin/mail/test'          => ['MailAdminController', 'sendTestMail'],
 
     // Admin AI Module
     '/admin/ai/settings' => ['AiAdminController', 'manageAiSettings'],
@@ -110,6 +126,7 @@ return [
     '/admin/ai/pricing/update' => ['AiAdminController', 'updateAiModelPricing'],
     '/admin/ai/budget' => ['AiAdminController', 'updateAiBudgetSettings'],
     '/admin/ai/retrieval' => ['AiAdminController', 'updateAiRetrievalSettings'],
+    '/admin/ai/live-voice' => ['AiAdminController', 'updateLiveVoiceSettings'],
     '/admin/ai/usage' => ['AiAdminController', 'usageReport'],
 
     // AI User endpoints

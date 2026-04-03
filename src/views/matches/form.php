@@ -16,6 +16,7 @@ $formationValue = trim((string)($formData['formation'] ?? ($isEdit ? (string)($m
 if ($formationValue === '') {
     $formationValue = '11-vs-11';
 }
+$formationTemplateIdValue = trim((string)($formData['formation_template_id'] ?? ($isEdit ? (string)($match['formation_template_id'] ?? '') : '')));
 
 $formations = [
     '6-vs-6' => '6 tegen 6',
@@ -25,6 +26,8 @@ $formations = [
 if (!array_key_exists($formationValue, $formations)) {
     $formations[$formationValue] = $formationValue;
 }
+
+$speelwijzenList = $speelwijzen ?? [];
 
 $action = $isEdit ? '/matches/edit?id=' . (int)$match['id'] : '/matches/create';
 $backUrl = $isEdit ? '/matches/view?id=' . (int)$match['id'] : '/matches';
@@ -65,6 +68,30 @@ $backUrl = $isEdit ? '/matches/view?id=' . (int)$match['id'] : '/matches';
         </div>
 
         <div class="form-group">
+            <label for="formation_template_id">Speelwijze</label>
+            <select id="formation_template_id" name="formation_template_id" class="form-control">
+                <option value="">-- Handmatige formatie --</option>
+                <?php
+                $ownTemplates = array_filter($speelwijzenList, fn($s) => !empty($s['team_id']));
+                $sharedTemplates = array_filter($speelwijzenList, fn($s) => empty($s['team_id']) || !empty($s['is_shared']));
+                if (!empty($ownTemplates)): ?>
+                    <optgroup label="Team">
+                        <?php foreach ($ownTemplates as $sw): ?>
+                            <option value="<?= (int)$sw['id'] ?>" data-format="<?= e($sw['format']) ?>" <?= $formationTemplateIdValue === (string)$sw['id'] ? 'selected' : '' ?>><?= e($sw['name']) ?></option>
+                        <?php endforeach; ?>
+                    </optgroup>
+                <?php endif;
+                if (!empty($sharedTemplates)): ?>
+                    <optgroup label="Gedeeld">
+                        <?php foreach ($sharedTemplates as $sw): ?>
+                            <option value="<?= (int)$sw['id'] ?>" data-format="<?= e($sw['format']) ?>" <?= $formationTemplateIdValue === (string)$sw['id'] ? 'selected' : '' ?>><?= e($sw['name']) ?></option>
+                        <?php endforeach; ?>
+                    </optgroup>
+                <?php endif; ?>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="formation">Formatie</label>
             <select id="formation" name="formation" class="form-control">
                 <?php foreach ($formations as $value => $label): ?>
@@ -72,6 +99,35 @@ $backUrl = $isEdit ? '/matches/view?id=' . (int)$match['id'] : '/matches';
                 <?php endforeach; ?>
             </select>
         </div>
+
+        <script>
+        (function() {
+            const templateSelect = document.getElementById('formation_template_id');
+            const formationSelect = document.getElementById('formation');
+            if (!templateSelect || !formationSelect) return;
+
+            function onTemplateChange() {
+                const opt = templateSelect.selectedOptions[0];
+                const format = opt?.dataset?.format || '';
+                if (format) {
+                    for (const o of formationSelect.options) {
+                        if (o.value === format) { o.selected = true; break; }
+                    }
+                    formationSelect.disabled = true;
+                } else {
+                    formationSelect.disabled = false;
+                }
+            }
+
+            templateSelect.addEventListener('change', onTemplateChange);
+            onTemplateChange();
+
+            // Re-enable disabled selects before submit so values are sent
+            formationSelect.closest('form')?.addEventListener('submit', () => {
+                formationSelect.disabled = false;
+            });
+        })();
+        </script>
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary"><?= $submitLabel ?></button>

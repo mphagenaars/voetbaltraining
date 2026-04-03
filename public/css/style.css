@@ -113,6 +113,18 @@ a:hover {
     border: 1px solid #ffcdd2;
 }
 
+.alert-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #c8e6c9;
+}
+
+.alert-danger {
+    background-color: #ffebee;
+    color: #c62828;
+    border-color: #ffcdd2;
+}
+
 .alert-info {
     background-color: #e3f2fd;
     color: #0d47a1;
@@ -2236,4 +2248,225 @@ body.page-match-live.live-landscape-blocked {
     .exercise-mode-switch {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── Voice UI (live match) ── */
+
+.voice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.voice-overlay.is-visible {
+    display: flex;
+}
+
+.voice-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.voice-overlay-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    color: #fff;
+    text-align: center;
+}
+
+.voice-status-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.12);
+    transition: background 0.2s, transform 0.15s;
+}
+
+.voice-status-icon.is-recording {
+    background: #d32f2f;
+    animation: voice-pulse 1.2s ease-in-out infinite;
+}
+
+.voice-status-icon.is-processing {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes voice-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.voice-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: voice-spin 0.7s linear infinite;
+}
+
+@keyframes voice-spin {
+    to { transform: rotate(360deg); }
+}
+
+.voice-status-text {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #fff;
+}
+
+/* Confirmation sheet */
+
+.voice-confirm-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 3100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.voice-confirm-sheet.is-visible {
+    display: flex;
+}
+
+.voice-confirm-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.voice-confirm-sheet-content {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 12px 12px 0 0;
+    padding: 1.25rem;
+    animation: voice-sheet-up 0.25s ease-out;
+}
+
+@keyframes voice-sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.voice-transcript {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0 0 0.75rem;
+    word-break: break-word;
+}
+
+.voice-events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.voice-event-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+}
+
+.voice-event-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    width: 2rem;
+    text-align: center;
+}
+
+.voice-event-details {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.voice-event-confidence {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.voice-event-confidence.is-high {
+    background: #c8e6c9;
+    color: #2e7d32;
+}
+
+.voice-event-confidence.is-medium {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.voice-event-confidence.is-low {
+    background: #ffcdd2;
+    color: #c62828;
+}
+
+.voice-confirm-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.voice-confirm-actions .btn {
+    flex: 1;
+    padding: 0.75rem;
+    font-size: 1rem;
+}
+
+/* Toast */
+
+.voice-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3200;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-size: 0.95rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.voice-toast.is-visible {
+    opacity: 1;
+}
+
+.voice-toast.is-success {
+    background: #2e7d32;
+}
+
+.voice-toast.is-error {
+    background: #c62828;
+}
+
+/* Voice button recording state */
+body.page-match-live .voice-btn.is-recording {
+    background-color: #d32f2f !important;
+    animation: voice-pulse 1.2s ease-in-out infinite;
 }

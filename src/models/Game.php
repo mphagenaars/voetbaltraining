@@ -9,29 +9,30 @@ class Game extends Model {
         if ($hidePlayed) {
             $sql .= " AND date >= date('now')";
         }
-        $sql .= " ORDER BY $orderBy";
+        $sql .= " ORDER BY " . self::sanitizeOrderBy($orderBy, 'date ASC');
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':team_id' => $teamId]);
         return $stmt->fetchAll();
     }
 
-    public function create(int $teamId, string $opponent, string $date, int $isHome, string $formation): int {
-        $stmt = $this->pdo->prepare("INSERT INTO matches (team_id, opponent, date, is_home, formation) VALUES (:team_id, :opponent, :date, :is_home, :formation)");
+    public function create(int $teamId, string $opponent, string $date, int $isHome, string $formation, ?int $formationTemplateId = null): int {
+        $stmt = $this->pdo->prepare("INSERT INTO matches (team_id, opponent, date, is_home, formation, formation_template_id) VALUES (:team_id, :opponent, :date, :is_home, :formation, :formation_template_id)");
         $stmt->execute([
             ':team_id' => $teamId,
             ':opponent' => $opponent,
             ':date' => $date,
             ':is_home' => $isHome,
-            ':formation' => $formation
+            ':formation' => $formation,
+            ':formation_template_id' => $formationTemplateId,
         ]);
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function updateMatch(int $matchId, string $opponent, string $date, int $isHome, string $formation): void {
+    public function updateMatch(int $matchId, string $opponent, string $date, int $isHome, string $formation, ?int $formationTemplateId = null): void {
         $stmt = $this->pdo->prepare("
             UPDATE matches
-            SET opponent = :opponent, date = :date, is_home = :is_home, formation = :formation
+            SET opponent = :opponent, date = :date, is_home = :is_home, formation = :formation, formation_template_id = :formation_template_id
             WHERE id = :id
         ");
         $stmt->execute([
@@ -39,6 +40,7 @@ class Game extends Model {
             ':date' => $date,
             ':is_home' => $isHome,
             ':formation' => $formation,
+            ':formation_template_id' => $formationTemplateId,
             ':id' => $matchId
         ]);
     }
@@ -510,5 +512,77 @@ class Game extends Model {
     public function updateEvaluation(int $matchId, string $evaluation): void {
         $stmt = $this->pdo->prepare("UPDATE matches SET evaluation = :evaluation WHERE id = :id");
         $stmt->execute([':evaluation' => $evaluation, ':id' => $matchId]);
+    }
+
+    // --- Voice command logs ---
+
+    public function createVoiceCommandLog(array $data): int {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO match_voice_command_logs (
+                match_id, user_id, period, clock_seconds, audio_duration_ms,
+                stt_model_id, raw_transcript, normalized_transcript, parsed_json,
+                status, error_code, created_at
+            ) VALUES (
+                :match_id, :user_id, :period, :clock_seconds, :audio_duration_ms,
+                :stt_model_id, :raw_transcript, :normalized_transcript, :parsed_json,
+                :status, :error_code, CURRENT_TIMESTAMP
+            )"
+        );
+
+        $stmt->execute([
+            ':match_id' => (int)$data['match_id'],
+            ':user_id' => (int)$data['user_id'],
+            ':period' => isset($data['period']) ? (int)$data['period'] : null,
+            ':clock_seconds' => isset($data['clock_seconds']) ? (int)$data['clock_seconds'] : null,
+            ':audio_duration_ms' => isset($data['audio_duration_ms']) ? (int)$data['audio_duration_ms'] : null,
+            ':stt_model_id' => $data['stt_model_id'] ?? null,
+            ':raw_transcript' => $data['raw_transcript'] ?? null,
+            ':normalized_transcript' => $data['normalized_transcript'] ?? null,
+            ':parsed_json' => $data['parsed_json'] ?? null,
+            ':status' => (string)($data['status'] ?? 'error'),
+            ':error_code' => $data['error_code'] ?? null,
+        ]);
+
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    public function updateVoiceCommandLogStatus(int $logId, string $status, ?string $errorCode = null): void {
+        $stmt = $this->pdo->prepare(
+            "UPDATE match_voice_command_logs
+             SET status = :status, error_code = :error_code
+             WHERE id = :id"
+        );
+        $stmt->execute([
+            ':id' => $logId,
+            ':status' => $status,
+            ':error_code' => $errorCode,
+        ]);
+    }
+
+    // --- Player name aliases ---
+
+    public function getAliasesForTeam(int $teamId): array {
+        $stmt = $this->pdo->prepare(
+            "SELECT id, team_id, player_id, alias, normalized_alias
+             FROM player_name_aliases
+             WHERE team_id = :team_id
+             ORDER BY player_id, alias"
+        );
+        $stmt->execute([':team_id' => $teamId]);
+        return $stmt->fetchAll();
+    }
+
+    public function addPlayerAlias(int $teamId, int $playerId, string $alias, string $normalizedAlias): int {
+        $stmt = $this->pdo->prepare(
+            "INSERT OR IGNORE INTO player_name_aliases (team_id, player_id, alias, normalized_alias)
+             VALUES (:team_id, :player_id, :alias, :normalized_alias)"
+        );
+        $stmt->execute([
+            ':team_id' => $teamId,
+            ':player_id' => $playerId,
+            ':alias' => $alias,
+            ':normalized_alias' => $normalizedAlias,
+        ]);
+        return (int)$this->pdo->lastInsertId();
     }
 }

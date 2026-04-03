@@ -1,0 +1,299 @@
+/* Tactics Studio Tabs */
+.tactics-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.tactics-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted, #6c757d);
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: var(--radius, 0.5rem);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tactics-tab:hover {
+    background: var(--bg-body, #f8f9fa);
+    color: var(--text-main, #212529);
+}
+
+.tactics-tab.active {
+    color: var(--primary, #2e7d32);
+    border-color: var(--primary, #2e7d32);
+    background: var(--bg-card, #fff);
+    font-weight: 600;
+}
+
+.tactics-tab svg {
+    flex-shrink: 0;
+}
+
+.tactics-tab-panel {
+    display: none;
+}
+
+.tactics-tab-panel.active {
+    display: block;
+}
+
+/* Speelwijze Editor */
+.speelwijze-editor {
+    margin-bottom: 1.5rem;
+}
+
+.speelwijze-layout {
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+}
+
+@media (max-width: 700px) {
+    .speelwijze-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* List panel */
+.speelwijze-list-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.speelwijze-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.speelwijze-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: 560px;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+}
+
+.speelwijze-list-group-label {
+    padding: 0.35rem 0.15rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #888);
+}
+
+.speelwijze-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.42rem 0.55rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border: 1px solid #d6dde4;
+    border-radius: 7px;
+    background: #ffffff;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.speelwijze-list-item:hover {
+    border-color: var(--primary, #2e7d32);
+}
+
+.speelwijze-list-item.active {
+    border-color: var(--primary, #2e7d32);
+    background: rgba(46, 125, 50, 0.08);
+    font-weight: 600;
+}
+
+.speelwijze-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.speelwijze-list-empty {
+    padding: 1rem 0.8rem;
+    color: var(--text-muted, #888);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* Detail panel */
+.speelwijze-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.speelwijze-form-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speelwijze-form-row input[type="text"] {
+    flex: 1;
+}
+
+.speelwijze-shared-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.speelwijze-shared-toggle input {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 10px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.speelwijze-shared-toggle input:checked + .toggle-slider {
+    background: var(--primary, #2e7d32);
+}
+
+.speelwijze-shared-toggle input:checked + .toggle-slider::after {
+    transform: translateX(16px);
+}
+
+.toggle-label {
+    font-size: 0.8rem;
+    color: var(--text-muted, #888);
+}
+
+.speelwijze-field-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.speelwijze-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.72rem;
+    border-radius: 10px;
+    background: var(--bg-subtle, #f0f0f0);
+    color: var(--text-muted, #666);
+    white-space: nowrap;
+}
+
+.speelwijze-format {
+    font-weight: 600;
+    background: var(--primary-light, #e3f0ff);
+    color: var(--primary, #2962ff);
+}
+
+/* Field markers */
+.sw-marker {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    z-index: 10;
+    transition: transform 0.1s;
+}
+
+.sw-marker:active {
+    cursor: grabbing;
+    z-index: 20;
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+.sw-marker.selected {
+    z-index: 20;
+    filter: drop-shadow(0 0 6px rgba(41, 98, 255, 0.7));
+}
+
+.sw-marker svg path {
+    fill: rgba(255, 255, 255, 0.95);
+    stroke: rgba(0, 0, 0, 0.4);
+    stroke-width: 2;
+}
+
+.sw-marker.selected svg path {
+    fill: rgba(41, 98, 255, 0.9);
+    stroke: rgba(255, 255, 255, 0.9);
+}
+
+.sw-marker svg text {
+    fill: #333;
+    font-family: Arial, sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+
+.sw-marker.selected svg text {
+    fill: #fff;
+}
+
+.football-field.readonly .sw-marker {
+    cursor: default;
+}
+
+/* Position edit bar */
+.speelwijze-pos-edit {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 6px;
+}
+
+.speelwijze-pos-edit .form-control-sm {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+    height: auto;
+}
+
+/* Danger icon button variant */
+.btn-danger-icon {
+    color: var(--danger, #e53935);
+}
+.btn-danger-icon:hover {
+    background: rgba(229, 57, 53, 0.1);
+}
