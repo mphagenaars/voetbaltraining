@@ -39,7 +39,7 @@
             <div class="report-column-picker" data-report-column-picker data-team-id="<?= (int)(Session::get('current_team')['id'] ?? 0) ?>">
                 <button
                     type="button"
-                    class="btn btn-sm btn-outline report-column-picker-toggle"
+                    class="tb-button tb-button--secondary tb-button--sm report-column-picker-toggle"
                     data-report-picker-toggle
                     aria-haspopup="dialog"
                     aria-expanded="false"
@@ -58,7 +58,7 @@
                     hidden
                 >
                     <div class="report-column-picker-actions">
-                        <button type="button" class="btn btn-sm btn-outline" data-report-preset="reset">Reset</button>
+                        <button type="button" class="tb-button tb-button--secondary tb-button--sm" data-report-preset="reset">Reset</button>
                     </div>
                     <div class="report-column-picker-options">
                         <?php foreach ($columnPickerLabels as $columnId => $label): ?>
@@ -69,7 +69,7 @@
                         <?php endforeach; ?>
                     </div>
                     <div class="report-column-picker-footer">
-                        <button type="button" class="btn btn-sm btn-secondary" data-report-picker-close>Sluiten</button>
+                        <button type="button" class="tb-button tb-button--secondary tb-button--sm" data-report-picker-close>Sluiten</button>
                     </div>
                 </div>
                 <div class="report-column-picker-backdrop" data-report-picker-backdrop hidden></div>

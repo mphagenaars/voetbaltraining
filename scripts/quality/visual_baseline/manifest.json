@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-04-05T11:43:28+0200",
+  "base_url": "http://127.0.0.1:18080",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "fixture": {
+    "username": "must11_admin",
+    "admin_user_id": 3,
+    "team_id": 1,
+    "match_id": 10
+  },
+  "screens": [
+    {
+      "slug": "auth_login",
+      "path": "/login",
+      "auth": "guest"
+    },
+    {
+      "slug": "auth_register",
+      "path": "/register",
+      "auth": "guest"
+    },
+    {
+      "slug": "dashboard",
+      "path": "/",
+      "auth": "admin"
+    },
+    {
+      "slug": "training_builder",
+      "path": "/trainings/create",
+      "auth": "admin"
+    },
+    {
+      "slug": "players_index",
+      "path": "/players",
+      "auth": "admin"
+    },
+    {
+      "slug": "exercises_index",
+      "path": "/exercises",
+      "auth": "admin"
+    },
+    {
+      "slug": "match_live",
+      "path": "/matches/live?id={match_id}",
+      "auth": "admin"
+    },
+    {
+      "slug": "matches_reports",
+      "path": "/matches/reports",
+      "auth": "admin"
+    },
+    {
+      "slug": "account_index",
+      "path": "/account",
+      "auth": "admin"
+    },
+    {
+      "slug": "account_teams",
+      "path": "/account/teams",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_index",
+      "path": "/admin",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_users",
+      "path": "/admin/users",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_teams",
+      "path": "/admin/teams",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_team_members",
+      "path": "/admin/team-members?team_id={team_id}",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_user_teams",
+      "path": "/admin/user-teams?user_id={admin_user_id}",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_edit_team",
+      "path": "/admin/teams/edit?id={team_id}",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_mail_settings",
+      "path": "/admin/mail/settings",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_options",
+      "path": "/admin/options",
+      "auth": "admin"
+    },
+    {
+      "slug": "admin_system",
+      "path": "/admin/system",
+      "auth": "admin"
+    }
+  ]
+}

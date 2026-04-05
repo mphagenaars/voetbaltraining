@@ -1,4 +1,4 @@
-<div class="card" style="max-width: 400px; margin: 0 auto;">
+<div class="card tb-auth-card">
     <h1 class="mb-2">Registreren</h1>
     <p class="text-muted mb-2">Gebruik de invite code van je team.</p>
     
@@ -24,7 +24,7 @@
             <label for="password">Wachtwoord</label>
             <input type="password" id="password" name="password" required>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Registreren</button>
+        <button type="submit" class="tb-button tb-button--primary tb-auth-submit">Registreren</button>
     </form>
 
     <div class="text-center mt-2">

@@ -15,7 +15,7 @@ $teamId = $teamId ?? 0;
         <div class="speelwijze-list-panel">
             <div class="speelwijze-list-header">
                 <span>Speelwijzen</span>
-                <button type="button" id="btn-new-speelwijze" class="btn-icon-round" title="Nieuwe speelwijze">
+                <button type="button" id="btn-new-speelwijze" class="btn-icon-round tb-icon-button--accent" title="Nieuwe speelwijze">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
@@ -35,8 +35,10 @@ $teamId = $teamId ?? 0;
                 </label>
             </div>
             <div class="speelwijze-field-toolbar">
-                <button type="button" id="btn-add-position" class="btn-icon-round" title="Positie toevoegen">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <button type="button" id="btn-add-position" class="btn-icon-round tb-icon-button--accent" title="Positie toevoegen">
+                    <svg width="18" height="18" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                        <path d="M15,30 L30,10 L70,10 L85,30 L75,40 L70,35 L70,90 L30,90 L30,35 L25,40 Z" fill="currentColor"></path>
+                    </svg>
                 </button>
                 <span id="speelwijze-position-count" class="speelwijze-badge">0 posities</span>
                 <span id="speelwijze-format-badge" class="speelwijze-badge speelwijze-format"></span>

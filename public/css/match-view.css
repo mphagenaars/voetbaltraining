@@ -318,6 +318,24 @@
     font-size: 0.9rem;
 }
 
+/* Keep "Nieuwe situatie" as the compact green plus, independent of shared button defaults. */
+.match-tactics-sidebar-head #tactics-new-btn {
+    width: var(--tb-touch-target, 44px);
+    height: var(--tb-touch-target, 44px);
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--tb-color-accent, #2f8f3a);
+    background: var(--tb-color-accent, #2f8f3a);
+    color: #ffffff;
+    box-shadow: var(--tb-shadow-sm, 0 1px 2px rgba(16, 24, 16, 0.06));
+}
+
+.match-tactics-sidebar-head #tactics-new-btn:hover {
+    border-color: var(--tb-color-accent-hover, #277a31);
+    background: var(--tb-color-accent-hover, #277a31);
+    color: #ffffff;
+}
+
 .match-tactics-list {
     display: flex;
     flex-direction: column;

@@ -4,7 +4,7 @@
 
     <div class="app-bar">
         <div class="app-bar-start">
-            <a href="/" class="btn-icon-round" title="Terug naar dashboard">
+            <a href="/" class="tb-icon-button btn-icon-round" title="Terug naar dashboard" aria-label="Terug naar dashboard">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <h1 class="app-bar-title">Tactiekstudio</h1>
@@ -23,12 +23,12 @@
     <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
 
     <!-- Tab navigation -->
-    <div class="tactics-tabs">
-        <button type="button" class="tactics-tab active" data-tab="tactiekbord">
+    <div class="tactics-tabs tb-segmented">
+        <button type="button" class="tactics-tab tb-segmented__item tb-segmented__item--active active" data-tab="tactiekbord" aria-pressed="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             Tactiekbord
         </button>
-        <button type="button" class="tactics-tab" data-tab="speelwijzen">
+        <button type="button" class="tactics-tab tb-segmented__item" data-tab="speelwijzen" aria-pressed="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             Speelwijzen
         </button>
@@ -83,9 +83,13 @@
                 }
             }
 
-            tabs.forEach(t => t.classList.remove('active'));
+            tabs.forEach(t => {
+                t.classList.remove('active', 'tb-segmented__item--active');
+                t.setAttribute('aria-pressed', 'false');
+            });
             panels.forEach(p => p.classList.remove('active'));
-            tab.classList.add('active');
+            tab.classList.add('active', 'tb-segmented__item--active');
+            tab.setAttribute('aria-pressed', 'true');
             document.getElementById('tab-' + target)?.classList.add('active');
             sessionStorage.setItem('tacticsTab', target);
         });
@@ -96,9 +100,13 @@
     if (saved) {
         const savedTab = document.querySelector('.tactics-tab[data-tab="' + saved + '"]');
         if (savedTab && !savedTab.classList.contains('active')) {
-            tabs.forEach(t => t.classList.remove('active'));
+            tabs.forEach(t => {
+                t.classList.remove('active', 'tb-segmented__item--active');
+                t.setAttribute('aria-pressed', 'false');
+            });
             panels.forEach(p => p.classList.remove('active'));
-            savedTab.classList.add('active');
+            savedTab.classList.add('active', 'tb-segmented__item--active');
+            savedTab.setAttribute('aria-pressed', 'true');
             document.getElementById('tab-' + saved)?.classList.add('active');
         }
     }

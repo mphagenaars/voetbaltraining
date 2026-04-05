@@ -1,0 +1,15 @@
+@font-face {
+    font-family: "TB Sans";
+    src: url("/fonts/tb-sans-regular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "TB Sans";
+    src: url("/fonts/tb-sans-bold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}

@@ -1,0 +1,74 @@
+:root {
+    /* Core colors */
+    --tb-color-bg: #f5f7f4;
+    --tb-color-surface: #ffffff;
+    --tb-color-surface-muted: #f0f3ef;
+    --tb-color-border: #d8ddd6;
+    --tb-color-text: #182018;
+    --tb-color-text-muted: #5e685f;
+
+    --tb-color-accent: #2b8535;
+    --tb-color-accent-hover: #277a31;
+    --tb-color-accent-soft: #e8f5ea;
+    --tb-color-accent-soft-strong: #d7eedb;
+
+    --tb-color-danger: #c53d33;
+    --tb-color-danger-soft: #f8e6e4;
+
+    --tb-color-focus: #204ecf;
+
+    /* Typography */
+    --tb-font-family: "TB Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --tb-font-size-xs: 12px;
+    --tb-font-size-sm: 14px;
+    --tb-font-size-md: 16px;
+    --tb-font-size-lg: 18px;
+    --tb-font-size-xl: 24px;
+    --tb-font-weight-medium: 500;
+    --tb-font-weight-semibold: 600;
+    --tb-font-weight-bold: 700;
+
+    /* Radius */
+    --tb-radius-sm: 10px;
+    --tb-radius-md: 12px;
+    --tb-radius-lg: 16px;
+    --tb-radius-round: 999px;
+    --tb-radius-fab: 999px;
+
+    /* Spacing */
+    --tb-space-1: 4px;
+    --tb-space-2: 8px;
+    --tb-space-3: 12px;
+    --tb-space-4: 16px;
+    --tb-space-5: 20px;
+    --tb-space-6: 24px;
+    --tb-space-8: 32px;
+
+    /* Shadows */
+    --tb-shadow-sm: 0 1px 2px rgba(16, 24, 16, 0.06);
+    --tb-shadow-md: 0 8px 20px rgba(24, 32, 24, 0.14);
+
+    /* Sizing */
+    --tb-touch-target: 44px;
+    --tb-button-height-sm: 40px;
+    --tb-button-height-md: 44px;
+    --tb-button-height-lg: 48px;
+    --tb-chip-height: 34px;
+    --tb-fab-size: 56px;
+    --tb-fab-size-compact: 48px;
+
+    /* Legacy compatibility aliases for existing CSS */
+    --primary: var(--tb-color-accent);
+    --primary-hover: var(--tb-color-accent-hover);
+    --primary-light: var(--tb-color-accent-soft);
+    --primary-color: var(--tb-color-accent);
+    --bg-body: var(--tb-color-bg);
+    --bg-card: var(--tb-color-surface);
+    --text-main: var(--tb-color-text);
+    --text-muted: var(--tb-color-text-muted);
+    --border-color: var(--tb-color-border);
+    --spacing: var(--tb-space-4);
+    --radius: var(--tb-radius-md);
+    --shadow: var(--tb-shadow-sm);
+    --font-family: var(--tb-font-family);
+}

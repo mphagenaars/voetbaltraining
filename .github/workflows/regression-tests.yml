@@ -22,5 +22,17 @@ jobs:
           extensions: pdo, sqlite3
           coverage: none
 
+      - name: Enforce MUST-04 guardrails
+        run: bash scripts/check_must04.sh
+
+      - name: Enforce Action Hierarchy guardrails
+        run: bash scripts/check_action_hierarchy.sh
+
+      - name: Enforce MUST-10 accessibility guardrails
+        run: bash scripts/check_must10.sh
+
+      - name: Enforce MUST-11 visual baseline guardrails
+        run: bash scripts/check_must11.sh
+
       - name: Run regression tests
         run: php scripts/regression_tests.php

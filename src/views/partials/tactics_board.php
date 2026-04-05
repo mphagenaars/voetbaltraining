@@ -41,7 +41,7 @@ $tacticsShowSourceMeta = !empty($tacticsShowSourceMeta);
         <aside class="match-tactics-sidebar">
             <div class="match-tactics-sidebar-head">
                 <h4>Situaties</h4>
-                <button type="button" id="tactics-new-btn" class="btn-icon tactics-action-icon tactics-action-icon-add" title="Nieuwe situatie" aria-label="Nieuwe situatie">
+                <button type="button" id="tactics-new-btn" class="btn-icon-round tb-icon-button--accent" title="Nieuwe situatie" aria-label="Nieuwe situatie">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>

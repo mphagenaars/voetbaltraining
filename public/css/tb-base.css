@@ -1,0 +1,52 @@
+html {
+    font-size: var(--tb-font-size-md);
+    -webkit-text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--tb-font-family);
+    font-size: var(--tb-font-size-md);
+    line-height: 1.5;
+    background: var(--tb-color-bg);
+    color: var(--tb-color-text);
+    text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--tb-color-text);
+    line-height: 1.25;
+    font-weight: var(--tb-font-weight-semibold);
+}
+
+h1 { font-size: var(--tb-font-size-xl); }
+h2 { font-size: var(--tb-font-size-lg); }
+h3 { font-size: var(--tb-font-size-md); }
+
+p,
+li {
+    line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--tb-color-focus);
+    outline-offset: 2px;
+}

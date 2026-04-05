@@ -10,18 +10,18 @@
 <div class="card" id="ai-usage-card">
     <h2>AI Verbruik</h2>
     <p class="text-muted" id="ai-usage-loading">Laden...</p>
-    <div id="ai-usage-summary" style="display:none; margin-bottom: 1rem;"></div>
-    <div id="ai-usage-history-wrap" style="display:none;">
-        <h3 style="margin-bottom: 0.5rem;">Recente calls</h3>
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
+    <div id="ai-usage-summary" class="tb-account-ai-summary"></div>
+    <div id="ai-usage-history-wrap" class="tb-account-ai-history">
+        <h3 class="tb-account-ai-history-title">Recente calls</h3>
+        <div class="tb-table-wrap">
+            <table class="tb-table">
                 <thead>
-                    <tr style="text-align:left; border-bottom: 2px solid #eee;">
-                        <th style="padding: 0.5rem;">Datum</th>
-                        <th style="padding: 0.5rem;">Model</th>
-                        <th style="padding: 0.5rem;">Status</th>
-                        <th style="padding: 0.5rem;">Tokens</th>
-                        <th style="padding: 0.5rem;">Kosten (EUR)</th>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Model</th>
+                        <th>Status</th>
+                        <th>Tokens</th>
+                        <th>Kosten (EUR)</th>
                     </tr>
                 </thead>
                 <tbody id="ai-usage-history-body"></tbody>
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const setError = function (message) {
         loadingEl.textContent = message;
-        loadingEl.style.color = '#c62828';
+        loadingEl.classList.add('tb-account-ai-error');
     };
 
     try {
@@ -91,18 +91,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .replace(/'/g, '&#39;');
         };
         if (rows.length === 0) {
-            historyBodyEl.innerHTML = '<tr><td colspan=\"5\" style=\"padding: 0.75rem; color: var(--text-muted);\">Nog geen AI usage events.</td></tr>';
+            historyBodyEl.innerHTML = '<tr><td colspan=\"5\" class=\"tb-table-empty\">Nog geen AI usage events.</td></tr>';
         } else {
             historyBodyEl.innerHTML = rows.map(function (row) {
                 const status = row.status || '-';
                 const tokenCount = Number(row.total_tokens || 0).toLocaleString('nl-NL');
                 const billable = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(Number(row.billable_cost_eur || 0));
-                return '<tr style=\"border-bottom: 1px solid #eee;\">' +
-                    '<td style=\"padding: 0.5rem;\">' + escapeHtml(String(row.created_at || '').substring(0, 16)) + '</td>' +
-                    '<td style=\"padding: 0.5rem;\"><code>' + escapeHtml(row.model_id || '-') + '</code></td>' +
-                    '<td style=\"padding: 0.5rem;\">' + escapeHtml(status) + '</td>' +
-                    '<td style=\"padding: 0.5rem;\">' + tokenCount + '</td>' +
-                    '<td style=\"padding: 0.5rem;\">' + billable + '</td>' +
+                return '<tr>' +
+                    '<td>' + escapeHtml(String(row.created_at || '').substring(0, 16)) + '</td>' +
+                    '<td><code>' + escapeHtml(row.model_id || '-') + '</code></td>' +
+                    '<td>' + escapeHtml(status) + '</td>' +
+                    '<td>' + tokenCount + '</td>' +
+                    '<td>' + billable + '</td>' +
                     '</tr>';
             }).join('');
         }
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             
             <div class="form-group">
                 <label>Gebruikersnaam</label>
-                <input type="text" value="<?= e($user['username']) ?>" disabled class="form-control" style="background-color: #f0f0f0;">
+                <input type="text" value="<?= e($user['username']) ?>" disabled class="form-control tb-account-disabled-input">
                 <small class="text-muted">Je gebruikersnaam kan niet gewijzigd worden.</small>
             </div>
 
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-outline">Opslaan</button>
+                <button type="submit" class="tb-button tb-button--primary">Opslaan</button>
             </div>
         </form>
     </div>
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-outline">Wachtwoord Wijzigen</button>
+                <button type="submit" class="tb-button tb-button--primary">Wachtwoord Wijzigen</button>
             </div>
         </form>
     </div>

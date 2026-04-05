@@ -24,32 +24,32 @@
         <?php else: ?>
             <ul class="list-group">
                 <?php foreach ($userTeams as $team): ?>
-                    <li class="list-group-item" style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="font-weight: bold;">
+                    <li class="list-group-item tb-inline-row tb-inline-row--between">
+                        <div>
                             <?= e($team['name']) ?>
                         </div>
                         
-                        <div style="display: flex; align-items: center; gap: 1.5rem;">
-                            <form action="/admin/update-team-role" method="POST" style="display: flex; align-items: center; gap: 1rem; margin: 0;">
+                        <div class="tb-inline-row tb-inline-role-options">
+                            <form action="/admin/update-team-role" method="POST" class="tb-inline-row tb-no-margin">
                                 <?= Csrf::renderInput() ?>
                                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                 <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
                                 
-                                <label style="margin: 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                                <label class="tb-checkbox-inline">
                                     <input type="checkbox" name="is_coach" value="1" <?= !empty($team['is_coach']) ? 'checked' : '' ?> onchange="this.form.submit()">
                                     Coach
                                 </label>
-                                <label style="margin: 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                                <label class="tb-checkbox-inline">
                                     <input type="checkbox" name="is_trainer" value="1" <?= !empty($team['is_trainer']) ? 'checked' : '' ?> onchange="this.form.submit()">
                                     Trainer
                                 </label>
                             </form>
 
-                            <form action="/admin/remove-team-member" method="POST" style="margin: 0;" onsubmit="return confirm('Weet je zeker dat je deze gebruiker uit het team wilt verwijderen?');">
+                            <form action="/admin/remove-team-member" method="POST" class="tb-no-margin" onsubmit="return confirm('Weet je zeker dat je deze gebruiker uit het team wilt verwijderen?');">
                                 <?= Csrf::renderInput() ?>
                                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                                 <input type="hidden" name="team_id" value="<?= $team['id'] ?>">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" style="border: none; background: transparent; padding: 0.25rem; display: flex; align-items: center;" title="Verwijderen">
+                                <button type="submit" class="tb-icon-button tb-icon-button--danger" title="Verwijderen" aria-label="Verwijderen">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="3 6 5 6 21 6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -85,18 +85,18 @@
 
                 <div class="form-group">
                     <label>Rollen</label>
-                    <div style="display: flex; gap: 1rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+                    <div class="tb-inline-role-options">
+                        <label class="tb-checkbox-inline">
                             <input type="checkbox" name="is_coach" value="1" checked> Coach
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+                        <label class="tb-checkbox-inline">
                             <input type="checkbox" name="is_trainer" value="1"> Trainer
                         </label>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-outline btn-inline-icon">
+                    <button type="submit" class="tb-button tb-button--primary btn-inline-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         Toevoegen
                     </button>

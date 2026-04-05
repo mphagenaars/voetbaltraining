@@ -1,4 +1,4 @@
-<div class="card" style="max-width: 400px; margin: 0 auto;">
+<div class="card tb-auth-card">
     <h1 class="mb-2">Inloggen</h1>
     
     <?php if (isset($error)): ?>
@@ -16,15 +16,15 @@
             <label for="password">Wachtwoord</label>
             <input type="password" id="password" name="password" required>
         </div>
-        <div style="margin-bottom: 1rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+        <div class="tb-auth-remember">
+            <label class="tb-checkbox-inline">
                 <input type="checkbox" name="remember_me" value="1"> Onthoud mij
             </label>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Inloggen</button>
+        <button type="submit" class="tb-button tb-button--primary tb-auth-submit">Inloggen</button>
     </form>
 
-    <div class="text-center mt-2" style="font-size: 0.875rem; color: #6c757d;">
+    <div class="text-center tb-auth-hint">
         Wachtwoord vergeten? Neem contact op met je beheerder.
     </div>
 </div>

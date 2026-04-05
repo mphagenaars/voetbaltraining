@@ -9,48 +9,44 @@
         <h1 class="app-bar-title">Systeem Logs</h1>
     </div>
 </div>
-<p class="lead mb-4">Inzicht in gebruik en activiteit.</p>
+<p class="tb-system-lead">Inzicht in gebruik en activiteit.</p>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">Populaire Oefeningen (Views)</div>
-                <ul class="list-group list-group-flush">
-                    <?php if (empty($stats['popular_exercises'])): ?>
-                        <li class="list-group-item text-muted">Nog geen data.</li>
-                    <?php else: ?>
-                        <?php foreach ($stats['popular_exercises'] as $ex): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <?= htmlspecialchars($ex['details'] ?? 'Onbekende oefening') ?>
-                                <span class="badge bg-primary rounded-pill"><?= $ex['count'] ?></span>
-                            </li>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
+    <div class="tb-system-grid">
+        <section class="card tb-system-card">
+            <h2 class="tb-system-card-title">Populaire Oefeningen (Views)</h2>
+            <ul class="tb-system-list">
+                <?php if (empty($stats['popular_exercises'])): ?>
+                    <li class="tb-system-list-item tb-muted">Nog geen data.</li>
+                <?php else: ?>
+                    <?php foreach ($stats['popular_exercises'] as $ex): ?>
+                        <li class="tb-system-list-item">
+                            <span><?= htmlspecialchars($ex['details'] ?? 'Onbekende oefening') ?></span>
+                            <span class="tb-system-pill"><?= $ex['count'] ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </ul>
+        </section>
 
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">Recente Activiteit</div>
-                <ul class="list-group list-group-flush">
-                    <?php if (empty($stats['recent_activity'])): ?>
-                        <li class="list-group-item text-muted">Geen activiteit gevonden.</li>
-                    <?php else: ?>
-                        <?php foreach ($stats['recent_activity'] as $log): ?>
-                            <li class="list-group-item" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <small class="text-muted" style="margin-right: 0.5rem;"><?= htmlspecialchars($log['created_at']) ?></small>
-                                <strong><?= htmlspecialchars($log['user_name'] ?? 'Onbekend') ?></strong>: 
-                                <?= htmlspecialchars($log['action']) ?>
-                                <?php if ($log['details']): ?>
-                                    <span class="text-muted">- <?= htmlspecialchars($log['details']) ?></span>
-                                <?php endif; ?>
-                            </li>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
+        <section class="card tb-system-card">
+            <h2 class="tb-system-card-title">Recente Activiteit</h2>
+            <ul class="tb-system-list">
+                <?php if (empty($stats['recent_activity'])): ?>
+                    <li class="tb-system-list-item tb-muted">Geen activiteit gevonden.</li>
+                <?php else: ?>
+                    <?php foreach ($stats['recent_activity'] as $log): ?>
+                        <li class="tb-system-activity-item">
+                            <small class="tb-muted tb-system-activity-date"><?= htmlspecialchars($log['created_at']) ?></small>
+                            <strong><?= htmlspecialchars($log['user_name'] ?? 'Onbekend') ?></strong>:
+                            <?= htmlspecialchars($log['action']) ?>
+                            <?php if ($log['details']): ?>
+                                <span class="tb-muted">- <?= htmlspecialchars($log['details']) ?></span>
+                            <?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </ul>
+        </section>
     </div>
 </div>
 

@@ -4,7 +4,7 @@
     <p class="mb-2">De tool voor trainers om oefenstof te beheren en trainingen voor te bereiden.</p>
     
     <div class="mt-2">
-        <a href="/login" class="btn btn-primary">Inloggen</a>
-        <a href="/register" class="btn btn-outline" style="margin-left: 0.5rem;">Registreren met code</a>
+        <a href="/login" class="tb-button tb-button--primary">Inloggen</a>
+        <a href="/register" class="tb-button tb-button--secondary" style="margin-left: 0.5rem;">Registreren met code</a>
     </div>
 </div>

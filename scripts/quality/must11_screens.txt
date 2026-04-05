@@ -1,0 +1,21 @@
+# MUST-11 must-schermen (slug|path|auth)
+# auth: guest | admin
+auth_login|/login|guest
+auth_register|/register|guest
+dashboard|/|admin
+training_builder|/trainings/create|admin
+players_index|/players|admin
+exercises_index|/exercises|admin
+match_live|/matches/live?id={match_id}|admin
+matches_reports|/matches/reports|admin
+account_index|/account|admin
+account_teams|/account/teams|admin
+admin_index|/admin|admin
+admin_users|/admin/users|admin
+admin_teams|/admin/teams|admin
+admin_team_members|/admin/team-members?team_id={team_id}|admin
+admin_user_teams|/admin/user-teams?user_id={admin_user_id}|admin
+admin_edit_team|/admin/teams/edit?id={team_id}|admin
+admin_mail_settings|/admin/mail/settings|admin
+admin_options|/admin/options|admin
+admin_system|/admin/system|admin

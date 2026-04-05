@@ -1,6 +1,6 @@
 <div class="app-bar">
     <div class="app-bar-start">
-        <a href="<?= !empty($selectForTrainingId) ? '/trainings/edit?id=' . (int)$selectForTrainingId : '/' ?>" class="btn-icon-round" title="Terug">
+        <a href="<?= !empty($selectForTrainingId) ? '/trainings/edit?id=' . (int)$selectForTrainingId : '/' ?>" class="btn-icon-round" title="Terug" aria-label="Terug">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
         <h1 class="app-bar-title">Oefenstof</h1>
@@ -77,7 +77,7 @@
 <?php else: ?>
     <div class="grid">
         <?php foreach ($exercises as $exercise): ?>
-            <div class="card" onclick="location.href='/exercises/view?id=<?= $exercise['id'] ?>'" style="cursor: pointer; position: relative;">
+            <div class="card" style="position: relative;">
                 <?php if (!empty($exercise['image_path'])): ?>
                     <div style="margin-bottom: 1rem; text-align: center;">
                         <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
@@ -138,7 +138,7 @@
                     <?php endif; ?>
                 </div>
 
-                <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;" onclick="event.stopPropagation();">
+                <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
                     <?php if (!empty($selectForTrainingId)): ?>
                         <form method="POST" action="/exercises/add-to-training" style="margin: 0;">
                             <?= Csrf::renderInput() ?>
@@ -150,7 +150,7 @@
                             <button type="submit" class="btn btn-outline">Toevoegen</button>
                         </form>
                     <?php endif; ?>
-                    <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bekijken">
+                    <a href="/exercises/view?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bekijken" aria-label="Bekijken">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </a>
                     <?php 
@@ -159,13 +159,13 @@
                                (!empty($exercise['created_by']) && $exercise['created_by'] == Session::get('user_id'));
                     ?>
                     <?php if ($canEdit): ?>
-                        <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bewerken">
+                        <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bewerken" aria-label="Bewerken">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </a>
                         <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0;">
                             <?= Csrf::renderInput() ?>
                             <input type="hidden" name="id" value="<?= $exercise['id'] ?>">
-                            <button type="submit" class="btn-icon" title="Verwijderen" style="color: var(--danger-color);">
+                            <button type="submit" class="btn-icon" title="Verwijderen" aria-label="Verwijderen" style="color: var(--danger-color);">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                             </button>
                         </form>
@@ -178,6 +178,6 @@
 
 
 
-<a href="/exercises/create" class="fab" title="Nieuwe Oefening">
+<a href="/exercises/create" class="tb-fab" title="Nieuwe Oefening" aria-label="Nieuwe oefening">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 </a>

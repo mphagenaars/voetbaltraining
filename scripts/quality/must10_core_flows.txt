@@ -1,0 +1,6 @@
+# Kernflows voor MUST-10 a11y gate
+src/views/dashboard.php|Dashboard
+src/views/trainings/form.php|Training Builder
+src/views/players/index.php|Team/Spelers
+src/views/matches/live.php|Match Mode
+src/views/exercises/index.php|Oefeningenlijst

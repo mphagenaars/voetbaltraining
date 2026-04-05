@@ -5,7 +5,22 @@
     <meta name="viewport" content="<?= e($viewportContent ?? 'width=device-width, initial-scale=1.0') ?>">
     <title><?= $pageTitle ?? 'Trainer Bobby' ?></title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
-    <link rel="stylesheet" href="/css/style.css?v=<?= (file_exists($_SERVER['DOCUMENT_ROOT'] . '/css/style.css') ? filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/style.css') : time()) ?>">
+    <?php
+        $coreCssFiles = [
+            '/css/tb-tokens.css',
+            '/css/tb-fonts.css',
+            '/css/tb-base.css',
+            '/css/tb-primitives.css',
+            '/css/style.css',
+        ];
+    ?>
+    <?php foreach ($coreCssFiles as $coreCssFile): ?>
+        <?php
+            $resolvedCoreCssPath = $_SERVER['DOCUMENT_ROOT'] . $coreCssFile;
+            $coreCssVersion = file_exists($resolvedCoreCssPath) ? filemtime($resolvedCoreCssPath) : time();
+        ?>
+        <link rel="stylesheet" href="<?= e($coreCssFile) ?>?v=<?= (int)$coreCssVersion ?>">
+    <?php endforeach; ?>
     <?php if (!empty($extraCssFiles) && is_array($extraCssFiles)): ?>
         <?php foreach ($extraCssFiles as $cssFile): ?>
             <?php
@@ -46,7 +61,7 @@
                     </div>
                 </div>
             <?php else: ?>
-                <a href="/login" class="btn btn-sm btn-outline">Inloggen</a>
+                <a href="/login" class="tb-button tb-button--secondary tb-button--sm">Inloggen</a>
             <?php endif; ?>
         </nav>
     </div>

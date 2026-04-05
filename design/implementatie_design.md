@@ -39,7 +39,7 @@ Regel: per domein eerst alle `Must`, daarna pas `Should`, daarna `Could`.
 | Domein | Must | Should | Could |
 |---|---|---|---|
 | Platform foundation | tokens, fonts, basis typografie/spacing, button hierarchy | cleanup oude utility-klassen | cosmetische micro-animaties |
-| Dashboard | 1 duidelijke create-FAB, minder concurrerende CTA's | chip-filters compacter | extra stat-card varianten |
+| Dashboard | geen create-FAB op dashboard, minder concurrerende CTA's | chip-filters compacter | extra stat-card varianten |
 | Training Builder | FAB add exercise, 1 expliciete save-actie, icon-acties per blok | betere preview/duplicate flow | extra drag-and-drop polish |
 | Team/Spelers | FAB add, compacte row/card acties, commit-momenten expliciet | extra filterchips/statusweergave | extra bulk-actions |
 | Match Mode | expliciete hoge-impact commit buttons, compacte support-acties | verbeterde mobiele action tray | extra sneltoetsen |
@@ -69,7 +69,7 @@ Deze regels zijn verplicht tijdens implementatie.
 - Tijdelijke uitzonderingen moeten in backlog als afbouwpunt landen.
 
 5. Action hierarchy
-- Overview create/add = FAB (1 dominante create-entry).
+- Overview create/add = FAB (1 dominante create-entry), met expliciete uitzondering: Dashboard heeft geen create-FAB.
 - Commit-acties (save/publish/start/confirm) = gelabelde primary button.
 - Contextacties op items = icon button met `aria-label`.
 - Secondary acties = outline/ghost/text, niet concurrerend met primary.
@@ -115,16 +115,16 @@ Doelwaarden:
 
 ## 7. Uitvoeringschecklist (enige checklist)
 - [x] MUST-01 Bronset in `/design` is final en frozen voor deze implementatieronde. (bewijs: `design/bronset_freeze_manifest.md`, datum: 2026-04-03)
-- [ ] MUST-02 Platform foundation staat: tokens geladen, fonts self-hosted, basistypografie en spacing uniform.
-- [ ] MUST-03 Button hierarchy geformaliseerd in 1 gedeelde primitive-laag (`tb-button`, `tb-icon-button`, `tb-fab`, chip/segmented).
-- [ ] MUST-04 Technische migratieregels (sectie 5) zijn actief en worden niet geschonden bij nieuwe wijzigingen.
-- [ ] MUST-05 Dashboard omgezet volgens matrix (FAB create, rustiger CTA-hiërarchie, compacte acties).
-- [ ] MUST-06 Training Builder omgezet volgens matrix (FAB add, 1 duidelijke save, icon-acties op blokniveau).
-- [ ] MUST-07 Team/Spelers omgezet volgens matrix (FAB add, compacte item-acties, expliciete commits).
-- [ ] MUST-08 Match Mode omgezet volgens matrix (hoge-impact commit acties expliciet, support compact).
-- [ ] MUST-09 Account/Admin/Auth/Reports geharmoniseerd op dezelfde primitives en tokens.
-- [ ] MUST-10 A11y testscript (6 checks) is uitgevoerd en geslaagd op alle kernflows.
-- [ ] MUST-11 Visual regression baseline is vastgelegd voor must-schermen op 2 viewports.
+- [x] MUST-02 Platform foundation staat: tokens geladen, fonts self-hosted, basistypografie en spacing uniform. (bewijs: `/public/css/tb-tokens.css`, `/public/css/tb-fonts.css`, `/public/css/tb-base.css`, `/public/fonts/tb-sans-regular.ttf`, `/public/fonts/tb-sans-bold.ttf`, `/src/views/layout/header.php`, datum: 2026-04-03)
+- [x] MUST-03 Button hierarchy geformaliseerd in 1 gedeelde primitive-laag (`tb-button`, `tb-icon-button`, `tb-fab`, chip/segmented). (bewijs: `/public/css/tb-primitives.css`, `/src/views/layout/header.php`, `/src/views/tactics/index.php`, `/src/views/matches/live.php`, datum: 2026-04-03)
+- [x] MUST-04 Technische migratieregels (sectie 5) zijn actief en worden niet geschonden bij nieuwe wijzigingen. (bewijs: `/scripts/check_must04.sh`, `/scripts/check_action_hierarchy.sh`, `/scripts/quality/must04_baseline.env`, `/scripts/quality/action_hierarchy_overviews.txt`, `/.github/workflows/regression-tests.yml`, datum: 2026-04-05)
+- [x] MUST-05 Dashboard omgezet volgens matrix (geen create-FAB, rustiger CTA-hiërarchie, compacte acties). (bewijs: `/src/views/dashboard.php`, `/public/css/style.css`, datum: 2026-04-05)
+- [x] MUST-06 Training Builder omgezet volgens matrix (FAB add, 1 duidelijke save, icon-acties op blokniveau). (bewijs: `/src/views/trainings/form.php`, `/public/css/style.css`, datum: 2026-04-03)
+- [x] MUST-07 Team/Spelers omgezet volgens matrix (FAB add, compacte item-acties, expliciete commits). (bewijs: `/src/views/account/teams.php`, `/src/views/players/index.php`, `/src/views/players/create.php`, `/src/views/teams/create.php`, `/public/css/style.css`, datum: 2026-04-03)
+- [x] MUST-08 Match Mode omgezet volgens matrix (hoge-impact commit acties expliciet, support compact). (bewijs: `/src/views/matches/live.php`, `/public/js/live-match.js`, `/public/css/style.css`, datum: 2026-04-03)
+- [x] MUST-09 Account/Admin/Auth/Reports geharmoniseerd op dezelfde primitives en tokens. (bewijs: `/public/css/style.css`, `/src/views/account/index.php`, `/src/views/admin/index.php`, `/src/views/admin/users.php`, `/src/views/admin/teams.php`, `/src/views/admin/team_members.php`, `/src/views/admin/user_teams.php`, `/src/views/admin/edit_team.php`, `/src/views/admin/mail_settings.php`, `/src/views/admin/options.php`, `/src/views/admin/system.php`, `/src/views/login.php`, `/src/views/register.php`, `/src/views/matches/reports.php`, datum: 2026-04-05)
+- [x] MUST-10 A11y testscript (6 checks) is uitgevoerd en geslaagd op alle kernflows. (bewijs: `/scripts/check_must10.sh`, `/scripts/quality/must10_core_flows.txt`, `/src/views/exercises/index.php`, `/public/css/tb-tokens.css`, `/.github/workflows/regression-tests.yml`, datum: 2026-04-05)
+- [x] MUST-11 Visual regression baseline is vastgelegd voor must-schermen op 2 viewports. (bewijs: `/scripts/capture_must11_baseline.py`, `/scripts/prepare_must11_fixture.php`, `/scripts/check_must11.sh`, `/scripts/quality/must11_screens.txt`, `/scripts/quality/visual_baseline/*`, `/.github/workflows/regression-tests.yml`, datum: 2026-04-05)
 - [ ] MUST-12 Iedere domeinrelease heeft rollback-pad via kleine revertbare commits.
 - [ ] MUST-13 KPI-check: inline styles en inline style-blokken dalen volgens doelwaarden.
 - [ ] MUST-14 Verificatiecheck: buiten `/design` zijn 0 verwijzingen naar `/design/*` (map blijft verwijderbaar).
@@ -141,4 +141,4 @@ Dit plan is succesvol uitgevoerd als:
 - `/design` verwijderd kan worden zonder regressie in runtime/build
 
 ---
-Laatste update: 2026-04-03
+Laatste update: 2026-04-05

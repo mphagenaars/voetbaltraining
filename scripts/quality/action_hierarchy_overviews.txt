@@ -1,0 +1,8 @@
+# MUST action hierarchy: overview create/add entrypoint must be a FAB.
+# Format: <relative-view-path>|<label>
+src/views/trainings/index.php|Trainingen Overzicht
+src/views/players/index.php|Spelers Overzicht
+src/views/matches/index.php|Wedstrijden Overzicht
+src/views/exercises/index.php|Oefeningen Overzicht
+src/views/account/teams.php|Mijn Teams Overzicht
+src/views/admin/users.php|Admin Gebruikers Overzicht

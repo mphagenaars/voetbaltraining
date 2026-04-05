@@ -188,16 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.is_playing) {
             const totalSeconds = getDisplayedTotalSeconds();
             timerDisplay.textContent = formatTime(totalSeconds);
-            timerBtn.textContent = 'Stop Tijd';
-            timerBtn.classList.remove('btn-primary');
-            timerBtn.classList.add('btn-danger');
-            timerBtn.style.backgroundColor = '#d32f2f';
+            timerBtn.textContent = 'Stop tijd';
+            timerBtn.classList.remove('tb-button--primary');
+            timerBtn.classList.add('tb-button--danger');
         } else {
             timerDisplay.textContent = formatTime(state.total_seconds);
-            timerBtn.textContent = state.total_seconds > 0 ? 'Hervat Tijd' : 'Start Wedstrijd';
-            timerBtn.classList.add('btn-primary');
-            timerBtn.classList.remove('btn-danger');
-            timerBtn.style.backgroundColor = '';
+            timerBtn.textContent = state.total_seconds > 0 ? 'Hervat tijd' : 'Start wedstrijd';
+            timerBtn.classList.add('tb-button--primary');
+            timerBtn.classList.remove('tb-button--danger');
         }
 
         periodDisplay.textContent = state.current_period > 0 ? `Periode ${state.current_period}` : 'Nog niet gestart';
@@ -696,8 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const li = document.createElement('li');
-            li.style.borderBottom = '1px solid #eee';
-            li.style.padding = '0.5rem 0';
+            li.className = 'tb-live-timeline-item';
 
             let label = '🔹 Gebeurtenis';
             if (eventType === 'goal') {
@@ -804,23 +801,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateModalForType(type) {
         const typeLabels = {
-            goal: 'Doelpunt Toevoegen',
-            card: 'Kaart Geven',
-            sub: 'Wissel Doorvoeren',
-            other: 'Notitie Maken'
+            goal: 'Doelpunt toevoegen',
+            card: 'Kaart registreren',
+            sub: 'Wissel doorvoeren',
+            other: 'Notitie maken'
         };
-        document.getElementById('modal-title').textContent = typeLabels[type] || 'Actie Toevoegen';
+        document.getElementById('modal-title').textContent = typeLabels[type] || 'Actie toevoegen';
 
         const playerSelectGroup = document.getElementById('player-select-group');
         const subGroup = document.getElementById('sub-group');
 
         if (type === 'sub') {
-            playerSelectGroup.style.display = 'none';
-            subGroup.style.display = 'block';
+            playerSelectGroup.hidden = true;
+            subGroup.hidden = false;
             populateSubstitutionSelects();
         } else {
-            playerSelectGroup.style.display = type === 'other' ? 'none' : 'block';
-            subGroup.style.display = 'none';
+            playerSelectGroup.hidden = type === 'other';
+            subGroup.hidden = true;
         }
     }
 
@@ -836,14 +833,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateModalForType(type || 'goal');
         document.getElementById('modal-minute').value = getCurrentMinuteDisplay();
-        modal.style.display = 'flex';
+        modal.classList.add('is-visible');
+        modal.setAttribute('aria-hidden', 'false');
     };
 
     window.closeModal = function closeModal() {
-        modal.style.display = 'none';
+        modal.classList.remove('is-visible');
+        modal.setAttribute('aria-hidden', 'true');
         actionForm.reset();
         populateSubstitutionSelects();
     };
+
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            if (event.target.closest('[data-close-modal]')) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal && modal.classList.contains('is-visible')) {
+            closeModal();
+        }
+    });
 
     actionForm.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -1219,18 +1232,18 @@ document.addEventListener('DOMContentLoaded', () => {
         voiceOverlay.setAttribute('aria-hidden', 'false');
 
         voiceStatusIcon.className = 'voice-status-icon';
-        voiceIconMic.style.display = 'none';
-        voiceSpinner.style.display = 'none';
-        voiceCancelBtn.style.display = 'none';
+        voiceIconMic.hidden = true;
+        voiceSpinner.hidden = true;
+        voiceCancelBtn.hidden = true;
 
         if (visibleState === 'recording') {
             voiceStatusIcon.classList.add('is-recording');
-            voiceIconMic.style.display = '';
+            voiceIconMic.hidden = false;
             voiceStatusText.textContent = 'Opname loopt... Laat los om te stoppen';
         } else if (visibleState === 'processing') {
             voiceStatusIcon.classList.add('is-processing');
-            voiceSpinner.style.display = '';
-            voiceCancelBtn.style.display = '';
+            voiceSpinner.hidden = false;
+            voiceCancelBtn.hidden = false;
             voiceStatusText.textContent = 'Verwerken...';
         }
     }
