@@ -41,7 +41,7 @@ if (!empty($training['training_date'])) {
 <div class="training-timeline">
     <?php foreach ($training['exercises'] as $index => $exercise): ?>
         <?php $exerciseDetailUrl = '/exercises/view?id=' . (int)$exercise['id'] . '&from_training=' . (int)$training['id']; ?>
-        <div class="card tb-training-card">
+        <div class="tb-card tb-training-card">
             <div class="tb-flex tb-justify-between tb-items-start">
                 <h3 class="tb-m-0">
                     <span class="tb-training-number">#<?= $index + 1 ?></span>

@@ -140,7 +140,7 @@ Doelwaarden:
 - [x] MUST-13 KPI-check: inline styles en inline style-blokken dalen volgens doelwaarden. (bewijs: inline `style="..."` 443 → 13, inline `<style>` 5 → 0, utility/component classes in `/public/css/style.css`, datum: 2026-04-05)
 - [x] MUST-14 Verificatiecheck: buiten `/design` zijn 0 verwijzingen naar `/design/*` (map blijft verwijderbaar). (bewijs: grep + `scripts/check_must04.sh` bevestigen 0 runtime/build-refs; enige vermeldingen zijn `.gitignore`, `README.md` (docs) en het checkscript zelf, datum: 2026-04-06)
 - [x] SHOULD-15 Opruimen van legacy/duplicatieve UI-klassen na afronding van alle must-items. (bewijs: 38 dode klassen verwijderd uit `style.css` (3886 → 3689 regels), 0 runtime-referenties gebroken, regressietests 14/14 groen, datum: 2026-04-06)
-- [ ] SHOULD-16 Extra harmonisatie van detailstaten (hover/focus/empty states) op minder kritieke pagina's.
+- [x] SHOULD-16 Extra harmonisatie van detailstaten (hover/focus/empty states) op minder kritieke pagina's. (bewijs: `:focus-visible` op links/forms/action-cards/dropdowns/multi-selects/match-items/speelwijze-items; 8 legacy klassen gemigreerd naar tb-primitives (`.alert`→`tb-alert`, `.card`→`tb-card`, `.action-card`→`tb-action-card`, `.modal`→`tb-modal`, `.dropdown`→`tb-dropdown`, `.multi-select-*`→`tb-multi-select-*`); `.tb-empty-state` component + 5 views geupgraded; `style.css` 3689→3451 regels, `tb-primitives.css` 337→605 regels; regressietests 14/14 groen, datum: 2026-04-06)
 - [ ] COULD-17 Visuele polish (micro-animaties, extra cardvarianten) pas na stabiele must+should basis.
 
 ## 8. Definition of done

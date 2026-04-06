@@ -1,9 +1,9 @@
-<div class="card tb-auth-card">
+<div class="tb-card tb-auth-card">
     <h1 class="mb-2">Registreren</h1>
     <p class="text-muted mb-2">Gebruik de invite code van je team.</p>
     
     <?php if (isset($error)): ?>
-        <div class="alert"><?= e($error) ?></div>
+        <div class="tb-alert"><?= e($error) ?></div>
     <?php endif; ?>
 
     <form method="POST" action="/register">

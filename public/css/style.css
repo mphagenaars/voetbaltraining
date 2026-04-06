@@ -27,6 +27,12 @@ a:hover {
     text-decoration: underline;
 }
 
+a:focus-visible {
+    outline: 2px solid var(--tb-color-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 /* =========================================
    Global Layout
    ========================================= */
@@ -84,139 +90,8 @@ a:hover {
 }
 
 /* =========================================
-   Components: Alerts
-   ========================================= */
-.alert {
-    padding: var(--spacing);
-    border-radius: var(--radius);
-    margin-bottom: var(--spacing);
-    background-color: #ffebee;
-    color: #c62828;
-    border: 1px solid #ffcdd2;
-}
-
-.alert-success {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border-color: #c8e6c9;
-}
-
-.alert-danger {
-    background-color: #ffebee;
-    color: #c62828;
-    border-color: #ffcdd2;
-}
-
-/* =========================================
    Components: Links and Action Text
    ========================================= */
-
-/* =========================================
-   Components: Cards
-   ========================================= */
-.card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: var(--spacing);
-    margin-bottom: var(--spacing);
-    box-shadow: var(--shadow);
-}
-
-/* Action Card (Clickable Card) */
-.action-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    text-align: left;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: var(--spacing);
-    margin-bottom: 1rem;
-    box-shadow: var(--shadow);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    text-decoration: none;
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: inherit;
-}
-
-.action-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    text-decoration: none;
-    color: var(--text-main);
-}
-
-.action-card h2, .action-card h3 {
-    margin-top: 0;
-    margin-bottom: 0.25rem;
-    font-size: 1.25rem;
-}
-
-.action-card p {
-    margin: 0;
-    color: var(--text-muted);
-}
-
-.action-card svg {
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-
-.action-card:hover svg {
-    color: var(--primary);
-}
-
-/* =========================================
-   Components: Dropdown
-   ========================================= */
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    background-color: var(--bg-card);
-    min-width: 180px;
-    box-shadow: var(--shadow);
-    z-index: 100;
-    border-radius: var(--radius);
-    border: 1px solid var(--border-color);
-    margin-top: 0.5rem;
-}
-
-/* Bridge the gap so menu doesn't close */
-.dropdown-content::before {
-    content: '';
-    position: absolute;
-    top: -0.5rem;
-    left: 0;
-    right: 0;
-    height: 0.5rem;
-}
-
-.dropdown-content a {
-    color: var(--text-main);
-    padding: 0.75rem 1rem;
-    text-decoration: none;
-    display: block;
-    transition: background-color 0.2s;
-}
-
-.dropdown-content a:hover {
-    background-color: #f8f9fa;
-}
-
-.dropdown:hover .dropdown-content {
-    display: block;
-}
 
 /* =========================================
    Module: Dashboard
@@ -1921,81 +1796,12 @@ textarea {
     resize: vertical;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-    outline: 2px solid var(--primary);
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--tb-color-focus);
+    outline-offset: 2px;
     border-color: transparent;
-}
-
-/* Multi-select Dropdown */
-.multi-select-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.multi-select-trigger {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    font-size: 1rem;
-    font-family: inherit;
-    background-color: var(--bg-card);
-    cursor: pointer;
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.multi-select-trigger::after {
-    content: '';
-    width: 0; 
-    height: 0; 
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid var(--text-muted);
-    margin-left: 0.5rem;
-}
-
-.multi-select-options {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    max-height: 250px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: var(--shadow);
-}
-
-.multi-select-options.open {
-    display: block;
-}
-
-.multi-select-option {
-    display: block;
-    padding: 0.5rem;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.multi-select-option:last-child {
-    border-bottom: none;
-}
-
-.multi-select-option:hover {
-    background-color: #f8f9fa;
-}
-
-.multi-select-option input[type="checkbox"] {
-    margin-right: 0.5rem;
 }
 
 /* =========================================
@@ -2490,50 +2296,6 @@ select:focus {
 .ai-segment-btn-use:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-/* =========================================
-   Components: Modals & Overlays
-   ========================================= */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center; /* Center Vertically */
-    justify-content: center; /* Center Horizontally */
-    z-index: 2000;
-    padding: 1rem;
-    transition: opacity 0.3s;
-}
-
-.modal {
-    background-color: var(--bg-card);
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    position: relative;
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* =========================================
@@ -3681,7 +3443,7 @@ body.page-match-live .voice-btn.is-recording {
 /* --- Print styles (moved from trainings/view.php <style>) --- */
 @media print {
     header, .btn { display: none !important; }
-    .card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
+    .tb-card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
     body { background: white; }
 }
 

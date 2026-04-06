@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <div class="card tb-mb-sm">
+    <div class="tb-card tb-mb-sm">
         <p>
             Team: <strong><?= e((string)($team['name'] ?? 'Onbekend team')) ?></strong>
         </p>
@@ -53,7 +53,7 @@
 
     <!-- Speelwijzen tab -->
     <div id="tab-speelwijzen" class="tactics-tab-panel">
-    <div class="card">
+    <div class="tb-card">
         <h2 class="tb-app-bar-title-sm tb-mb-xs">Speelwijzen</h2>
         <script type="application/json" id="speelwijze-data"><?= json_encode($speelwijzen ?? [], JSON_UNESCAPED_UNICODE) ?></script>
         <?php

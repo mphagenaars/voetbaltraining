@@ -1,8 +1,8 @@
-<div class="card tb-auth-card">
+<div class="tb-card tb-auth-card">
     <h1 class="mb-2">Inloggen</h1>
     
     <?php if (isset($error)): ?>
-        <div class="alert"><?= e($error) ?></div>
+        <div class="tb-alert"><?= e($error) ?></div>
     <?php endif; ?>
 
     <?php $action = '/login' . (isset($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''); ?>

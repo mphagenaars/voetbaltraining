@@ -38,7 +38,7 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
         </div>
     </div>
 
-    <div class="card live-timer-card tb-live-timer-card">
+    <div class="tb-card live-timer-card tb-live-timer-card">
         <h2 id="period-display" class="tb-live-period-label">
             <?= $timerState['current_period'] > 0 ? 'Periode ' . $timerState['current_period'] : 'Nog niet gestart' ?>
         </h2>
@@ -57,7 +57,7 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
         </div>
     </div>
 
-    <div class="card tb-live-support-card">
+    <div class="tb-card tb-live-support-card">
         <h3 class="tb-live-card-title">Snelle acties</h3>
         <div class="tb-live-support-grid<?= !empty($liveVoiceEnabled) ? ' is-two' : '' ?>">
             <button class="tb-button tb-button--secondary tb-live-support-btn" type="button" onclick="openActionModal('goal')">
@@ -73,7 +73,7 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
         </div>
     </div>
 
-    <div class="card tb-live-lineup-card">
+    <div class="tb-card tb-live-lineup-card">
         <h3 class="tb-live-card-title">Actieve opstelling</h3>
         <div class="lineup-editor live-lineup-editor">
             <div class="field-container live-field-container">
@@ -108,12 +108,12 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
         </div>
     </div>
 
-    <div class="card tb-live-minutes-card">
+    <div class="tb-card tb-live-minutes-card">
         <h3 class="tb-live-card-title">Speeltijd (live)</h3>
         <div id="minutes-summary-container"></div>
     </div>
 
-    <div class="card tb-live-timeline-card">
+    <div class="tb-card tb-live-timeline-card">
         <h3 class="tb-live-card-title">Recente gebeurtenissen</h3>
         <div id="timeline-filter-controls" class="live-timeline-filters" role="group" aria-label="Filter gebeurtenissen">
             <button type="button" class="timeline-filter-btn tb-chip is-active" data-filter="all" aria-pressed="true">
@@ -134,7 +134,7 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
 
 <div id="action-modal" class="tb-live-modal" aria-hidden="true">
     <div class="tb-live-modal-backdrop" data-close-modal></div>
-    <div class="card tb-live-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="tb-card tb-live-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <h3 id="modal-title" class="tb-live-modal-title">Actie toevoegen</h3>
         <form id="action-form">
             <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
@@ -214,7 +214,7 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
 
 <div id="voice-confirm-sheet" class="voice-confirm-sheet" aria-hidden="true">
     <div class="voice-confirm-sheet-backdrop"></div>
-    <div class="voice-confirm-sheet-content card">
+    <div class="voice-confirm-sheet-content tb-card">
         <h3 class="tb-live-confirm-title">Herkende events</h3>
         <p id="voice-transcript" class="voice-transcript"></p>
         <div id="voice-events-list" class="voice-events-list"></div>

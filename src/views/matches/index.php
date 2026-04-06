@@ -35,13 +35,13 @@
 </div>
 
 <?php if (empty($matches)): ?>
-    <div class="card">
+    <div class="tb-card tb-empty-state">
         <p>Nog geen wedstrijden aangemaakt.</p>
     </div>
 <?php else: ?>
     <div class="match-list">
         <?php foreach ($matches as $match): ?>
-            <div class="action-card tb-list-card" onclick="location.href='/matches/view?id=<?= $match['id'] ?>'">
+            <div class="tb-action-card tb-list-card" onclick="location.href='/matches/view?id=<?= $match['id'] ?>'">
                 <div class="tb-flex-1">
                     <h3><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h3>
                     <div class="tb-list-card-meta">

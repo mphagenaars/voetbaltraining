@@ -32,7 +32,7 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <div class="tb-two-col">
         <div class="tb-two-col-item">
             <?php if (!empty($exercise['drawing_data'])): ?>
@@ -144,7 +144,7 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
     </div>
 </div>
 
-<div class="card tb-mt-lg">
+<div class="tb-card tb-mt-lg">
     <h2>Reacties & Feedback</h2>
     
     <!-- Emoji Reactions -->
@@ -210,8 +210,8 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
 
 <!-- Add to Training Modal -->
 <?php if (!empty($canAddToTraining)): ?>
-<div id="modal-add-to-training" class="modal-overlay" style="display:none;">
-    <div class="modal card tb-modal-card">
+<div id="modal-add-to-training" class="tb-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="tb-modal tb-modal-card">
         <h3>Inplannen in training</h3>
         
         <?php if (empty($selectableTrainings)): ?>

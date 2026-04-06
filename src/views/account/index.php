@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<div class="card" id="ai-usage-card">
+<div class="tb-card" id="ai-usage-card">
     <h2>AI Verbruik</h2>
     <p class="text-muted" id="ai-usage-loading">Laden...</p>
     <div id="ai-usage-summary" class="tb-account-ai-summary"></div>
@@ -117,16 +117,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 </script>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <div class="grid-2">
     <!-- Blok 1: Profiel -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Profiel</h2>
         <form action="/account/update-profile" method="POST">
             <?= Csrf::renderInput() ?>
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     </div>
 
     <!-- Blok 2: Beveiliging -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Wachtwoord Wijzigen</h2>
         <form action="/account/update-password" method="POST">
             <?= Csrf::renderInput() ?>

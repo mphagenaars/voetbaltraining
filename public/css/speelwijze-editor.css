@@ -133,6 +133,11 @@
     border-color: var(--primary, #2e7d32);
 }
 
+.speelwijze-list-item:focus-visible {
+    outline: 2px solid var(--tb-color-focus);
+    outline-offset: 2px;
+}
+
 .speelwijze-list-item.active {
     border-color: var(--primary, #2e7d32);
     background: rgba(46, 125, 50, 0.08);

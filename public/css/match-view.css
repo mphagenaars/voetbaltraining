@@ -361,6 +361,11 @@
     background: #f8fafb;
 }
 
+.match-tactic-item:focus-visible {
+    outline: 2px solid var(--tb-color-focus);
+    outline-offset: 2px;
+}
+
 .match-tactic-item.is-active {
     border-color: #2e7d32;
     background: rgba(46, 125, 50, 0.08);

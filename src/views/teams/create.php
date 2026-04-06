@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<div class="card tb-entity-card">
+<div class="tb-card tb-entity-card">
     <p>Maak een nieuw team aan waar jij de coach van bent.</p>
 
     <form method="POST" action="/team/create" class="tb-entity-form">

@@ -35,7 +35,7 @@
         </div>
     </div>
     
-    <div class="card tb-mb-sm">
+    <div class="tb-card tb-mb-sm">
         <div class="tb-flex-wrap tb-gap-lg">
             <p><strong>Datum:</strong> <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
             <p><strong>Formatie:</strong> <?= e($match['formation']) ?></p>
@@ -44,7 +44,7 @@
 
     <div class="match-grid">
         <!-- Card 1: Opstelling -->
-        <div class="card">
+        <div class="tb-card">
             <div class="tb-section-header">
                 <h3>Startopstelling</h3>
                 <div class="tb-flex tb-items-center tb-gap-xs">
@@ -170,7 +170,7 @@
         </div>
 
         <!-- Card 2: Wedstrijdverloop -->
-        <div class="card">
+        <div class="tb-card">
             <h3>Wedstrijdverloop</h3>
             
             <form action="/matches/add-event" method="POST" class="tb-form-divider">
@@ -253,7 +253,7 @@
         </div>
 
         <!-- Card 3: Eindstand & Evaluatie -->
-        <div class="card">
+        <div class="tb-card">
             <form action="/matches/update-details" method="POST">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="match_id" value="<?= $match['id'] ?>">

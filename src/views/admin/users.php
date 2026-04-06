@@ -8,14 +8,14 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
-<div id="new-user-form" class="card tb-admin-new-user-card hidden">
+<div id="new-user-form" class="tb-card tb-admin-new-user-card hidden">
     <h2 class="tb-admin-new-user-title">Nieuwe gebruiker aanmaken</h2>
     <form action="/admin/create-user" method="POST">
         <?= Csrf::renderInput() ?>
@@ -40,7 +40,7 @@
     </form>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <div class="tb-table-wrap">
         <table class="tb-table">
             <thead>

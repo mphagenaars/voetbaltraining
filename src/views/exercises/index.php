@@ -8,7 +8,7 @@
 </div>
 
 <?php if (!empty($selectForTraining)): ?>
-    <div class="card tb-mb-sm">
+    <div class="tb-card tb-mb-sm">
         <div class="tb-flex tb-justify-between tb-items-center tb-gap-md">
             <div>
                 <strong>Selecteer oefeningen voor training:</strong>
@@ -19,7 +19,7 @@
     </div>
 <?php endif; ?>
 
-<div class="card tb-mb-sm">
+<div class="tb-card tb-mb-sm">
     <?php
     $teamTasksList = Exercise::getTeamTasks();
     $objectivesList = Exercise::getObjectives();
@@ -71,13 +71,13 @@
 </div>
 
 <?php if (empty($exercises)): ?>
-    <div class="card">
+    <div class="tb-card tb-empty-state">
         <p>Geen oefeningen gevonden.</p>
     </div>
 <?php else: ?>
     <div class="grid">
         <?php foreach ($exercises as $exercise): ?>
-            <div class="card" style="position:relative;">
+            <div class="tb-card" style="position:relative;">
                 <?php if (!empty($exercise['image_path'])): ?>
                     <div class="tb-card-image">
                         <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" class="tb-img-card">

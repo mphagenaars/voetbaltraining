@@ -27,7 +27,7 @@ $allExercisesForPicker = array_values(array_map(static function (array $exercise
 <form method="POST" id="training-form" class="tb-training-builder-form">
     <?= Csrf::renderInput() ?>
 
-    <div class="card tb-training-builder-card">
+    <div class="tb-card tb-training-builder-card">
         <div class="tb-training-builder-grid">
             <div class="form-group tb-training-builder-date-group">
                 <label for="training_date">Datum *</label>
@@ -49,7 +49,7 @@ $allExercisesForPicker = array_values(array_map(static function (array $exercise
             </div>
         </div>
 
-        <div class="card tb-training-builder-list-card" id="selected-list">
+        <div class="tb-card tb-training-builder-list-card" id="selected-list">
             <p class="tb-training-builder-empty text-muted" id="empty-msg"<?= !empty($currentExercises) ? ' hidden' : '' ?>>Nog geen oefeningen gekozen.</p>
 
             <?php foreach ($currentExercises as $index => $exercise): ?>
@@ -105,7 +105,7 @@ $allExercisesForPicker = array_values(array_map(static function (array $exercise
 
 <div id="tb-training-picker" class="tb-training-picker" hidden>
     <div class="tb-training-picker-backdrop" data-close-picker></div>
-    <div class="tb-training-picker-panel card" role="dialog" aria-modal="true" aria-labelledby="tb-training-picker-title">
+    <div class="tb-training-picker-panel tb-card" role="dialog" aria-modal="true" aria-labelledby="tb-training-picker-title">
         <div class="tb-training-picker-header">
             <h3 id="tb-training-picker-title">Oefening toevoegen</h3>
             <button type="button" class="tb-icon-button" data-close-picker title="Sluiten" aria-label="Sluiten">

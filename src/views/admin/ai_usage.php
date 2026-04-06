@@ -49,7 +49,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Per model</h2>
     <div class="ai-admin-table-wrap">
         <table class="ai-admin-table">
@@ -81,7 +81,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Per gebruiker</h2>
     <div class="ai-admin-table-wrap">
         <table class="ai-admin-table">
@@ -111,7 +111,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Quality events per type</h2>
     <div class="ai-admin-table-wrap">
         <table class="ai-admin-table">
@@ -139,7 +139,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Recente quality events</h2>
     <div class="ai-admin-table-wrap">
         <table class="ai-admin-table">

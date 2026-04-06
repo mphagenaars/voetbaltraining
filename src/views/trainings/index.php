@@ -28,7 +28,7 @@
 </div>
 
 <?php if (empty($trainings)): ?>
-    <div class="card">
+    <div class="tb-card tb-empty-state">
         <p>Er zijn nog geen trainingen voor dit team.</p>
     </div>
 <?php else: ?>
@@ -43,7 +43,7 @@
                     $displayTitle = $days[date('w', $ts)] . ', ' . date('j', $ts) . ' ' . $months[date('n', $ts) - 1] . ' ' . date('Y', $ts);
                 }
             ?>
-            <div class="action-card tb-list-card" onclick="location.href='/trainings/view?id=<?= $training['id'] ?>'">
+            <div class="tb-action-card tb-list-card" onclick="location.href='/trainings/view?id=<?= $training['id'] ?>'">
                 <div class="tb-flex-1">
                     <h3><?= $displayTitle ?></h3>
                     <p class="text-muted tb-mb-xs"><?= nl2br(e(strlen($training['description'] ?? '') > 100 ? substr($training['description'], 0, 100) . '...' : ($training['description'] ?? ''))) ?></p>

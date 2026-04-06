@@ -48,7 +48,7 @@ $backUrl = $isEdit ? '/matches/view?id=' . (int)$match['id'] : '/matches';
         <input type="hidden" name="id" value="<?= (int)$match['id'] ?>">
     <?php endif; ?>
 
-    <div class="card tb-form-card-narrow">
+    <div class="tb-card tb-form-card-narrow">
         <div class="form-group">
             <label for="opponent">Tegenstander *</label>
             <input type="text" id="opponent" name="opponent" required class="form-control" value="<?= e($opponentValue) ?>">

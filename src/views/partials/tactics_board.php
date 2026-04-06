@@ -13,7 +13,7 @@ $tacticsShowSourceMeta = !empty($tacticsShowSourceMeta);
 ?>
 
 <div
-    class="card match-tactics-card"
+    class="tb-card match-tactics-card"
     id="match-tactics-root"
     data-context-mode="<?= e($tacticsContextMode) ?>"
     data-team-id="<?= $tacticsTeamId > 0 ? $tacticsTeamId : '' ?>"

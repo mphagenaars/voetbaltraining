@@ -48,13 +48,13 @@
                     </a>
                 <?php endif; ?>
                 
-                <div class="dropdown">
+                <div class="tb-dropdown">
                     <a href="#" class="header-nav-link">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         <strong><?= e($_SESSION['user_name']) ?></strong>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </a>
-                    <div class="dropdown-content">
+                    <div class="tb-dropdown__content">
                         <a href="/account">Profiel</a>
                         <a href="/account/teams">Mijn Teams</a>
                         <a href="/logout">Uitloggen</a>

@@ -15,7 +15,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
     </div>
 </div>
 
-<div class="card exercise-mode-card">
+<div class="tb-card exercise-mode-card">
     <h2 class="exercise-mode-title">Kies hoe je wilt starten</h2>
     <p class="exercise-mode-subtitle">Je komt altijd uit op hetzelfde oefenformulier. Kies de manier die voor jou prettig werkt.</p>
     <div class="exercise-mode-switch">
@@ -30,7 +30,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
     </div>
 </div>
 
-<div class="card" id="exercise-card"<?php if ($formMode === 'ai'): ?> data-ai-phase="search"<?php endif; ?>>
+<div class="tb-card" id="exercise-card"<?php if ($formMode === 'ai'): ?> data-ai-phase="search"<?php endif; ?>>
     <form method="POST" enctype="multipart/form-data">
         <?= Csrf::renderInput() ?>
         <input type="hidden" name="form_mode" value="<?= e($formMode) ?>">
@@ -145,11 +145,11 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
         <div class="form-group">
             <label>Doelstelling</label>
-            <div class="multi-select-wrapper" id="wrapper-objective">
-                <div class="multi-select-trigger" onclick="toggleMultiSelect('wrapper-objective')">
+            <div class="tb-multi-select-wrapper" id="wrapper-objective">
+                <div class="tb-multi-select-trigger" onclick="toggleMultiSelect('wrapper-objective')">
                     Selecteer doelstelling(en)
                 </div>
-                <div class="multi-select-options">
+                <div class="tb-tb-multi-select-options">
                     <?php
                     $objectives = Exercise::getObjectives();
                     
@@ -165,7 +165,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
                     foreach ($objectives as $obj) {
                         $checked = in_array($obj, $currentObjectives) ? 'checked' : '';
-                        echo '<label class="multi-select-option">';
+                        echo '<label class="tb-multi-select-option">';
                         echo '<input type="checkbox" name="training_objective[]" value="' . e($obj) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-objective\')"> ';
                         echo e($obj);
                         echo '</label>';
@@ -177,11 +177,11 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
         <div class="form-group">
             <label>Voetbalhandeling</label>
-            <div class="multi-select-wrapper" id="wrapper-action">
-                <div class="multi-select-trigger" onclick="toggleMultiSelect('wrapper-action')">
+            <div class="tb-multi-select-wrapper" id="wrapper-action">
+                <div class="tb-multi-select-trigger" onclick="toggleMultiSelect('wrapper-action')">
                     Selecteer voetbalhandeling(en)
                 </div>
-                <div class="multi-select-options">
+                <div class="tb-tb-multi-select-options">
                     <?php
                     $actions = Exercise::getFootballActions();
 
@@ -205,7 +205,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
                             }
                         }
                         $checked = $isChecked ? 'checked' : '';
-                        echo '<label class="multi-select-option">';
+                        echo '<label class="tb-multi-select-option">';
                         echo '<input type="checkbox" name="football_action[]" value="' . e($action) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-action\')"> ';
                         echo e($action);
                         echo '</label>';
@@ -471,8 +471,8 @@ function updateYouTubePreview() {
 
 function toggleMultiSelect(id) {
     const wrapper = document.getElementById(id);
-    const options = wrapper.querySelector('.multi-select-options');
-    const allOptions = document.querySelectorAll('.multi-select-options');
+    const options = wrapper.querySelector('.tb-tb-multi-select-options');
+    const allOptions = document.querySelectorAll('.tb-tb-multi-select-options');
     
     // Close other open dropdowns
     allOptions.forEach(opt => {
@@ -487,7 +487,7 @@ function toggleMultiSelect(id) {
 function updateTrigger(id) {
     const wrapper = document.getElementById(id);
     const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
-    const trigger = wrapper.querySelector('.multi-select-trigger');
+    const trigger = wrapper.querySelector('.tb-multi-select-trigger');
     
     if (checkboxes.length > 0) {
         const values = Array.from(checkboxes).map(cb => cb.parentElement.textContent.trim());
@@ -504,8 +504,8 @@ function updateTrigger(id) {
 
 // Close when clicking outside
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.multi-select-wrapper')) {
-        document.querySelectorAll('.multi-select-options').forEach(opt => {
+    if (!e.target.closest('.tb-multi-select-wrapper')) {
+        document.querySelectorAll('.tb-tb-multi-select-options').forEach(opt => {
             opt.classList.remove('open');
         });
     }

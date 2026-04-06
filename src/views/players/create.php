@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<div class="card tb-entity-card">
+<div class="tb-card tb-entity-card">
     <p>Voeg een nieuwe speler toe aan <strong><?= e($_SESSION['current_team']['name']) ?></strong>.</p>
 
     <form method="POST" action="/players/create" class="tb-entity-form">
