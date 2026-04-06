@@ -48,7 +48,7 @@ $backUrl = $isEdit ? '/matches/view?id=' . (int)$match['id'] : '/matches';
         <input type="hidden" name="id" value="<?= (int)$match['id'] ?>">
     <?php endif; ?>
 
-    <div class="card" style="max-width: 560px; margin: 1rem auto;">
+    <div class="card tb-form-card-narrow">
         <div class="form-group">
             <label for="opponent">Tegenstander *</label>
             <input type="text" id="opponent" name="opponent" required class="form-control" value="<?= e($opponentValue) ?>">
@@ -61,7 +61,7 @@ $backUrl = $isEdit ? '/matches/view?id=' . (int)$match['id'] : '/matches';
 
         <div class="form-group">
             <label>Locatie</label>
-            <div style="display: flex; gap: 1rem;">
+            <div class="tb-radio-group">
                 <label><input type="radio" name="is_home" value="1" <?= $isHomeValue === 1 ? 'checked' : '' ?>> Thuis</label>
                 <label><input type="radio" name="is_home" value="0" <?= $isHomeValue === 0 ? 'checked' : '' ?>> Uit</label>
             </div>

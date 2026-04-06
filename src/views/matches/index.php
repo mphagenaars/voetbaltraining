@@ -14,7 +14,7 @@
             </svg>
         </a>
         <?php $nextFilter = ($currentFilter ?? 'all') === 'all' ? 'upcoming' : 'all'; ?>
-        <a href="/matches?filter=<?= $nextFilter ?>" class="btn-icon-round" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg gespeelde wedstrijden' : 'Toon alle wedstrijden' ?>" aria-label="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg gespeelde wedstrijden' : 'Toon alle wedstrijden' ?>" style="<?= ($currentFilter ?? 'all') === 'upcoming' ? 'color: var(--primary); background-color: rgba(46, 125, 50, 0.1);' : '' ?>">
+        <a href="/matches?filter=<?= $nextFilter ?>" class="btn-icon-round<?= ($currentFilter ?? 'all') === 'upcoming' ? ' tb-filter-active' : '' ?>" title="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg gespeelde wedstrijden' : 'Toon alle wedstrijden' ?>" aria-label="<?= ($currentFilter ?? 'all') === 'all' ? 'Verberg gespeelde wedstrijden' : 'Toon alle wedstrijden' ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
@@ -41,17 +41,17 @@
 <?php else: ?>
     <div class="match-list">
         <?php foreach ($matches as $match): ?>
-            <div class="action-card" onclick="location.href='/matches/view?id=<?= $match['id'] ?>'" style="display: flex; align-items: center; justify-content: space-between;">
-                <div style="flex: 1;">
+            <div class="action-card tb-list-card" onclick="location.href='/matches/view?id=<?= $match['id'] ?>'">
+                <div class="tb-flex-1">
                     <h3><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h3>
-                    <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 1rem;">
+                    <div class="tb-list-card-meta">
                         <span>📅 <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></span>
                         <span>⚽ <?= $match['score_home'] ?> - <?= $match['score_away'] ?></span>
                     </div>
                 </div>
                 
-                <div style="display: flex; align-items: center;">
-                    <div style="display: flex; gap: 0.5rem;" onclick="event.stopPropagation();">
+                <div class="tb-list-card-actions">
+                    <div class="tb-list-card-actions-inner" onclick="event.stopPropagation();">
                         <a href="/matches/view?id=<?= $match['id'] ?>" class="btn-icon" title="Bekijken" aria-label="Bekijken">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </a>
@@ -59,10 +59,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
                         </a>
                         <?php if (Session::get('is_admin')): ?>
-                            <form action="/matches/delete" method="POST" style="display: inline;" onsubmit="return confirm('Weet je zeker dat je deze wedstrijd wilt verwijderen?');">
+                            <form action="/matches/delete" method="POST" class="tb-inline" onsubmit="return confirm('Weet je zeker dat je deze wedstrijd wilt verwijderen?');">
                                 <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
                                 <input type="hidden" name="id" value="<?= $match['id'] ?>">
-                                <button type="submit" class="btn-icon delete" title="Verwijderen" aria-label="Verwijderen" style="color: var(--danger-color);">
+                                <button type="submit" class="btn-icon delete tb-text-danger" title="Verwijderen" aria-label="Verwijderen">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                 </button>
                             </form>

@@ -95,9 +95,20 @@ Vaste testscript per kernflow (Dashboard, Training Builder, Team/Spelers, Match 
 
 ### 6.3 Release en rollback (lichtgewicht)
 - Gefaseerde release per domein (geen big-bang).
-- Commitstrategie: kleine, terugdraai-bare commits per scherm/feature.
-- Rollback: `git revert` op laatste domein-commit(s), geen brede resetacties.
+- Rollback: `git revert` op domein-commit(s), geen brede resetacties.
 - Alleen doorgaan naar volgend domein als `Must` + kwaliteitsgates groen zijn.
+
+Commitstrategie voor toekomstige design-wijzigingen:
+- 1 commit per domein of per scherm, afhankelijk van omvang.
+- Domeinen: Platform foundation, Dashboard, Training Builder, Team/Spelers, Match Mode, Account/Admin/Auth/Reports, Quality/CI.
+- Commitbericht bevat domein-prefix, bijv. `[design:dashboard] …` of `[design:foundation] …`.
+- Gedeelde CSS-wijzigingen (style.css, tb-*.css) worden meegenomen in de domein-commit die ze motiveert.
+- Cross-domein wijzigingen (layout, header, tokens) gaan in een aparte `[design:foundation]` commit.
+
+Rollback bestaande MUST-ronde:
+- Initiële implementatie (MUST-02 t/m MUST-11) is uitgerold in commit `dca0240`.
+- Volledige rollback mogelijk via `git revert dca0240`.
+- Granulaire per-domein rollback is niet van toepassing op deze ronde, wel op alle toekomstige wijzigingen.
 
 ### 6.4 KPI's voor voortgang en succes
 Startwaarden (huidig):
@@ -125,10 +136,10 @@ Doelwaarden:
 - [x] MUST-09 Account/Admin/Auth/Reports geharmoniseerd op dezelfde primitives en tokens. (bewijs: `/public/css/style.css`, `/src/views/account/index.php`, `/src/views/admin/index.php`, `/src/views/admin/users.php`, `/src/views/admin/teams.php`, `/src/views/admin/team_members.php`, `/src/views/admin/user_teams.php`, `/src/views/admin/edit_team.php`, `/src/views/admin/mail_settings.php`, `/src/views/admin/options.php`, `/src/views/admin/system.php`, `/src/views/login.php`, `/src/views/register.php`, `/src/views/matches/reports.php`, datum: 2026-04-05)
 - [x] MUST-10 A11y testscript (6 checks) is uitgevoerd en geslaagd op alle kernflows. (bewijs: `/scripts/check_must10.sh`, `/scripts/quality/must10_core_flows.txt`, `/src/views/exercises/index.php`, `/public/css/tb-tokens.css`, `/.github/workflows/regression-tests.yml`, datum: 2026-04-05)
 - [x] MUST-11 Visual regression baseline is vastgelegd voor must-schermen op 2 viewports. (bewijs: `/scripts/capture_must11_baseline.py`, `/scripts/prepare_must11_fixture.php`, `/scripts/check_must11.sh`, `/scripts/quality/must11_screens.txt`, `/scripts/quality/visual_baseline/*`, `/.github/workflows/regression-tests.yml`, datum: 2026-04-05)
-- [ ] MUST-12 Iedere domeinrelease heeft rollback-pad via kleine revertbare commits.
-- [ ] MUST-13 KPI-check: inline styles en inline style-blokken dalen volgens doelwaarden.
-- [ ] MUST-14 Verificatiecheck: buiten `/design` zijn 0 verwijzingen naar `/design/*` (map blijft verwijderbaar).
-- [ ] SHOULD-15 Opruimen van legacy/duplicatieve UI-klassen na afronding van alle must-items.
+- [x] MUST-12 Iedere domeinrelease heeft rollback-pad via kleine revertbare commits. (bewijs: rollback bestaande ronde via `git revert dca0240`, commitstrategie voor toekomstige wijzigingen vastgelegd in sectie 6.3, datum: 2026-04-05)
+- [x] MUST-13 KPI-check: inline styles en inline style-blokken dalen volgens doelwaarden. (bewijs: inline `style="..."` 443 → 13, inline `<style>` 5 → 0, utility/component classes in `/public/css/style.css`, datum: 2026-04-05)
+- [x] MUST-14 Verificatiecheck: buiten `/design` zijn 0 verwijzingen naar `/design/*` (map blijft verwijderbaar). (bewijs: grep + `scripts/check_must04.sh` bevestigen 0 runtime/build-refs; enige vermeldingen zijn `.gitignore`, `README.md` (docs) en het checkscript zelf, datum: 2026-04-06)
+- [x] SHOULD-15 Opruimen van legacy/duplicatieve UI-klassen na afronding van alle must-items. (bewijs: 38 dode klassen verwijderd uit `style.css` (3886 → 3689 regels), 0 runtime-referenties gebroken, regressietests 14/14 groen, datum: 2026-04-06)
 - [ ] SHOULD-16 Extra harmonisatie van detailstaten (hover/focus/empty states) op minder kritieke pagina's.
 - [ ] COULD-17 Visuele polish (micro-animaties, extra cardvarianten) pas na stabiele must+should basis.
 
@@ -141,4 +152,4 @@ Dit plan is succesvol uitgevoerd als:
 - `/design` verwijderd kan worden zonder regressie in runtime/build
 
 ---
-Laatste update: 2026-04-05
+Laatste update: 2026-04-06

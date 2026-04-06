@@ -18,7 +18,7 @@ if (!empty($training['training_date'])) {
         <a href="/trainings" class="btn-icon-round" title="Terug">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
-        <h1 class="app-bar-title" style="font-size: 1.25rem;"><?= $displayTitle ?></h1>
+        <h1 class="app-bar-title tb-app-bar-title-sm"><?= $displayTitle ?></h1>
     </div>
     <div class="app-bar-actions">
         <button onclick="shareTraining()" class="btn-icon-round" title="Delen">
@@ -33,64 +33,56 @@ if (!empty($training['training_date'])) {
     </div>
 </div>
 
-<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start;">
-    <p class="text-muted" style="margin: 0;"><?= e($training['description'] ?? '') ?></p>
-    <span style="font-size: 1.1rem; font-weight: bold; white-space: nowrap; margin-left: 1rem;">⏱️ <?= $totalDuration ?> min</span>
+<div class="tb-training-desc-row">
+    <p class="text-muted tb-m-0"><?= e($training['description'] ?? '') ?></p>
+    <span class="tb-training-total">⏱️ <?= $totalDuration ?> min</span>
 </div>
 
 <div class="training-timeline">
     <?php foreach ($training['exercises'] as $index => $exercise): ?>
         <?php $exerciseDetailUrl = '/exercises/view?id=' . (int)$exercise['id'] . '&from_training=' . (int)$training['id']; ?>
-        <div class="card" style="margin-bottom: 1rem; border-left: 5px solid var(--primary-color);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h3 style="margin-top: 0;">
-                    <span style="color: var(--primary-color); margin-right: 0.5rem;">#<?= $index + 1 ?></span>
-                    <a href="<?= e($exerciseDetailUrl) ?>" style="color: inherit; text-decoration: none;">
+        <div class="card tb-training-card">
+            <div class="tb-flex tb-justify-between tb-items-start">
+                <h3 class="tb-m-0">
+                    <span class="tb-training-number">#<?= $index + 1 ?></span>
+                    <a href="<?= e($exerciseDetailUrl) ?>" class="tb-training-link">
                         <?= e($exercise['title']) ?>
                     </a>
                 </h3>
-                <span style="background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold;">
+                <span class="tb-training-badge">
                     <?= $exercise['training_duration'] ?: $exercise['duration'] ?: '?' ?> min
                 </span>
             </div>
 
             <?php if (!empty($exercise['training_goal'])): ?>
-                <div style="margin-top: 0.25rem; margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 6px; background: rgba(0,0,0,0.03);">
+                <div class="tb-training-goal">
                     <strong>Doel in deze training:</strong><br>
                     <?= nl2br(e($exercise['training_goal'])) ?>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($exercise['image_path'])): ?>
-                <div style="margin: 1rem 0; text-align: center;">
-                    <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 300px; border-radius: 4px;">
+                <div class="tb-mt-sm tb-mb-sm tb-text-center">
+                    <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" class="tb-img-tall">
                 </div>
             <?php endif; ?>
 
-            <div style="margin-top: 0.5rem;">
+            <div class="tb-mt-xs">
                 <?= nl2br(e($exercise['description'] ?? '')) ?>
             </div>
 
             <?php if (!empty($exercise['requirements'])): ?>
-                <div style="margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid #eee; font-size: 0.9rem; color: #666;">
+                <div class="tb-training-requirements">
                     <strong>Benodigdheden:</strong> <?= e($exercise['requirements']) ?>
                 </div>
             <?php endif; ?>
 
-            <div style="margin-top: 1rem;">
+            <div class="tb-mt-sm">
                 <a href="<?= e($exerciseDetailUrl) ?>" class="btn btn-outline">Bekijk volledige details</a>
             </div>
         </div>
     <?php endforeach; ?>
 </div>
-
-<style>
-@media print {
-    header, .btn { display: none !important; }
-    .card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
-    body { background: white; }
-}
-</style>
 
 <script>
 function shareTraining() {

@@ -1,0 +1,126 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag of commit SHA om te deployen
+        required: true
+        default: main
+      dry_run:
+        description: Alleen artifact bouwen (geen deploy naar server)
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build Production Artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Build allowlist artifact
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf dist/voetbaltraining-production.tgz \
+            public \
+            src \
+            scripts/init_db.php \
+            data/config.php.example \
+            README.md \
+            LICENSE
+          tar -tzf dist/voetbaltraining-production.tgz > dist/artifact-manifest.txt
+
+      - name: Upload production artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-artifact
+          path: |
+            dist/voetbaltraining-production.tgz
+            dist/artifact-manifest.txt
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy To Production
+    if: ${{ inputs.dry_run == false }}
+    needs: package
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+      PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
+      PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+      PROD_APP_DIR: ${{ secrets.PROD_APP_DIR }}
+      PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+      PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+    steps:
+      - name: Download production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-artifact
+          path: dist
+
+      - name: Validate required secrets
+        run: |
+          set -euo pipefail
+          : "${PROD_SSH_HOST:?Missing secret PROD_SSH_HOST}"
+          : "${PROD_SSH_USER:?Missing secret PROD_SSH_USER}"
+          : "${PROD_APP_DIR:?Missing secret PROD_APP_DIR}"
+          : "${PROD_SSH_PRIVATE_KEY:?Missing secret PROD_SSH_PRIVATE_KEY}"
+          if [ -z "${PROD_SSH_PORT:-}" ]; then
+            echo "PROD_SSH_PORT niet gezet, val terug op 22."
+            echo "PROD_SSH_PORT=22" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$PROD_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+
+          if [ -n "${PROD_SSH_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$PROD_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          else
+            ssh-keyscan -p "${PROD_SSH_PORT}" -H "${PROD_SSH_HOST}" > "$HOME/.ssh/known_hosts"
+          fi
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Upload artifact to server
+        run: |
+          set -euo pipefail
+          scp \
+            -P "${PROD_SSH_PORT}" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            dist/voetbaltraining-production.tgz \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:/tmp/voetbaltraining-production.tgz"
+
+      - name: Deploy on server and run migration
+        run: |
+          set -euo pipefail
+          ssh \
+            -p "${PROD_SSH_PORT}" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
+            "set -euo pipefail; \
+             mkdir -p '${PROD_APP_DIR}'; \
+             tar -xzf /tmp/voetbaltraining-production.tgz -C '${PROD_APP_DIR}'; \
+             php '${PROD_APP_DIR}/scripts/init_db.php'; \
+             rm -f /tmp/voetbaltraining-production.tgz"

@@ -11,11 +11,11 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom: 1rem;">
+    <div class="card tb-mb-sm">
         <p>
             Team: <strong><?= e((string)($team['name'] ?? 'Onbekend team')) ?></strong>
         </p>
-        <p style="margin-top: 0.3rem; color: var(--text-muted);">
+        <p class="tb-mt-xs" style="color:var(--text-muted);">
             Bekijk hier wedstrijdsituaties, voeg trainingssituaties toe en beheer je speelwijzen.
         </p>
     </div>
@@ -54,7 +54,7 @@
     <!-- Speelwijzen tab -->
     <div id="tab-speelwijzen" class="tactics-tab-panel">
     <div class="card">
-        <h2 style="font-size: 1.1rem; margin-bottom: 0.8rem;">Speelwijzen</h2>
+        <h2 class="tb-app-bar-title-sm tb-mb-xs">Speelwijzen</h2>
         <script type="application/json" id="speelwijze-data"><?= json_encode($speelwijzen ?? [], JSON_UNESCAPED_UNICODE) ?></script>
         <?php
         $teamId = (int)($team['id'] ?? 0);
