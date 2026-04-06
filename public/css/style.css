@@ -540,6 +540,12 @@ body.tb-picker-open {
     border: 1px solid var(--tb-color-border);
     border-radius: var(--tb-radius-sm);
     background: var(--tb-color-surface);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.tb-player-item:hover {
+    border-color: var(--tb-color-accent);
+    box-shadow: var(--tb-shadow-sm);
 }
 
 .tb-player-main {
@@ -596,6 +602,12 @@ body.tb-picker-open {
     gap: var(--tb-space-3);
     padding: var(--tb-space-4);
     margin-bottom: 0;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.tb-team-card:hover {
+    border-color: var(--tb-color-accent);
+    box-shadow: var(--tb-shadow-sm);
 }
 
 .tb-team-card--current {
@@ -3401,7 +3413,8 @@ body.page-match-live .voice-btn.is-recording {
 .tb-training-requirements { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid #eee; font-size: 0.9rem; color: #666; }
 
 /* --- Component: list card --- */
-.tb-list-card { display: flex; align-items: center; justify-content: space-between; }
+.tb-list-card { display: flex; align-items: center; justify-content: space-between; transition: border-color 120ms ease; }
+.tb-list-card:hover { border-color: var(--tb-color-accent); }
 .tb-list-card-meta { font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 1rem; }
 .tb-list-card-actions { display: flex; align-items: center; }
 .tb-list-card-actions-inner { display: flex; gap: 0.5rem; }

@@ -603,3 +603,54 @@
     height: 48px;
     color: var(--tb-color-border);
 }
+
+/* ---- Micro-animations (COULD-17) ---- */
+
+/* Shared fade-in keyframe */
+@keyframes tb-fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* P1: Interactive card hover elevation */
+a > .tb-card,
+button > .tb-card,
+.tb-card[onclick] {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+a:hover > .tb-card,
+button:hover > .tb-card,
+.tb-card[onclick]:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--tb-shadow-md);
+}
+
+/* P2: Alert entrance */
+.tb-alert {
+    animation: tb-fade-in 300ms ease-out;
+}
+
+/* P3: Empty state entrance */
+.tb-empty-state {
+    animation: tb-fade-in 300ms ease-out;
+}
+
+/* P6: FAB entrance bounce */
+.tb-fab, .fab {
+    animation: tb-fab-enter 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes tb-fab-enter {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* P7: Dropdown / multi-select smooth open */
+.tb-dropdown:hover .tb-dropdown__content,
+.tb-dropdown:focus-within .tb-dropdown__content,
+.tb-multi-select-options.open {
+    animation: tb-dropdown-enter 150ms ease-out;
+}
+@keyframes tb-dropdown-enter {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

@@ -283,7 +283,8 @@ class GameController extends BaseController {
         $liveState = $this->matchLiveStateService->getLiveState($id);
 
         $settings = new AppSetting($this->pdo);
-        $liveVoiceEnabled = $settings->get('live_voice_enabled', '0') === '1';
+        // Fallback naar "aan" als key (nog) ontbreekt om regressie op bestaande live-flow te voorkomen.
+        $liveVoiceEnabled = $settings->get('live_voice_enabled', '1') === '1';
 
         View::render('matches/live', [
             'match' => $match,
@@ -817,7 +818,7 @@ class GameController extends BaseController {
         }
 
         $settings = new AppSetting($this->pdo);
-        if ($settings->get('live_voice_enabled', '0') !== '1') {
+        if ($settings->get('live_voice_enabled', '1') !== '1') {
             http_response_code(403);
             echo json_encode(['error' => 'Spraakfunctie is niet ingeschakeld.']);
             exit;

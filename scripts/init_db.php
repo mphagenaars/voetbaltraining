@@ -70,6 +70,7 @@ try {
         'ai_retrieval_max_candidates' => '10',
         'ai_retrieval_min_youtube_sources' => '2',
         'ai_retrieval_internal_limit' => '2',
+        'live_voice_enabled' => '1',
     ];
     foreach ($initialSettings as $key => $value) {
         $settingStmt->execute([
