@@ -15,7 +15,7 @@ class DashboardController extends BaseController {
             
             View::render('dashboard', ['teams' => $teams, 'pageTitle' => 'Dashboard - Trainer Bobby']);
         } else {
-            View::render('home', ['pageTitle' => 'Home - Trainer Bobby']);
+            View::render('home', ['pageTitle' => 'Home - Trainer Bobby', 'hideHeader' => true]);
         }
     }
 }

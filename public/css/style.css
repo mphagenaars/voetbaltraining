@@ -62,6 +62,18 @@ a:focus-visible {
     text-decoration: none;
 }
 
+.brand-logo {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+@media (max-width: 480px) {
+    .brand-logo {
+        height: 32px;
+    }
+}
+
 .header-nav {
     display: flex;
     align-items: center;
@@ -1214,6 +1226,30 @@ form div {
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.tb-auth-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 60px);
+    padding-top: 0;
+}
+
+.tb-auth-logo {
+    text-align: center;
+    margin-bottom: var(--tb-space-4);
+}
+
+.tb-auth-logo img {
+    max-width: 260px;
+    width: 100%;
+    height: auto;
+}
+
+.tb-auth-logo--large img {
+    max-width: 360px;
 }
 
 .tb-auth-submit {

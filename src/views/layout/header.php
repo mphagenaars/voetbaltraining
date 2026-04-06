@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="<?= e($viewportContent ?? 'width=device-width, initial-scale=1.0') ?>">
     <title><?= $pageTitle ?? 'Trainer Bobby' ?></title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+    <?php if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/images/favicon.png')): ?>
+        <link rel="icon" type="image/png" href="/images/favicon.png">
+    <?php else: ?>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+    <?php endif; ?>
     <?php
         $coreCssFiles = [
             '/css/tb-tokens.css',
@@ -36,9 +40,12 @@
     <?php endif; ?>
 </head>
 <body<?= !empty($bodyClass) ? ' class="' . e($bodyClass) . '"' : '' ?>>
+<?php if (empty($hideHeader)): ?>
 <header class="main-header">
     <div class="container">
-        <a href="/" class="brand">⚽ Trainer Bobby</a>
+        <a href="/" class="brand">
+            <img src="/images/logo.png" alt="Trainer Bobby" class="brand-logo">
+        </a>
         <nav class="header-nav">
             <?php if (isset($_SESSION['user_id'])): ?>
                 <?php if (!empty($_SESSION['is_admin'])): ?>
@@ -66,4 +73,5 @@
         </nav>
     </div>
 </header>
-<main class="container">
+<?php endif; ?>
+<main class="<?= !empty($hideHeader) ? 'container tb-auth-page' : 'container' ?>">

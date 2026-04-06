@@ -1,4 +1,7 @@
 <div class="tb-card tb-auth-card">
+    <div class="tb-auth-logo tb-auth-logo--large">
+        <img src="/images/logo.png" alt="Trainer Bobby – Train Smarter, Play Better">
+    </div>
     <h1 class="mb-2">Inloggen</h1>
     
     <?php if (isset($error)): ?>
