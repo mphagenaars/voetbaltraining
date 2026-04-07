@@ -8,16 +8,16 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <div class="grid-2">
     <!-- Clubs -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Clubs</h2>
         <form action="/admin/teams/add-club" method="POST" enctype="multipart/form-data" class="tb-stack-form">
             <?= Csrf::renderInput() ?>
@@ -57,7 +57,7 @@
     </div>
 
     <!-- Seizoenen -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Seizoenen</h2>
         <form action="/admin/teams/add-season" method="POST" class="tb-inline-row">
             <?= Csrf::renderInput() ?>
@@ -84,7 +84,7 @@
     </div>
 </div>
 
-<div class="card tb-admin-section-gap">
+<div class="tb-card tb-admin-section-gap">
     <h2>Alle Teams</h2>
     <div class="tb-table-wrap">
         <table class="tb-table">

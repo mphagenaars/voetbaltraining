@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<div class="card tb-entity-card">
+<div class="tb-card tb-entity-card">
     <form action="/players/update" method="POST" class="tb-entity-form">
         <?= Csrf::renderInput() ?>
         <input type="hidden" name="id" value="<?= $player['id'] ?>">

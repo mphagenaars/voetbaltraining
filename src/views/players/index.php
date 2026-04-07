@@ -8,7 +8,7 @@
         </div>
     </div>
 
-    <div class="card tb-players-card">
+    <div class="tb-card tb-players-card">
         <div class="tb-players-header">
             <h2>Selectie</h2>
             <?php if (!empty($players)): ?>
@@ -17,7 +17,9 @@
         </div>
 
         <?php if (empty($players)): ?>
-            <p class="tb-players-empty">Nog geen spelers toegevoegd.</p>
+            <div class="tb-empty-state">
+                <p>Nog geen spelers toegevoegd.</p>
+            </div>
         <?php else: ?>
             <div class="tb-player-list">
                 <?php foreach ($players as $player): ?>

@@ -584,7 +584,7 @@ class AiAdminController extends BaseController {
             'ai_retrieval_min_youtube_sources' => '2',
             'ai_retrieval_internal_limit' => '2',
             'ai_ytdlp_cookies_path' => '',
-            'live_voice_enabled' => '0',
+            'live_voice_enabled' => '1',
         ];
 
         $stored = $this->settings->getMany(array_keys($defaults));

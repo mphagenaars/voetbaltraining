@@ -1,8 +1,11 @@
-<div class="card tb-auth-card">
+<div class="tb-card tb-auth-card">
+    <div class="tb-auth-logo tb-auth-logo--large">
+        <img src="/images/logo.png" alt="Trainer Bobby – Train Smarter, Play Better">
+    </div>
     <h1 class="mb-2">Inloggen</h1>
     
     <?php if (isset($error)): ?>
-        <div class="alert"><?= e($error) ?></div>
+        <div class="tb-alert"><?= e($error) ?></div>
     <?php endif; ?>
 
     <?php $action = '/login' . (isset($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''); ?>

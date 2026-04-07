@@ -1,7 +1,7 @@
 <div class="container">
     <link rel="stylesheet" href="/css/match-view.css?v=<?= time() ?>">
     
-    <svg width="0" height="0" style="position: absolute;">
+    <svg width="0" height="0" class="tb-svg-defs">
       <defs>
         <pattern id="striped-jersey" patternUnits="userSpaceOnUse" width="100" height="20">
           <rect width="100" height="10" fill="black"/>
@@ -24,19 +24,19 @@
             </a>
             <h1 class="app-bar-title"><?= e($match['opponent']) ?> (<?= $match['is_home'] ? 'Thuis' : 'Uit' ?>)</h1>
         </div>
-        <div class="app-bar-end" style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="app-bar-end tb-flex tb-items-center tb-gap-sm">
             <a href="/matches/edit?id=<?= $match['id'] ?>" class="btn-icon-round" title="Wedstrijd bewerken">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
             </a>
-            <a href="/matches/live?id=<?= $match['id'] ?>" class="btn btn-primary" style="background-color: #2e7d32; color: white; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold;">
+            <a href="/matches/live?id=<?= $match['id'] ?>" class="tb-btn-live">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                 LIVE MODE
             </a>
         </div>
     </div>
     
-    <div class="card" style="margin-bottom: 1rem;">
-        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <div class="tb-card tb-mb-sm">
+        <div class="tb-flex-wrap tb-gap-lg">
             <p><strong>Datum:</strong> <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
             <p><strong>Formatie:</strong> <?= e($match['formation']) ?></p>
         </div>
@@ -44,11 +44,11 @@
 
     <div class="match-grid">
         <!-- Card 1: Opstelling -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div class="tb-card">
+            <div class="tb-section-header">
                 <h3>Startopstelling</h3>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span id="save-status" style="font-size: 0.85rem; color: #666; transition: all 0.3s ease; font-weight: bold;"></span>
+                <div class="tb-flex tb-items-center tb-gap-xs">
+                    <span id="save-status" class="tb-save-status"></span>
                 </div>
                 <input type="hidden" id="csrf_token" value="<?= Csrf::getToken() ?>">
             </div>
@@ -113,8 +113,8 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <div class="bench-container" style="flex: 1; min-width: 200px;">
+                <div class="tb-flex-wrap tb-gap-md">
+                    <div class="bench-container tb-bench-col">
                         <h4>Wissels / Selectie</h4>
                         <div id="players-list" class="players-list">
                             <?php 
@@ -143,7 +143,7 @@
                         </div>
                     </div>
 
-                    <div class="bench-container" style="flex: 1; min-width: 200px;">
+                    <div class="bench-container tb-bench-col">
                         <h4>Afwezig / Ziek</h4>
                         <div id="absent-list" class="players-list">
                              <?php foreach ($players as $player): ?>
@@ -170,28 +170,28 @@
         </div>
 
         <!-- Card 2: Wedstrijdverloop -->
-        <div class="card">
+        <div class="tb-card">
             <h3>Wedstrijdverloop</h3>
             
-            <form action="/matches/add-event" method="POST" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee;">
+            <form action="/matches/add-event" method="POST" class="tb-form-divider">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; margin-top: 1rem;">
-                    <h4 style="margin: 0;">Gebeurtenis toevoegen</h4>
+                <div class="tb-flex tb-justify-between tb-items-center tb-mb-xs tb-mt-sm">
+                    <h4 class="tb-m-0">Gebeurtenis toevoegen</h4>
                     <button type="submit" class="btn-icon" title="Toevoegen">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                     </button>
                 </div>
                 
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <div style="width: 80px;">
-                        <label style="font-size: 0.8rem;">Minuut</label>
-                        <input type="number" name="minute" required min="1" max="120" style="width: 100%;">
+                <div class="tb-flex tb-gap-xs tb-mb-xs">
+                    <div class="tb-input-narrow">
+                        <label class="tb-label-sm">Minuut</label>
+                        <input type="number" name="minute" required min="1" max="120" class="tb-w-full">
                     </div>
-                    <div style="flex-grow: 1;">
-                        <label style="font-size: 0.8rem;">Type</label>
-                        <select name="type" required style="width: 100%;">
+                    <div class="tb-flex-grow">
+                        <label class="tb-label-sm">Type</label>
+                        <select name="type" required class="tb-w-full">
                             <option value="goal">Doelpunt</option>
                             <option value="card_yellow">Gele kaart</option>
                             <option value="card_red">Rode kaart</option>
@@ -202,8 +202,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label style="font-size: 0.8rem;">Speler (optioneel)</label>
-                    <select name="player_id" style="width: 100%;">
+                    <label class="tb-label-sm">Speler (optioneel)</label>
+                    <select name="player_id" class="tb-w-full">
                         <option value="">-- Selecteer speler --</option>
                         <?php foreach ($players as $player): ?>
                             <option value="<?= $player['id'] ?>"><?= e($player['name']) ?></option>
@@ -212,12 +212,12 @@
                 </div>
                 
                 <div class="form-group">
-                    <label style="font-size: 0.8rem;">Omschrijving</label>
-                    <input type="text" name="description" placeholder="Bijv. Assist van..." style="width: 100%;">
+                    <label class="tb-label-sm">Omschrijving</label>
+                    <input type="text" name="description" placeholder="Bijv. Assist van..." class="tb-w-full">
                 </div>
             </form>
 
-            <ul class="timeline" style="list-style: none; padding: 0;">
+            <ul class="timeline tb-timeline">
                 <?php foreach ($events as $event): ?>
                     <?php
                         $eventDescription = (string)($event['description'] ?? '');
@@ -225,7 +225,7 @@
                             $eventDescription = preg_replace('/^\[\[sub:\d+\]\]\s*/', '', $eventDescription) ?? $eventDescription;
                         }
                     ?>
-                    <li style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
+                    <li class="tb-timeline-item">
                         <strong><?= $event['minute'] ?>'</strong> 
                         
                         <?php 
@@ -253,30 +253,30 @@
         </div>
 
         <!-- Card 3: Eindstand & Evaluatie -->
-        <div class="card">
+        <div class="tb-card">
             <form action="/matches/update-details" method="POST">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="tb-section-header">
                     <h3>Details</h3>
                     <button type="submit" class="btn-icon" title="Opslaan">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                     </button>
                 </div>
 
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Eindstand</label>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="number" name="score_home" value="<?= $match['score_home'] ?>" min="0" style="width: 60px; text-align: center;">
+                <div class="tb-mb-md">
+                    <label class="tb-label-block">Eindstand</label>
+                    <div class="tb-flex tb-items-center tb-gap-xs">
+                        <input type="number" name="score_home" value="<?= $match['score_home'] ?>" min="0" class="tb-input-score">
                         <span>-</span>
-                        <input type="number" name="score_away" value="<?= $match['score_away'] ?>" min="0" style="width: 60px; text-align: center;">
+                        <input type="number" name="score_away" value="<?= $match['score_away'] ?>" min="0" class="tb-input-score">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Evaluatie & Opmerkingen</label>
-                    <textarea name="evaluation" rows="6" placeholder="Schrijf hier je evaluatie van de wedstrijd..." style="width: 100%;"><?= e($match['evaluation'] ?? '') ?></textarea>
+                    <label class="tb-label-block">Evaluatie & Opmerkingen</label>
+                    <textarea name="evaluation" rows="6" placeholder="Schrijf hier je evaluatie van de wedstrijd..." class="tb-w-full"><?= e($match['evaluation'] ?? '') ?></textarea>
                 </div>
             </form>
         </div>

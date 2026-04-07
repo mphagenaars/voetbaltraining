@@ -9,7 +9,7 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
         <a href="<?= e($backUrl) ?>" class="btn-icon-round" title="<?= e($backTitle) ?>">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </a>
-        <h1 class="app-bar-title" style="font-size: 1.25rem;"><?= e($exercise['title']) ?></h1>
+        <h1 class="app-bar-title tb-app-bar-title-sm"><?= e($exercise['title']) ?></h1>
     </div>
     <div class="app-bar-actions">
         <?php if (!empty($canAddToTraining)): ?>
@@ -21,10 +21,10 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
             <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon-round" title="Bewerken">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </a>
-            <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0; display: inline-block;">
+            <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" class="tb-inline tb-m-0">
                 <?= Csrf::renderInput() ?>
                 <input type="hidden" name="id" value="<?= $exercise['id'] ?>">
-                <button type="submit" class="btn-icon-round" title="Verwijderen" style="color: var(--danger-color);">
+                <button type="submit" class="btn-icon-round tb-text-danger" title="Verwijderen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
             </form>
@@ -32,54 +32,54 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
     </div>
 </div>
 
-<div class="card">
-    <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
-        <div style="flex: 1; min-width: 240px;">
+<div class="tb-card">
+    <div class="tb-two-col">
+        <div class="tb-two-col-item">
             <?php if (!empty($exercise['drawing_data'])): ?>
-                <div class="editor-wrapper" style="border: none;">
+                <div class="editor-wrapper" style="border:none;">
                     <div id="container" class="editor-canvas-container"></div>
                 </div>
                 <input type="hidden" id="drawing_data" value="<?= e($exercise['drawing_data']) ?>">
                 <input type="hidden" id="field_type" value="<?= e($exercise['field_type'] ?? 'portrait') ?>">
             <?php elseif (!empty($exercise['image_path'])): ?>
-                <div style="text-align: center;">
-                    <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; border-radius: 4px;">
+                <div class="tb-text-center">
+                    <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" class="tb-img-responsive">
                 </div>
             <?php else: ?>
-                <div style="background: #eee; height: 300px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #666;">
+                <div class="tb-placeholder">
                     Geen afbeelding beschikbaar
                 </div>
             <?php endif; ?>
         </div>
 
-        <div style="flex: 1; min-width: 240px;">
-            <div style="margin-bottom: 1.5rem;">
+        <div class="tb-two-col-item">
+            <div class="tb-content-section">
                 <h3>Beschrijving</h3>
                 <p><?= nl2br(e($exercise['description'] ?? '')) ?></p>
             </div>
 
             <?php if (!empty($exercise['variation'])): ?>
-            <div style="margin-bottom: 1.5rem;">
+            <div class="tb-content-section">
                 <h3>Moeilijker / makkelijker maken</h3>
                 <p><?= nl2br(e($exercise['variation'])) ?></p>
             </div>
             <?php endif; ?>
 
             <?php if (!empty($exercise['coach_instructions'])): ?>
-            <div style="margin-bottom: 1.5rem;">
+            <div class="tb-content-section">
                 <h3>Coach instructies</h3>
                 <p><?= nl2br(e($exercise['coach_instructions'])) ?></p>
             </div>
             <?php endif; ?>
 
             <?php if (!empty($exercise['source'])): ?>
-            <div style="margin-bottom: 1.5rem;">
+            <div class="tb-content-section">
                 <h3>Bron</h3>
                 <p><?= formatSourceLink($exercise['source']) ?></p>
             </div>
             <?php endif; ?>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="tb-info-grid">
                 <div>
                     <strong>Teamtaak:</strong><br>
                     <?= !empty($exercise['team_task']) ? e($exercise['team_task']) : '-' ?>
@@ -144,12 +144,12 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
     </div>
 </div>
 
-<div class="card" style="margin-top: 2rem;">
+<div class="tb-card tb-mt-lg">
     <h2>Reacties & Feedback</h2>
     
     <!-- Emoji Reactions -->
-    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center;">
-        <form method="POST" action="/exercises/react" style="margin: 0;">
+    <div class="tb-flex tb-gap-md tb-mb-lg tb-items-center">
+        <form method="POST" action="/exercises/react" class="tb-m-0">
             <?= Csrf::renderInput() ?>
             <input type="hidden" name="exercise_id" value="<?= $exercise['id'] ?>">
             <?php if ($fromTrainingId > 0): ?>
@@ -161,7 +161,7 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
             </button>
         </form>
 
-        <form method="POST" action="/exercises/react" style="margin: 0;">
+        <form method="POST" action="/exercises/react" class="tb-m-0">
             <?= Csrf::renderInput() ?>
             <input type="hidden" name="exercise_id" value="<?= $exercise['id'] ?>">
             <?php if ($fromTrainingId > 0): ?>
@@ -175,15 +175,15 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
     </div>
 
     <!-- Comments List -->
-    <div class="comments-list" style="margin-bottom: 2rem;">
+    <div class="comments-list tb-mb-lg">
         <?php if (empty($comments)): ?>
-            <p style="color: #666; font-style: italic;">Nog geen reacties geplaatst.</p>
+            <p class="tb-comment-empty">Nog geen reacties geplaatst.</p>
         <?php else: ?>
             <?php foreach ($comments as $comment): ?>
-                <div class="comment-item" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
-                    <div style="font-weight: bold; margin-bottom: 0.25rem;">
+                <div class="comment-item tb-comment-item">
+                    <div class="tb-comment-author">
                         <?= e($comment['user_name']) ?>
-                        <small style="font-weight: normal; color: #888; margin-left: 0.5rem;"><?= date('d-m-Y H:i', strtotime($comment['created_at'])) ?></small>
+                        <small class="tb-comment-date"><?= date('d-m-Y H:i', strtotime($comment['created_at'])) ?></small>
                     </div>
                     <div><?= nl2br(e($comment['comment'])) ?></div>
                 </div>
@@ -201,50 +201,23 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
                 <input type="hidden" name="from_training" value="<?= $fromTrainingId ?>">
             <?php endif; ?>
             <div class="form-group">
-                <textarea name="comment" rows="3" placeholder="Wat vind je van deze oefening?" required style="width: 100%;"></textarea>
+                <textarea name="comment" rows="3" placeholder="Wat vind je van deze oefening?" required class="tb-w-full"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Plaats reactie</button>
         </form>
     </div>
 </div>
 
-<style>
-.reaction-btn {
-    background: #f0f2f5;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    padding: 0.5rem 1rem;
-    font-size: 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.reaction-btn:hover {
-    background: #e4e6eb;
-}
-.reaction-btn.active {
-    background: #e7f3ff;
-    border-color: #1877f2;
-    color: #1877f2;
-}
-.reaction-btn .count {
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-</style>
-
 <!-- Add to Training Modal -->
 <?php if (!empty($canAddToTraining)): ?>
-<div id="modal-add-to-training" class="modal-overlay" style="display: none;">
-    <div class="modal card" style="max-width: 500px; width: 100%;">
+<div id="modal-add-to-training" class="tb-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="tb-modal tb-modal-card">
         <h3>Inplannen in training</h3>
         
         <?php if (empty($selectableTrainings)): ?>
             <p>Er zijn geen aankomende trainingen gevonden voor jouw teams.</p>
             <p><a href="/trainings/create">Maak eerst een training aan</a> of controleer of je de juiste rechten hebt.</p>
-            <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+            <div class="tb-modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-add-to-training').style.display='none'">Sluiten</button>
             </div>
         <?php else: ?>
@@ -259,7 +232,7 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
                 
                 <div class="form-group">
                     <label for="training_id">Kies training</label>
-                    <select name="training_id" id="training_id" required style="width: 100%; padding: 0.5rem;">
+                    <select name="training_id" id="training_id" required class="tb-w-full">
                         <option value="">-- Selecteer een training --</option>
                         <?php foreach ($selectableTrainings as $teamName => $trainings): ?>
                             <optgroup label="<?= e($teamName) ?>">
@@ -276,10 +249,10 @@ $fromTrainingId = isset($fromTrainingId) ? (int)$fromTrainingId : 0;
 
                 <div class="form-group">
                     <label for="duration">Duur (optioneel)</label>
-                    <input type="number" name="duration" id="duration" placeholder="Minuten" value="<?= e((string)($exercise['duration'] ?? '')) ?>" style="width: 100%;">
+                    <input type="number" name="duration" id="duration" placeholder="Minuten" value="<?= e((string)($exercise['duration'] ?? '')) ?>" class="tb-w-full">
                 </div>
                 
-                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                <div class="tb-modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-add-to-training').style.display='none'">Annuleren</button>
                     <button type="submit" class="btn btn-primary">Toevoegen</button>
                 </div>

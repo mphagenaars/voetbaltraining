@@ -8,11 +8,11 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <?php
@@ -32,7 +32,7 @@ $placeholders = [
 <div class="tb-admin-grid">
 
     <?php foreach ($categories as $key => $label): ?>
-    <div class="card">
+    <div class="tb-card">
         <h2><?= $label ?></h2>
         <ul class="sortable-list tb-options-list" data-category="<?= $key ?>">
             <?php foreach ($options[$key] as $opt): ?>

@@ -12,7 +12,7 @@
 <p class="tb-system-lead">Inzicht in gebruik en activiteit.</p>
 
     <div class="tb-system-grid">
-        <section class="card tb-system-card">
+        <section class="tb-card tb-system-card">
             <h2 class="tb-system-card-title">Populaire Oefeningen (Views)</h2>
             <ul class="tb-system-list">
                 <?php if (empty($stats['popular_exercises'])): ?>
@@ -28,7 +28,7 @@
             </ul>
         </section>
 
-        <section class="card tb-system-card">
+        <section class="tb-card tb-system-card">
             <h2 class="tb-system-card-title">Recente Activiteit</h2>
             <ul class="tb-system-list">
                 <?php if (empty($stats['recent_activity'])): ?>

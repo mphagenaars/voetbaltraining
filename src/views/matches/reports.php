@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h3 class="report-section-title">Teamoverzicht</h3>
     <div class="report-summary-grid">
         <div class="report-summary-item">
@@ -21,7 +21,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <?php
         $columnPickerLabels = [
             'matches' => 'Wedstrijden',
@@ -78,7 +78,9 @@
     </div>
 
     <?php if (empty($playerStats)): ?>
-        <p>Er zijn nog geen spelers beschikbaar voor rapportage.</p>
+        <div class="tb-empty-state">
+            <p>Er zijn nog geen spelers beschikbaar voor rapportage.</p>
+        </div>
     <?php else: ?>
         <?php
             $currentSort = $currentSort ?? 'matches';

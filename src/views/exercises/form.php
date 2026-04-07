@@ -15,7 +15,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
     </div>
 </div>
 
-<div class="card exercise-mode-card">
+<div class="tb-card exercise-mode-card">
     <h2 class="exercise-mode-title">Kies hoe je wilt starten</h2>
     <p class="exercise-mode-subtitle">Je komt altijd uit op hetzelfde oefenformulier. Kies de manier die voor jou prettig werkt.</p>
     <div class="exercise-mode-switch">
@@ -30,7 +30,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
     </div>
 </div>
 
-<div class="card" id="exercise-card"<?php if ($formMode === 'ai'): ?> data-ai-phase="search"<?php endif; ?>>
+<div class="tb-card" id="exercise-card"<?php if ($formMode === 'ai'): ?> data-ai-phase="search"<?php endif; ?>>
     <form method="POST" enctype="multipart/form-data">
         <?= Csrf::renderInput() ?>
         <input type="hidden" name="form_mode" value="<?= e($formMode) ?>">
@@ -125,7 +125,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
         <div class="form-group">
             <label for="title">Titel *</label>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <div class="tb-flex tb-gap-xs tb-items-center">
                 <input type="text" id="title" name="title" value="<?= e($exercise['title'] ?? '') ?>" required>
                 <button type="submit" class="btn-icon" title="Opslaan">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -145,11 +145,11 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
         <div class="form-group">
             <label>Doelstelling</label>
-            <div class="multi-select-wrapper" id="wrapper-objective">
-                <div class="multi-select-trigger" onclick="toggleMultiSelect('wrapper-objective')">
+            <div class="tb-multi-select-wrapper" id="wrapper-objective">
+                <div class="tb-multi-select-trigger" onclick="toggleMultiSelect('wrapper-objective')">
                     Selecteer doelstelling(en)
                 </div>
-                <div class="multi-select-options">
+                <div class="tb-tb-multi-select-options">
                     <?php
                     $objectives = Exercise::getObjectives();
                     
@@ -165,7 +165,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
                     foreach ($objectives as $obj) {
                         $checked = in_array($obj, $currentObjectives) ? 'checked' : '';
-                        echo '<label class="multi-select-option">';
+                        echo '<label class="tb-multi-select-option">';
                         echo '<input type="checkbox" name="training_objective[]" value="' . e($obj) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-objective\')"> ';
                         echo e($obj);
                         echo '</label>';
@@ -177,11 +177,11 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
         <div class="form-group">
             <label>Voetbalhandeling</label>
-            <div class="multi-select-wrapper" id="wrapper-action">
-                <div class="multi-select-trigger" onclick="toggleMultiSelect('wrapper-action')">
+            <div class="tb-multi-select-wrapper" id="wrapper-action">
+                <div class="tb-multi-select-trigger" onclick="toggleMultiSelect('wrapper-action')">
                     Selecteer voetbalhandeling(en)
                 </div>
-                <div class="multi-select-options">
+                <div class="tb-tb-multi-select-options">
                     <?php
                     $actions = Exercise::getFootballActions();
 
@@ -205,7 +205,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
                             }
                         }
                         $checked = $isChecked ? 'checked' : '';
-                        echo '<label class="multi-select-option">';
+                        echo '<label class="tb-multi-select-option">';
                         echo '<input type="checkbox" name="football_action[]" value="' . e($action) . '" ' . $checked . ' onchange="updateTrigger(\'wrapper-action\')"> ';
                         echo e($action);
                         echo '</label>';
@@ -215,18 +215,18 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem;">
-            <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+        <div class="tb-form-grid-4">
+            <div class="form-group tb-col-span-2 tb-mb-0">
                 <label>Aantal spelers (Min - Max)</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0;">
-                    <div class="number-stepper" style="margin-bottom: 0;">
+                <div class="tb-form-grid-2">
+                    <div class="number-stepper tb-mb-0">
                         <button type="button" class="stepper-btn" onclick="updateNumber('min_players', -1)">-</button>
-                        <input type="number" id="min_players" name="min_players" value="<?= e((string)($exercise['min_players'] ?? '')) ?>" placeholder="Min" style="width: 100%; flex: 1;">
+                        <input type="number" id="min_players" name="min_players" value="<?= e((string)($exercise['min_players'] ?? '')) ?>" placeholder="Min" class="tb-w-full tb-flex-1">
                         <button type="button" class="stepper-btn" onclick="updateNumber('min_players', 1)">+</button>
                     </div>
-                    <div class="number-stepper" style="margin-bottom: 0;">
+                    <div class="number-stepper tb-mb-0">
                         <button type="button" class="stepper-btn" onclick="updateNumber('max_players', -1)">-</button>
-                        <input type="number" id="max_players" name="max_players" value="<?= e((string)($exercise['max_players'] ?? '')) ?>" placeholder="Max" style="width: 100%; flex: 1;">
+                        <input type="number" id="max_players" name="max_players" value="<?= e((string)($exercise['max_players'] ?? '')) ?>" placeholder="Max" class="tb-w-full tb-flex-1">
                         <button type="button" class="stepper-btn" onclick="updateNumber('max_players', 1)">+</button>
                     </div>
                 </div>
@@ -234,11 +234,11 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
 
             <div><!-- Spacer --></div>
 
-            <div class="form-group" style="margin-bottom: 0;">
+            <div class="form-group tb-mb-0">
                 <label for="duration">Duur (minuten)</label>
-                <div class="number-stepper" style="margin-bottom: 0;">
+                <div class="number-stepper tb-mb-0">
                     <button type="button" class="stepper-btn" onclick="updateNumber('duration', -5)">-</button>
-                    <input type="number" id="duration" name="duration" value="<?= e((string)($exercise['duration'] ?? '')) ?>" style="width: 100%; flex: 1;">
+                    <input type="number" id="duration" name="duration" value="<?= e((string)($exercise['duration'] ?? '')) ?>" class="tb-w-full tb-flex-1">
                     <button type="button" class="stepper-btn" onclick="updateNumber('duration', 5)">+</button>
                 </div>
             </div>
@@ -277,16 +277,13 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
                             <div class="group-title">Veldindeling</div>
                             <div class="group-items">
                                 <button type="button" id="btn-field-square" class="tool-btn" title="Vierkant veld">
-                                    <div style="width: 26px; height: 26px; background: #4CAF50; border: 1px solid #fff; position: relative;">
-                                    </div>
+                                    <div class="tb-field-icon-square"></div>
                                 </button>
                                 <button type="button" id="btn-field-portrait" class="tool-btn" title="Heel veld (staand)">
-                                    <div style="width: 20px; height: 30px; background: #4CAF50; border: 1px solid #fff; position: relative;">
-                                    </div>
+                                    <div class="tb-field-icon-portrait"></div>
                                 </button>
                                 <button type="button" id="btn-field-landscape" class="tool-btn" title="Heel veld (liggend)">
-                                    <div style="width: 30px; height: 20px; background: #4CAF50; border: 1px solid #fff; position: relative;">
-                                    </div>
+                                    <div class="tb-field-icon-landscape"></div>
                                 </button>
                             </div>
                         </div>
@@ -299,13 +296,13 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
                                 <div class="draggable-item" draggable="true" data-type="cone_white"><img src="/images/assets/cone_white.svg" alt="Hoedje Wit"></div>
                                 <div class="draggable-item" draggable="true" data-type="cone_yellow"><img src="/images/assets/cone_yellow.svg" alt="Hoedje Geel"></div>
                                 <div class="draggable-item" draggable="true" data-type="cone_orange"><img src="/images/assets/cone_orange.svg" alt="Hoedje Oranje"></div>
-                                <div class="draggable-item" draggable="true" data-type="ball" style="font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: grab;">⚽</div>
+                                <div class="draggable-item tb-draggable-ball" draggable="true" data-type="ball">⚽</div>
                                 <div class="draggable-item" draggable="true" data-type="goal"><img src="/images/assets/goal.svg" alt="Doel"></div>
                                 <div class="draggable-item" draggable="true" data-type="shirt_red_black"><img src="/images/assets/shirt_red_black.svg" alt="Speler Rood/Zwart"></div>
                                 <div class="draggable-item" draggable="true" data-type="shirt_red_white"><img src="/images/assets/shirt_red_white.svg" alt="Speler Rood/Wit"></div>
                                 <div class="draggable-item" draggable="true" data-type="shirt_orange"><img src="/images/assets/shirt_orange.svg" alt="Speler Oranje"></div>
                                 <button type="button" id="tool-zone" class="tool-btn" title="Vak / Zone">
-                                    <div style="width: 24px; height: 24px; border: 2px dashed #333; background: rgba(0,0,0,0.2);"></div>
+                                    <div class="tb-zone-icon"></div>
                                 </button>
                             </div>
                         </div>
@@ -341,7 +338,7 @@ $aiModeUrl = $baseFormPath . (str_contains($baseFormPath, '?') ? '&' : '?') . 'm
                                 </button>
                                 <button type="button" id="btn-to-back" class="tool-btn" title="Naar achtergrond">⬇️</button>
                                 <button type="button" id="btn-delete-selected" class="tool-btn" title="Verwijder geselecteerde">🗑️</button>
-                                <button type="button" id="btn-clear" class="btn btn-danger" style="height: 40px; align-self: center;">Wissen</button>
+                                <button type="button" id="btn-clear" class="btn btn-danger tb-btn-clear">Wissen</button>
                             </div>
                         </div>
                     </div>
@@ -474,8 +471,8 @@ function updateYouTubePreview() {
 
 function toggleMultiSelect(id) {
     const wrapper = document.getElementById(id);
-    const options = wrapper.querySelector('.multi-select-options');
-    const allOptions = document.querySelectorAll('.multi-select-options');
+    const options = wrapper.querySelector('.tb-tb-multi-select-options');
+    const allOptions = document.querySelectorAll('.tb-tb-multi-select-options');
     
     // Close other open dropdowns
     allOptions.forEach(opt => {
@@ -490,7 +487,7 @@ function toggleMultiSelect(id) {
 function updateTrigger(id) {
     const wrapper = document.getElementById(id);
     const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
-    const trigger = wrapper.querySelector('.multi-select-trigger');
+    const trigger = wrapper.querySelector('.tb-multi-select-trigger');
     
     if (checkboxes.length > 0) {
         const values = Array.from(checkboxes).map(cb => cb.parentElement.textContent.trim());
@@ -507,8 +504,8 @@ function updateTrigger(id) {
 
 // Close when clicking outside
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.multi-select-wrapper')) {
-        document.querySelectorAll('.multi-select-options').forEach(opt => {
+    if (!e.target.closest('.tb-multi-select-wrapper')) {
+        document.querySelectorAll('.tb-tb-multi-select-options').forEach(opt => {
             opt.classList.remove('open');
         });
     }

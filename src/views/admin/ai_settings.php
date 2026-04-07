@@ -14,15 +14,15 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <?php if (empty($hasEncryptionKey)): ?>
-    <div class="alert alert-danger">
+    <div class="tb-alert tb-alert--danger">
         Encryptiesleutel ontbreekt. Stel de omgevingsvariabele <code>APP_ENCRYPTION_KEY</code> in (aanbevolen),
         of voeg <code>data/config.php</code> toe met een geldige <code>encryption_key</code>.
         Zie <code>data/config.php.example</code> voor een sjabloon.
@@ -46,7 +46,7 @@ $ytDlpCookiesPath = (string)($settings['ai_ytdlp_cookies_path'] ?? '');
 $liveVoiceEnabled = (string)($settings['live_voice_enabled'] ?? '0') === '1';
 ?>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">AI Toegangsmodus</h2>
     <form action="/admin/ai/access-mode" method="POST" class="admin-inline-form">
         <?= Csrf::renderInput() ?>
@@ -66,7 +66,7 @@ $liveVoiceEnabled = (string)($settings['live_voice_enabled'] ?? '0') === '1';
     </form>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">API Keys</h2>
     <p class="ai-admin-card-subtitle">Sleutel wordt versleuteld in de database opgeslagen.</p>
 
@@ -125,7 +125,7 @@ $liveVoiceEnabled = (string)($settings['live_voice_enabled'] ?? '0') === '1';
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Modelbeheer</h2>
     <p class="ai-admin-card-subtitle">Geen losse defaults of vision-vinkjes meer: het systeem gebruikt automatisch het eerste publiceerbare model. Beeldanalyse pakt automatisch het eerste model met beeldondersteuning.</p>
 
@@ -208,7 +208,7 @@ $liveVoiceEnabled = (string)($settings['live_voice_enabled'] ?? '0') === '1';
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Prijsbeheer (EUR)</h2>
     <div class="ai-admin-table-wrap">
         <table class="ai-admin-table">
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Budgetinstellingen</h2>
     <form action="/admin/ai/budget" method="POST" class="admin-grid-form admin-grid-form-budget">
         <?= Csrf::renderInput() ?>
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </form>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Retrievalinstellingen</h2>
     <form action="/admin/ai/retrieval" method="POST" class="admin-grid-form admin-grid-form-budget">
         <?= Csrf::renderInput() ?>
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </form>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Live spraakcommando's</h2>
     <form action="/admin/ai/live-voice" method="POST" class="admin-grid-form admin-grid-form-budget">
         <?= Csrf::renderInput() ?>
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </form>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Korte usage samenvatting</h2>
     <div class="ai-admin-stats-grid">
         <div class="ai-admin-stat-card">

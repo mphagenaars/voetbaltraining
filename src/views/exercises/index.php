@@ -8,8 +8,8 @@
 </div>
 
 <?php if (!empty($selectForTraining)): ?>
-    <div class="card" style="margin-bottom: 1rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+    <div class="tb-card tb-mb-sm">
+        <div class="tb-flex tb-justify-between tb-items-center tb-gap-md">
             <div>
                 <strong>Selecteer oefeningen voor training:</strong>
                 <?= e($selectForTraining['title'] ?? '') ?>
@@ -19,7 +19,7 @@
     </div>
 <?php endif; ?>
 
-<div class="card" style="margin-bottom: 1rem;">
+<div class="tb-card tb-mb-sm">
     <?php
     $teamTasksList = Exercise::getTeamTasks();
     $objectivesList = Exercise::getObjectives();
@@ -61,32 +61,32 @@
             </select>
         </div>
 
-        <div style="display: flex; gap: 1rem;">
+        <div class="tb-flex tb-gap-md">
             <button type="submit" class="btn btn-outline">Zoeken</button>
             <?php if (!empty($query) || !empty($teamTask) || !empty($trainingObjective) || !empty($footballAction)): ?>
-                <a href="/exercises" class="btn btn-outline" style="border: none;">Reset</a>
+                <a href="/exercises" class="btn btn-outline" style="border:none;">Reset</a>
             <?php endif; ?>
         </div>
     </form>
 </div>
 
 <?php if (empty($exercises)): ?>
-    <div class="card">
+    <div class="tb-card tb-empty-state">
         <p>Geen oefeningen gevonden.</p>
     </div>
 <?php else: ?>
     <div class="grid">
         <?php foreach ($exercises as $exercise): ?>
-            <div class="card" style="position: relative;">
+            <div class="tb-card" style="position:relative;">
                 <?php if (!empty($exercise['image_path'])): ?>
-                    <div style="margin-bottom: 1rem; text-align: center;">
-                        <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
+                    <div class="tb-card-image">
+                        <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" class="tb-img-card">
                     </div>
                 <?php endif; ?>
                 <h3><?= e($exercise['title']) ?></h3>
                 <p><?= nl2br(e(strlen($exercise['description'] ?? '') > 100 ? substr($exercise['description'], 0, 100) . '...' : ($exercise['description'] ?? ''))) ?></p>
                 
-                <div style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                <div class="tb-exercise-meta">
                     <?php if (!empty($exercise['min_players']) || !empty($exercise['max_players'])): ?>
                         <span>👥 
                             <?php 
@@ -103,11 +103,11 @@
                          <span>👥 <?= $exercise['players'] ?> spelers</span>
                     <?php endif; ?>
                     <?php if ($exercise['duration']): ?>
-                        <span style="margin-left: 0.5rem;">⏱️ <?= $exercise['duration'] ?> min</span>
+                        <span class="tb-ml-xs">⏱️ <?= $exercise['duration'] ?> min</span>
                     <?php endif; ?>
                 </div>
 
-                <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #555;">
+                <div class="tb-exercise-tags">
                     <?php if (!empty($exercise['team_task'])): ?>
                         <div><strong>Teamtaak:</strong> <?= e($exercise['team_task']) ?></div>
                     <?php endif; ?>
@@ -138,9 +138,9 @@
                     <?php endif; ?>
                 </div>
 
-                <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <div class="tb-exercise-actions">
                     <?php if (!empty($selectForTrainingId)): ?>
-                        <form method="POST" action="/exercises/add-to-training" style="margin: 0;">
+                        <form method="POST" action="/exercises/add-to-training" class="tb-m-0">
                             <?= Csrf::renderInput() ?>
                             <input type="hidden" name="exercise_id" value="<?= (int)$exercise['id'] ?>">
                             <input type="hidden" name="training_id" value="<?= (int)$selectForTrainingId ?>">
@@ -162,10 +162,10 @@
                         <a href="/exercises/edit?id=<?= $exercise['id'] ?>" class="btn-icon" title="Bewerken" aria-label="Bewerken">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </a>
-                        <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" style="margin: 0;">
+                        <form method="POST" action="/exercises/delete" onsubmit="return confirm('Weet je zeker dat je deze oefening wilt verwijderen?');" class="tb-m-0">
                             <?= Csrf::renderInput() ?>
                             <input type="hidden" name="id" value="<?= $exercise['id'] ?>">
-                            <button type="submit" class="btn-icon" title="Verwijderen" aria-label="Verwijderen" style="color: var(--danger-color);">
+                            <button type="submit" class="btn-icon tb-text-danger" title="Verwijderen" aria-label="Verwijderen">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                             </button>
                         </form>

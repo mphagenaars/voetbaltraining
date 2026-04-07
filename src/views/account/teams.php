@@ -13,7 +13,7 @@ $hiddenTeams = array_filter($teams, fn($t) => !empty($t['is_hidden']));
 ?>
 
 <?php if (empty($teams)): ?>
-    <div class="card tb-team-empty-card">
+    <div class="tb-card tb-team-empty-card">
         <p>Je bent nog geen lid van een team.</p>
     </div>
 <?php else: ?>
@@ -38,7 +38,7 @@ $hiddenTeams = array_filter($teams, fn($t) => !empty($t['is_hidden']));
                     ]));
                     $isCurrent = isset($_SESSION['current_team']) && (int)$_SESSION['current_team']['id'] === (int)$team['id'];
                     ?>
-                    <article class="card tb-team-card<?= $isCurrent ? ' tb-team-card--current' : '' ?>">
+                    <article class="tb-card tb-team-card<?= $isCurrent ? ' tb-team-card--current' : '' ?>">
                         <div class="tb-team-card-main">
                             <?php if (!empty($team['logo_path'])): ?>
                                 <img src="/<?= e($team['logo_path']) ?>" alt="Clublogo van <?= e($team['name']) ?>" class="tb-team-logo">
@@ -110,7 +110,7 @@ $hiddenTeams = array_filter($teams, fn($t) => !empty($t['is_hidden']));
                         (string)($team['season'] ?? ''),
                     ]));
                     ?>
-                    <article class="card tb-team-card tb-team-card--hidden">
+                    <article class="tb-card tb-team-card tb-team-card--hidden">
                         <div class="tb-team-card-main">
                             <?php if (!empty($team['logo_path'])): ?>
                                 <img src="/<?= e($team['logo_path']) ?>" alt="Clublogo van <?= e($team['name']) ?>" class="tb-team-logo tb-team-logo--hidden">

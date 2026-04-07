@@ -8,18 +8,18 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <?php $backUrl = '/admin/team-members?team_id=' . $team['id']; ?>
 
 <div class="grid-2">
     <!-- Huidige leden -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Huidige leden</h2>
         <?php if (empty($teamMembers)): ?>
             <p class="text-muted">Dit team heeft nog geen leden.</p>
@@ -69,7 +69,7 @@
     </div>
 
     <!-- Gebruiker toevoegen -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Gebruiker toevoegen</h2>
         <?php if (empty($availableUsers)): ?>
             <p class="text-muted">Alle gebruikers zijn al lid van dit team.</p>

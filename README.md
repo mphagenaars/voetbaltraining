@@ -77,6 +77,32 @@ sudo ./update.sh
 
 `update.sh` voert `git pull`, database-initialisatie/migraties en permissieherstel uit.
 
+## Productie deploy via GitHub (handmatig)
+
+Er is een aparte workflow toegevoegd: `.github/workflows/deploy-production.yml`.
+
+Belangrijk:
+- Deze deploy draait alleen handmatig via `workflow_dispatch` (niet op elke push).
+- Er wordt een allowlist-artifact gedeployed (alleen runtime-bestanden), dus geen `scripts/check_*`, `.github/` of `design/`.
+- De deploy-job gebruikt `environment: productie`, zodat je in GitHub verplichte goedkeuring kunt afdwingen.
+
+Eenmalig instellen in GitHub:
+1. `Settings -> Environments -> productie` aanmaken.
+2. Bij `production` minimaal 1 `Required reviewer` instellen.
+3. In `production` environment secrets toevoegen:
+   - `PROD_SSH_HOST`
+   - `PROD_SSH_PORT` (optioneel, standaard 22)
+   - `PROD_SSH_USER`
+   - `PROD_APP_DIR` (doelmap op server)
+   - `PROD_SSH_PRIVATE_KEY`
+   - `PROD_SSH_KNOWN_HOSTS` (aanbevolen; zo niet, dan gebruikt workflow `ssh-keyscan`)
+
+Gebruik:
+1. Ga naar `Actions -> Deploy Production`.
+2. Klik `Run workflow`.
+3. Laat `dry_run=true` voor alleen artifact-check.
+4. Zet `dry_run=false` voor echte deploy na review/approval.
+
 ## Handige scripts
 
 - `php scripts/init_db.php` - database aanmaken en schema-migraties uitvoeren.

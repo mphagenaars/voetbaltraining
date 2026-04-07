@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <form action="/admin/teams/update" method="POST" class="tb-admin-form-limited">
         <?= Csrf::renderInput() ?>
         <input type="hidden" name="id" value="<?= $team['id'] ?>">

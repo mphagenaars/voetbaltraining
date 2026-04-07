@@ -8,11 +8,11 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <?php
@@ -25,7 +25,7 @@ $fromName   = e($settings['smtp_from_name'] ?? '');
 $hasPassword = !empty($hasPassword);
 ?>
 
-<div class="card tb-mail-card">
+<div class="tb-card tb-mail-card">
     <h2 class="ai-admin-card-title">SMTP-configuratie</h2>
 
     <form action="/admin/mail/save" method="POST">
@@ -139,7 +139,7 @@ $hasPassword = !empty($hasPassword);
     </form>
 </div>
 
-<div class="card">
+<div class="tb-card">
     <h2 class="ai-admin-card-title">Testmail versturen</h2>
     <p class="tb-mail-test-note">
         Verstuur een testbericht om te controleren of de instellingen correct zijn.

@@ -8,16 +8,16 @@
 </div>
 
 <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
+    <div class="tb-alert tb-alert--success"><?= e($success) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
+    <div class="tb-alert tb-alert--danger"><?= e($error) ?></div>
 <?php endif; ?>
 
 <div class="grid-2">
     <!-- Huidige Teams -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Huidige Teams</h2>
         <?php if (empty($userTeams)): ?>
             <p class="text-muted">Deze gebruiker zit nog niet in een team.</p>
@@ -64,7 +64,7 @@
     </div>
 
     <!-- Toevoegen aan Team -->
-    <div class="card">
+    <div class="tb-card">
         <h2>Toevoegen aan Team</h2>
         <?php if (empty($availableTeams)): ?>
             <p class="text-muted">Geen teams beschikbaar om toe te voegen.</p>

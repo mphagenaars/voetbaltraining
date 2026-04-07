@@ -87,7 +87,7 @@ class AuthController extends BaseController {
                 }
             }
         }
-        View::render('login', ['error' => $error ?? null, 'pageTitle' => 'Inloggen - Trainer Bobby']);
+        View::render('login', ['error' => $error ?? null, 'pageTitle' => 'Inloggen - Trainer Bobby', 'hideHeader' => true]);
     }
 
     public function register(): void {
@@ -146,7 +146,7 @@ class AuthController extends BaseController {
                 }
             }
         }
-        View::render('register', ['error' => $error ?? null, 'pageTitle' => 'Registreren - Trainer Bobby']);
+        View::render('register', ['error' => $error ?? null, 'pageTitle' => 'Registreren - Trainer Bobby', 'hideHeader' => true]);
     }
 
     public function logout(): void {
