@@ -124,12 +124,16 @@ class TrainingController extends BaseController {
                 foreach ($teams as $team) {
                     if ($team['id'] === $requestedTeamId) {
                         $role = Team::resolveMemberRole($team);
+                        $competitionCategory = Team::resolveCompetitionCategory($team);
+                        $matchFormat = Team::resolveMatchFormatForTeam($team);
 
                         Session::set('current_team', [
                             'id' => $team['id'],
                             'name' => $team['name'],
                             'role' => $role,
-                            'invite_code' => $team['invite_code'] ?? ''
+                            'invite_code' => $team['invite_code'] ?? '',
+                            'competition_category' => $competitionCategory,
+                            'match_format' => $matchFormat,
                         ]);
                         break;
                     }

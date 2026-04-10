@@ -108,6 +108,7 @@ function createSchema(PDO $pdo): void {
             name TEXT NOT NULL,
             invite_code TEXT UNIQUE,
             club TEXT DEFAULT '',
+            competition_category TEXT DEFAULT '',
             season TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -321,7 +322,8 @@ function createLiveSchema(PDO $pdo): void {
     $pdo->exec("
         CREATE TABLE teams (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
+            name TEXT NOT NULL,
+            competition_category TEXT DEFAULT ''
         )
     ");
 
@@ -518,6 +520,37 @@ function expectedSixVsSixAnchor(string $slotCode): ?array {
 }
 
 $tests = [];
+
+$tests['team match format derives from competition category'] = function (): void {
+    assertSame(
+        '6-vs-6',
+        Team::resolveMatchFormatForTeam(['name' => 'Team A', 'competition_category' => 'JO9']),
+        'JO9 teams should map to 6-vs-6.'
+    );
+    assertSame(
+        '8-vs-8',
+        Team::resolveMatchFormatForTeam(['name' => 'Team B', 'competition_category' => 'JO12']),
+        'JO12 teams should map to 8-vs-8.'
+    );
+    assertSame(
+        '11-vs-11',
+        Team::resolveMatchFormatForTeam(['name' => 'Team C', 'competition_category' => 'JO15']),
+        'JO13+ teams should map to 11-vs-11.'
+    );
+};
+
+$tests['team match format falls back to team name inference'] = function (): void {
+    assertSame(
+        '6-vs-6',
+        Team::resolveMatchFormatForTeam(['name' => 'JO8-2', 'competition_category' => '']),
+        'JO8 from team name should map to 6-vs-6.'
+    );
+    assertSame(
+        '11-vs-11',
+        Team::resolveMatchFormatForTeam(['name' => 'Senioren 2', 'competition_category' => '']),
+        'Unknown team naming should fall back to 11-vs-11.'
+    );
+};
 
 $tests['addToTraining allows trainer and writes row'] = function (): void {
     withFreshContext(function (PDO $pdo): void {

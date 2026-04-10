@@ -45,6 +45,18 @@ class Game extends Model {
         ]);
     }
 
+    public function updateFormationTemplateId(int $matchId, ?int $formationTemplateId): void {
+        $stmt = $this->pdo->prepare("
+            UPDATE matches
+            SET formation_template_id = :formation_template_id
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':formation_template_id' => $formationTemplateId,
+            ':id' => $matchId,
+        ]);
+    }
+
     public function savePlayers(int $matchId, array $players): void {
         $this->replaceMany(
             "DELETE FROM match_players WHERE match_id = :match_id",
@@ -473,18 +485,28 @@ class Game extends Model {
         $totalSeconds = 0;
         $currentPeriod = 0;
         $lastStartTime = null;
+        $periodSeconds = []; // accumulated seconds per period id
 
         foreach ($whistles as $w) {
             $period = (int)$w['period'];
             $time = strtotime($w['created_at']);
-            
+
             if ($w['description'] === 'start_period') {
                 $isPlaying = true;
                 $lastStartTime = $time;
                 $currentPeriod = $period;
+                if (!isset($periodSeconds[$period])) {
+                    $periodSeconds[$period] = 0;
+                }
             } elseif ($w['description'] === 'end_period') {
                 if ($isPlaying && $lastStartTime) {
-                    $totalSeconds += ($time - $lastStartTime);
+                    $delta = $time - $lastStartTime;
+                    $totalSeconds += $delta;
+                    $stopPeriod = $currentPeriod > 0 ? $currentPeriod : $period;
+                    if (!isset($periodSeconds[$stopPeriod])) {
+                        $periodSeconds[$stopPeriod] = 0;
+                    }
+                    $periodSeconds[$stopPeriod] += $delta;
                 }
                 $isPlaying = false;
                 $lastStartTime = null;
@@ -492,14 +514,23 @@ class Game extends Model {
         }
 
         if ($isPlaying && $lastStartTime) {
-             $totalSeconds += (time() - $lastStartTime);
+            $delta = time() - $lastStartTime;
+            $totalSeconds += $delta;
+            if (!isset($periodSeconds[$currentPeriod])) {
+                $periodSeconds[$currentPeriod] = 0;
+            }
+            $periodSeconds[$currentPeriod] += $delta;
         }
+
+        $currentPeriodSeconds = $currentPeriod > 0 ? (int)($periodSeconds[$currentPeriod] ?? 0) : 0;
 
         return [
             'is_playing' => $isPlaying,
             'current_period' => $currentPeriod,
             'total_minutes' => floor($totalSeconds / 60),
             'total_seconds' => $totalSeconds,
+            'current_period_seconds' => $currentPeriodSeconds,
+            'current_period_minutes' => (int)floor($currentPeriodSeconds / 60),
             'start_time' => $lastStartTime
         ];
     }

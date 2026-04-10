@@ -5,6 +5,32 @@
     gap: 1rem;
 }
 
+.match-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1.5rem;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.match-meta-date {
+    margin: 0;
+}
+
+.match-setup-inline-form {
+    margin: 0;
+    min-width: 220px;
+    max-width: 340px;
+    flex: 1 1 280px;
+}
+
+.match-setup-inline-form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 @media (min-width: 900px) {
     .match-grid {
         display: grid;

@@ -150,6 +150,7 @@ class AdminController extends BaseController {
             'team' => $team,
             'clubs' => $clubs,
             'seasons' => $seasons,
+            'competitionCategories' => Team::competitionCategoryOptions(),
             'pageTitle' => 'Team Bewerken - Trainer Bobby'
         ]);
     }
@@ -163,17 +164,28 @@ class AdminController extends BaseController {
             $name = trim($_POST['name']);
             $club = trim($_POST['club'] ?? '');
             $season = trim($_POST['season'] ?? '');
+            $rawCompetitionCategory = trim((string)($_POST['competition_category'] ?? ''));
+            $competitionCategory = Team::normalizeCompetitionCategory($rawCompetitionCategory);
+            if ($rawCompetitionCategory !== '' && $competitionCategory === '') {
+                Session::flash('error', 'Leeftijdscategorie is ongeldig.');
+                $this->redirect('/admin/teams/edit?id=' . $id);
+            }
             
             if (empty($name)) {
                 Session::flash('error', 'Team naam is verplicht.');
                 $this->redirect('/admin/teams/edit?id=' . $id);
             }
             
-            $stmt = $this->pdo->prepare("UPDATE teams SET name = :name, club = :club, season = :season WHERE id = :id");
+            if ($competitionCategory === '') {
+                $competitionCategory = Team::inferCompetitionCategoryFromTeamName($name);
+            }
+
+            $stmt = $this->pdo->prepare("UPDATE teams SET name = :name, club = :club, season = :season, competition_category = :competition_category WHERE id = :id");
             $stmt->execute([
                 ':name' => $name,
                 ':club' => $club,
                 ':season' => $season,
+                ':competition_category' => $competitionCategory,
                 ':id' => $id
             ]);
             

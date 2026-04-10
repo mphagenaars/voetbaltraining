@@ -34,12 +34,16 @@ class AuthController extends BaseController {
                             if (!empty($teams)) {
                                 $team = $teams[0];
                                 $role = Team::resolveMemberRole($team);
+                                $competitionCategory = Team::resolveCompetitionCategory($team);
+                                $matchFormat = Team::resolveMatchFormatForTeam($team);
 
                                 Session::set('current_team', [
                                     'id' => $team['id'],
                                     'name' => $team['name'],
                                     'role' => $role,
-                                    'invite_code' => $team['invite_code']
+                                    'invite_code' => $team['invite_code'],
+                                    'competition_category' => $competitionCategory,
+                                    'match_format' => $matchFormat,
                                 ]);
                             }
                             
@@ -134,7 +138,9 @@ class AuthController extends BaseController {
                                 'id' => $team['id'],
                                 'name' => $team['name'],
                                 'role' => 'coach',
-                                'invite_code' => $team['invite_code']
+                                'invite_code' => $team['invite_code'],
+                                'competition_category' => Team::resolveCompetitionCategory($team),
+                                'match_format' => Team::resolveMatchFormatForTeam($team),
                             ]);
                             
                             $this->redirect('/');

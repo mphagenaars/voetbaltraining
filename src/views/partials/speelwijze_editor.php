@@ -7,9 +7,17 @@
  */
 $speelwijzen = $speelwijzen ?? [];
 $teamId = $teamId ?? 0;
+$isAdmin = !empty($_SESSION['is_admin']);
+$teamMatchFormat = Team::normalizeMatchFormat((string)($_SESSION['current_team']['match_format'] ?? ''));
 ?>
 
-<div id="speelwijze-editor" class="speelwijze-editor" data-team-id="<?= (int)$teamId ?>">
+<div
+    id="speelwijze-editor"
+    class="speelwijze-editor"
+    data-team-id="<?= (int)$teamId ?>"
+    data-is-admin="<?= $isAdmin ? '1' : '0' ?>"
+    data-team-format="<?= e($teamMatchFormat) ?>"
+>
     <div class="speelwijze-layout">
         <!-- List panel -->
         <div class="speelwijze-list-panel">
@@ -50,6 +58,9 @@ $teamId = $teamId ?? 0;
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
             </div>
+            <p class="tb-mt-xs" style="margin:0; color:var(--text-muted, #6c757d); font-size:0.78rem;">
+                Tik op een positie om code/label te wijzigen of te verwijderen.
+            </p>
 
             <!-- Football field -->
             <div class="field-container">

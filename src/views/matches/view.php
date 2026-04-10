@@ -36,9 +36,30 @@
     </div>
     
     <div class="tb-card tb-mb-sm">
-        <div class="tb-flex-wrap tb-gap-lg">
-            <p><strong>Datum:</strong> <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
-            <p><strong>Formatie:</strong> <?= e($match['formation']) ?></p>
+        <?php
+        $setupTemplates = is_array($setupTemplates ?? null) ? $setupTemplates : [];
+        $selectedSetupTemplate = is_array($selectedSetupTemplate ?? null) ? $selectedSetupTemplate : null;
+        $selectedTemplateId = $selectedSetupTemplate ? (int)($selectedSetupTemplate['id'] ?? 0) : 0;
+        ?>
+        <div class="match-meta-row">
+            <p class="match-meta-date"><strong>Datum:</strong> <?= e(date('d-m-Y H:i', strtotime($match['date']))) ?></p>
+            <form action="/matches/update-setup" method="POST" class="match-setup-inline-form">
+                <?= Csrf::renderInput() ?>
+                <input type="hidden" name="match_id" value="<?= $match['id'] ?>">
+                <label for="top_formation_template_id">Opstelling</label>
+                <select id="top_formation_template_id" name="formation_template_id" class="tb-w-full" <?= empty($setupTemplates) ? 'disabled' : '' ?>>
+                    <?php if (empty($setupTemplates)): ?>
+                        <option value="">Geen opstellingen beschikbaar</option>
+                    <?php else: ?>
+                        <?php foreach ($setupTemplates as $template): ?>
+                            <?php $templateId = (int)($template['id'] ?? 0); ?>
+                            <option value="<?= $templateId ?>" <?= $selectedTemplateId === $templateId ? 'selected' : '' ?>>
+                                <?= e((string)($template['option_label'] ?? $template['name'] ?? 'Naamloze opstelling')) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </form>
         </div>
     </div>
 
@@ -296,6 +317,18 @@
     require __DIR__ . '/../partials/tactics_board.php';
     ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const setupSelect = document.getElementById('top_formation_template_id');
+    if (!setupSelect || !setupSelect.form || setupSelect.disabled) {
+        return;
+    }
+    setupSelect.addEventListener('change', function () {
+        setupSelect.form.submit();
+    });
+});
+</script>
 
 <script src="/js/konva.min.js"></script>
 <script src="/js/match-view.js?v=<?= time() ?>"></script>

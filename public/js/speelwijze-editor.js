@@ -7,7 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!editor) return;
 
     const csrfToken = document.getElementById('csrf_token')?.value || '';
-    const teamId = parseInt(editor.dataset.teamId, 10) || 0;
+    const isAdmin = String(editor.dataset.isAdmin || '') === '1';
+    const teamFormat = String(editor.dataset.teamFormat || '').trim().toLowerCase();
+
+    function parseTeamSize(format) {
+        const match = format.match(/^([0-9]{1,2})-vs-\1$/);
+        if (!match) return null;
+        const size = parseInt(match[1], 10);
+        return Number.isFinite(size) && size > 0 ? size : null;
+    }
+
+    const expectedTeamSize = parseTeamSize(teamFormat);
+    const maxPositions = expectedTeamSize ?? 11;
 
     // DOM refs
     const listEl = document.getElementById('speelwijze-list');
@@ -30,6 +41,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function markDirty() { window._speelwijzeDirty = true; }
     function markClean() { window._speelwijzeDirty = false; }
+
+    function getDefaultPositions() {
+        if (expectedTeamSize === 6) {
+            return [
+                { slot_code: 'K', label: 'Keeper', x: 50, y: 88 },
+                { slot_code: 'LV', label: 'Links verdediger', x: 20, y: 65 },
+                { slot_code: 'RV', label: 'Rechts verdediger', x: 80, y: 65 },
+                { slot_code: 'M', label: 'Middenveld', x: 50, y: 45 },
+                { slot_code: 'LA', label: 'Links aanvaller', x: 20, y: 20 },
+                { slot_code: 'RA', label: 'Rechts aanvaller', x: 80, y: 20 }
+            ];
+        }
+        if (expectedTeamSize === 8) {
+            return [
+                { slot_code: 'K', label: 'Keeper', x: 50, y: 88 },
+                { slot_code: 'LV', label: 'Links verdediger', x: 30, y: 75 },
+                { slot_code: 'RV', label: 'Rechts verdediger', x: 70, y: 75 },
+                { slot_code: 'LM', label: 'Links midden', x: 20, y: 50 },
+                { slot_code: 'CM', label: 'Centraal midden', x: 50, y: 50 },
+                { slot_code: 'RM', label: 'Rechts midden', x: 80, y: 50 },
+                { slot_code: 'LA', label: 'Links aanvaller', x: 35, y: 25 },
+                { slot_code: 'RA', label: 'Rechts aanvaller', x: 65, y: 25 }
+            ];
+        }
+        if (expectedTeamSize === 11) {
+            return [
+                { slot_code: 'K', label: 'Keeper', x: 50, y: 90 },
+                { slot_code: 'LV', label: 'Linksback', x: 15, y: 75 },
+                { slot_code: 'LCV', label: 'Linker centrale verdediger', x: 38, y: 75 },
+                { slot_code: 'RCV', label: 'Rechter centrale verdediger', x: 62, y: 75 },
+                { slot_code: 'RV', label: 'Rechtsback', x: 85, y: 75 },
+                { slot_code: 'LCM', label: 'Linker midden', x: 30, y: 50 },
+                { slot_code: 'CM', label: 'Centrale middenvelder', x: 50, y: 55 },
+                { slot_code: 'RCM', label: 'Rechter midden', x: 70, y: 50 },
+                { slot_code: 'LA', label: 'Links aanvaller', x: 15, y: 25 },
+                { slot_code: 'SP', label: 'Spits', x: 50, y: 20 },
+                { slot_code: 'RA', label: 'Rechts aanvaller', x: 85, y: 25 }
+            ];
+        }
+
+        return [
+            { slot_code: 'K', label: 'Keeper', x: 50, y: 88 }
+        ];
+    }
 
     // Track edits on name and shared checkbox
     nameInput.addEventListener('input', markDirty);
@@ -87,10 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
         posEditEl.style.display = 'none';
         markClean();
 
-        // Disable editing for shared templates not owned by this team
-        const isOwn = sw.team_id && parseInt(sw.team_id, 10) === teamId;
+        // Global shared templates are read-only for non-admins.
         const isGlobalShared = !sw.team_id && parseInt(sw.is_shared, 10) === 1;
-        const readOnly = isGlobalShared;
+        const readOnly = isGlobalShared && !isAdmin;
         setReadOnly(readOnly);
 
         detailEl.style.display = '';
@@ -112,9 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentId = null;
         nameInput.value = '';
         sharedCheckbox.checked = false;
-        positions = [
-            { slot_code: 'K', label: 'Keeper', x: 50, y: 88 }
-        ];
+        positions = getDefaultPositions();
         selectedPosIndex = null;
         posEditEl.style.display = 'none';
         setReadOnly(false);
@@ -141,7 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <text x="50" y="65">${escHtml(pos.slot_code)}</text>
             </svg>`;
 
-            // Click to select
+            // Select/edit from both click and drag start.
+            marker.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (fieldEl.classList.contains('readonly')) return;
+                selectPosition(idx);
+            });
             marker.addEventListener('mousedown', (e) => onMarkerDown(e, idx));
             marker.addEventListener('touchstart', (e) => onMarkerDown(e, idx), { passive: false });
 
@@ -154,6 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCountBadge() {
         const n = positions.length;
         posCountEl.textContent = n + ' positie' + (n !== 1 ? 's' : '');
+        if (expectedTeamSize !== null) {
+            formatBadgeEl.textContent = n + 'v' + n + ' / team ' + expectedTeamSize + 'v' + expectedTeamSize;
+            return;
+        }
         formatBadgeEl.textContent = n >= 5 ? n + 'v' + n : '';
     }
 
@@ -264,7 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Add position ---
     document.getElementById('btn-add-position').addEventListener('click', () => {
-        if (positions.length >= 11) return;
+        if (positions.length >= maxPositions) {
+            if (expectedTeamSize !== null) {
+                alert('Dit team speelt ' + expectedTeamSize + 'v' + expectedTeamSize + '. Meer posities toevoegen kan niet.');
+            }
+            return;
+        }
         const nextCode = getNextSlotCode();
         positions.push({ slot_code: nextCode, label: '', x: 50, y: 50 });
         selectedPosIndex = positions.length - 1;
@@ -276,11 +343,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getNextSlotCode() {
         const used = new Set(positions.map(p => p.slot_code));
-        const candidates = ['K', 'LV', 'RV', 'CV', 'M', 'LM', 'CM', 'RM', 'LA', 'RA', 'SP'];
+        const candidates = expectedTeamSize === 6
+            ? ['K', 'LV', 'RV', 'M', 'LA', 'RA']
+            : expectedTeamSize === 8
+                ? ['K', 'LV', 'RV', 'LM', 'CM', 'RM', 'LA', 'RA']
+                : ['K', 'LV', 'RV', 'CV', 'M', 'LM', 'CM', 'RM', 'LA', 'RA', 'SP'];
         for (const c of candidates) {
             if (!used.has(c)) return c;
         }
-        for (let i = 1; i <= 11; i++) {
+        for (let i = 1; i <= maxPositions; i++) {
             const code = 'P' + i;
             if (!used.has(code)) return code;
         }
@@ -291,6 +362,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-save-speelwijze').addEventListener('click', async () => {
         const name = nameInput.value.trim();
         if (!name) { nameInput.focus(); return; }
+        if (expectedTeamSize !== null && positions.length !== expectedTeamSize) {
+            alert('Voor dit team moet een speelwijze precies ' + expectedTeamSize + ' posities bevatten.');
+            return;
+        }
         if (positions.length < 5) {
             alert('Een speelwijze moet minimaal 5 posities bevatten.');
             return;

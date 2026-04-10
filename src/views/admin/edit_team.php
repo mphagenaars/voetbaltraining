@@ -8,6 +8,10 @@
 </div>
 
 <div class="tb-card">
+    <?php
+    $competitionCategories = is_array($competitionCategories ?? null) ? $competitionCategories : [];
+    $currentCompetitionCategory = Team::resolveCompetitionCategory($team ?? []);
+    ?>
     <form action="/admin/teams/update" method="POST" class="tb-admin-form-limited">
         <?= Csrf::renderInput() ?>
         <input type="hidden" name="id" value="<?= $team['id'] ?>">
@@ -36,6 +40,18 @@
                 <?php foreach ($seasons as $season): ?>
                     <option value="<?= e($season['name']) ?>" <?= $team['season'] === $season['name'] ? 'selected' : '' ?>>
                         <?= e($season['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="competition_category">Leeftijdscategorie</label>
+            <select id="competition_category" name="competition_category" class="form-control">
+                <option value="">-- Afleiden uit teamnaam --</option>
+                <?php foreach ($competitionCategories as $value => $label): ?>
+                    <option value="<?= e($value) ?>" <?= $currentCompetitionCategory === $value ? 'selected' : '' ?>>
+                        <?= e($label) ?>
                     </option>
                 <?php endforeach; ?>
             </select>

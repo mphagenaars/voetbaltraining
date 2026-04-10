@@ -49,6 +49,7 @@ return [
     '/matches/add-event' => ['GameController', 'addEvent'],
     '/matches/update-score' => ['GameController', 'updateScore'],
     '/matches/update-details' => ['GameController', 'updateDetails'],
+    '/matches/update-setup' => ['GameController', 'updateSetup'],
     '/matches/save-lineup' => ['GameController', 'saveLineup'],
     '/matches/live/substitute' => ['GameController', 'substitute'],
     '/matches/live/substitute/undo' => ['GameController', 'undoSubstitution'],

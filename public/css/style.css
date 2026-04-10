@@ -2652,6 +2652,19 @@ body.page-match-live .tb-live-timer-value {
     line-height: 1;
 }
 
+body.page-match-live .tb-live-phase-timer-value {
+    margin-top: var(--tb-space-2);
+    font-size: var(--tb-font-size-md);
+    font-weight: 600;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    color: var(--tb-color-text-muted);
+    line-height: 1;
+}
+
+body.page-match-live .tb-live-phase-timer-value[hidden] {
+    display: none;
+}
+
 body.page-match-live .tb-live-primary-action {
     margin-top: var(--tb-space-5);
 }
@@ -3459,9 +3472,69 @@ body.page-match-live .voice-btn.is-recording {
 .tb-filter-active { color: var(--primary); background-color: rgba(46, 125, 50, 0.1); }
 
 /* --- Component: exercise card meta --- */
+.tb-exercise-card {
+    position: relative;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.tb-exercise-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--tb-shadow-md);
+    border-color: var(--tb-color-accent-soft-strong);
+}
+
+.tb-exercise-card:active {
+    transform: translateY(0);
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-exercise-card:focus-within {
+    outline: 2px solid var(--tb-color-focus);
+    outline-offset: 2px;
+    transform: translateY(-1px);
+    box-shadow: var(--tb-shadow-md);
+}
+
+.tb-exercise-card-link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.tb-exercise-card-link:focus-visible {
+    outline: none;
+}
+
+.tb-exercise-open-hint {
+    display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .tb-exercise-open-hint {
+        display: block;
+        margin: 0.25rem 0 0.5rem;
+        font-size: var(--tb-font-size-xs);
+        color: var(--tb-color-text-muted);
+        opacity: 0;
+        transform: translateY(-1px);
+        transition: opacity 120ms ease, transform 120ms ease;
+        pointer-events: none;
+        position: relative;
+        z-index: 2;
+    }
+
+    .tb-exercise-card:hover .tb-exercise-open-hint,
+    .tb-exercise-card:focus-within .tb-exercise-open-hint {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .tb-exercise-meta { margin-top: 1rem; font-size: 0.9rem; color: #666; }
 .tb-exercise-tags { margin-top: 0.5rem; font-size: 0.85rem; color: #555; }
-.tb-exercise-actions { margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
+.tb-exercise-actions { margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem; position: relative; z-index: 2; }
 
 /* --- Component: exercise form grid --- */
 .tb-form-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem; }

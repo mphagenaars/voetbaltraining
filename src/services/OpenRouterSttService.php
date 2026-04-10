@@ -56,7 +56,19 @@ class OpenRouterSttService implements SttServiceInterface {
             null
         );
 
-        $convertedAudio = $this->ensureCompatibleFormat($audioBase64, $mimeType);
+        try {
+            $convertedAudio = $this->ensureCompatibleFormat($audioBase64, $mimeType);
+        } catch (RuntimeException $e) {
+            $this->usageService->failEvent($usageEventId, 'stt_audio_conversion_failed');
+
+            return [
+                'ok' => false,
+                'error' => 'Audio kon niet worden geconverteerd naar een door de provider ondersteund formaat (wav/mp3).',
+                'error_code' => 'stt_audio_conversion_failed',
+                'model_id' => $resolvedModelId,
+            ];
+        }
+
         $messages = $this->buildMessages($convertedAudio['data'], $convertedAudio['mime'], $context);
         $result = $this->client->chatCompletion($messages, $resolvedModelId, $userId);
 
@@ -285,20 +297,34 @@ class OpenRouterSttService implements SttServiceInterface {
         ];
     }
 
+    /**
+     * Guarantee the audio is in a format the provider actually accepts.
+     *
+     * OpenAI's input_audio endpoint only supports 'wav' and 'mp3'. Everything
+     * else (mp4/m4a/webm/ogg/flac/...) must be transcoded to wav first.
+     * We keep wav/mp3 input untouched and transcode anything else to 16 kHz
+     * mono PCM wav via ffmpeg — optimal for speech STT and always available.
+     */
     private function ensureCompatibleFormat(string $audioBase64, string $mimeType): array {
         $normalized = strtolower(trim(explode(';', $mimeType)[0]));
-        $nativeFormats = ['audio/wav', 'audio/wave', 'audio/x-wav', 'audio/mp3', 'audio/mpeg', 'audio/mp4', 'audio/m4a', 'audio/flac'];
+        $providerNativeFormats = ['audio/wav', 'audio/wave', 'audio/x-wav', 'audio/mp3', 'audio/mpeg'];
 
-        if (in_array($normalized, $nativeFormats, true)) {
-            return ['data' => $audioBase64, 'mime' => $mimeType];
+        if (in_array($normalized, $providerNativeFormats, true)) {
+            return ['data' => $audioBase64, 'mime' => $normalized];
         }
 
-        // Convert webm/ogg to wav via ffmpeg
+        // Transcode everything else (mp4/m4a/webm/ogg/flac/...) to wav
         $tmpIn = tempnam(sys_get_temp_dir(), 'voice_in_');
         $tmpOut = tempnam(sys_get_temp_dir(), 'voice_out_') . '.wav';
 
         try {
-            file_put_contents($tmpIn, base64_decode($audioBase64));
+            $rawAudio = base64_decode($audioBase64, true);
+            if ($rawAudio === false || $rawAudio === '') {
+                throw new RuntimeException('Kon audiopayload niet decoderen.');
+            }
+            if (file_put_contents($tmpIn, $rawAudio) === false) {
+                throw new RuntimeException('Kon audio niet wegschrijven voor conversie.');
+            }
 
             $cmd = sprintf(
                 'ffmpeg -y -i %s -ar 16000 -ac 1 -f wav %s 2>&1',
@@ -307,34 +333,34 @@ class OpenRouterSttService implements SttServiceInterface {
             );
             exec($cmd, $output, $exitCode);
 
-            if ($exitCode !== 0 || !file_exists($tmpOut)) {
-                // Fallback: send original format
-                return ['data' => $audioBase64, 'mime' => $mimeType];
+            if ($exitCode !== 0 || !file_exists($tmpOut) || filesize($tmpOut) === 0) {
+                throw new RuntimeException('ffmpeg-conversie naar wav mislukt.');
             }
 
-            $wavData = base64_encode(file_get_contents($tmpOut));
-            return ['data' => $wavData, 'mime' => 'audio/wav'];
+            $wavBytes = file_get_contents($tmpOut);
+            if ($wavBytes === false || $wavBytes === '') {
+                throw new RuntimeException('Geconverteerde wav kon niet worden gelezen.');
+            }
+
+            return ['data' => base64_encode($wavBytes), 'mime' => 'audio/wav'];
         } finally {
             @unlink($tmpIn);
             @unlink($tmpOut);
         }
     }
 
+    /**
+     * Map a mime type to the provider's input_audio.format value.
+     * After ensureCompatibleFormat() the mime is always wav or mp3.
+     */
     private function resolveAudioFormat(string $mimeType): string {
-        $map = [
-            'audio/webm' => 'webm',
-            'audio/wav' => 'wav',
-            'audio/wave' => 'wav',
-            'audio/x-wav' => 'wav',
-            'audio/mp3' => 'mp3',
-            'audio/mpeg' => 'mp3',
-            'audio/mp4' => 'mp4',
-            'audio/m4a' => 'mp4',
-            'audio/ogg' => 'ogg',
-        ];
-
         $normalized = strtolower(trim(explode(';', $mimeType)[0]));
-        return $map[$normalized] ?? 'webm';
+
+        if ($normalized === 'audio/mp3' || $normalized === 'audio/mpeg') {
+            return 'mp3';
+        }
+
+        return 'wav';
     }
 
     private function resolveSttModel(): string {

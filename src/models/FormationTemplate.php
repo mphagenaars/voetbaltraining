@@ -7,14 +7,22 @@ class FormationTemplate extends Model {
     /**
      * Get all templates available to a team: own + shared.
      */
-    public function getForTeam(int $teamId): array {
-        $stmt = $this->pdo->prepare(
-            "SELECT *
-             FROM formation_templates
-             WHERE team_id = :team_id OR is_shared = 1
-             ORDER BY is_shared ASC, name ASC"
-        );
-        $stmt->execute([':team_id' => $teamId]);
+    public function getForTeam(int $teamId, ?string $format = null): array {
+        $normalizedFormat = Team::normalizeMatchFormat((string)$format);
+        $sql = "SELECT *
+                FROM formation_templates
+                WHERE (team_id = :team_id OR is_shared = 1)";
+        $params = [':team_id' => $teamId];
+
+        if ($normalizedFormat !== '') {
+            $sql .= " AND format = :format";
+            $params[':format'] = $normalizedFormat;
+        }
+
+        $sql .= " ORDER BY is_shared ASC, name ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
@@ -80,10 +88,22 @@ class FormationTemplate extends Model {
     /**
      * Delete a template, but only if owned by the given team (not a global shared one).
      */
-    public function deleteForTeam(int $id, int $teamId): bool {
-        $stmt = $this->pdo->prepare(
-            "DELETE FROM formation_templates WHERE id = :id AND team_id = :team_id"
-        );
+    public function deleteForTeam(int $id, int $teamId, bool $allowGlobalSharedDelete = false): bool {
+        if ($allowGlobalSharedDelete) {
+            $stmt = $this->pdo->prepare(
+                "DELETE FROM formation_templates
+                 WHERE id = :id
+                   AND (
+                        team_id = :team_id
+                        OR (team_id IS NULL AND is_shared = 1)
+                   )"
+            );
+        } else {
+            $stmt = $this->pdo->prepare(
+                "DELETE FROM formation_templates WHERE id = :id AND team_id = :team_id"
+            );
+        }
+
         $stmt->execute([':id' => $id, ':team_id' => $teamId]);
         return $stmt->rowCount() > 0;
     }

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const matchId = document.getElementById('match_id').value;
     const csrfToken = document.getElementById('csrf_token').value;
     const timerDisplay = document.getElementById('timer-display');
+    const phaseTimerDisplay = document.getElementById('phase-timer-display');
     const periodDisplay = document.getElementById('period-display');
     const timerBtn = document.getElementById('timer-btn');
     const scoreHomeDisplay = document.getElementById('score-home');
@@ -26,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         current_period: 0,
         total_seconds: 0,
         total_minutes: 0,
+        current_period_seconds: 0,
+        current_period_minutes: 0,
         start_time: null
     });
     let liveState = parseJsonFromInput('initial_live_state', {
@@ -184,6 +187,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return baseSeconds + delta;
     }
 
+    function getDisplayedPhaseSeconds() {
+        const baseSeconds = Number.parseInt(state.current_period_seconds, 10) || 0;
+        if (!state.is_playing) {
+            return baseSeconds;
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        const syncedAt = Number.parseInt(state._client_synced_at, 10) || now;
+        const delta = Math.max(0, now - syncedAt);
+        return baseSeconds + delta;
+    }
+
     function updateTimerUI() {
         if (state.is_playing) {
             const totalSeconds = getDisplayedTotalSeconds();
@@ -199,6 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         periodDisplay.textContent = state.current_period > 0 ? `Periode ${state.current_period}` : 'Nog niet gestart';
+
+        if (phaseTimerDisplay) {
+            if (state.current_period > 0) {
+                const phaseSeconds = getDisplayedPhaseSeconds();
+                phaseTimerDisplay.textContent = `Fase: ${formatTime(phaseSeconds)}`;
+                phaseTimerDisplay.hidden = false;
+            } else {
+                phaseTimerDisplay.textContent = 'Fase: 00:00';
+                phaseTimerDisplay.hidden = true;
+            }
+        }
     }
 
     function updateScoreUI() {

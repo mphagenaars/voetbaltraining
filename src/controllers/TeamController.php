@@ -7,15 +7,31 @@ class TeamController extends BaseController {
         $this->requireAuth();
         $this->verifyCsrf();
 
+        $competitionCategories = Team::competitionCategoryOptions();
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator($_POST);
             $validator->required('name');
 
             if ($validator->isValid()) {
                 $teamModel = new Team($this->pdo);
-                $club = $_POST['club'] ?? '';
-                $season = $_POST['season'] ?? '';
-                $teamModel->create($_POST['name'], Session::get('user_id'), $club, $season);
+                $name = trim((string)($_POST['name'] ?? ''));
+                $club = trim((string)($_POST['club'] ?? ''));
+                $season = trim((string)($_POST['season'] ?? ''));
+                $rawCompetitionCategory = trim((string)($_POST['competition_category'] ?? ''));
+                $normalizedCompetitionCategory = Team::normalizeCompetitionCategory($rawCompetitionCategory);
+                if ($rawCompetitionCategory !== '' && $normalizedCompetitionCategory === '') {
+                    Session::flash('error', 'Ongeldige leeftijdscategorie.');
+                    $this->redirect('/team/create');
+                }
+
+                $teamModel->create(
+                    $name,
+                    (int)Session::get('user_id'),
+                    $club,
+                    $season,
+                    $normalizedCompetitionCategory
+                );
                 Session::flash('success', 'Team succesvol aangemaakt.');
                 $this->redirect('/account/teams');
             }
@@ -28,7 +44,8 @@ class TeamController extends BaseController {
         View::render('teams/create', [
             'pageTitle' => 'Nieuw Team - Trainer Bobby',
             'clubs' => $clubs,
-            'seasons' => $seasons
+            'seasons' => $seasons,
+            'competitionCategories' => $competitionCategories,
         ]);
     }
 
@@ -47,6 +64,8 @@ class TeamController extends BaseController {
                 $teamDetails = $teamModel->getTeamDetails($teamId);
                 
                 $roleString = Team::roleLabelFromRoles($roles);
+                $competitionCategory = Team::resolveCompetitionCategory($teamDetails);
+                $matchFormat = Team::resolveMatchFormatForTeam($teamDetails);
 
                 Session::set('current_team', [
                     'id' => $teamId,
@@ -55,7 +74,9 @@ class TeamController extends BaseController {
                     'invite_code' => $teamDetails['invite_code'],
                     'club' => $teamDetails['club'],
                     'season' => $teamDetails['season'],
-                    'logo_path' => $teamDetails['logo_path']
+                    'logo_path' => $teamDetails['logo_path'],
+                    'competition_category' => $competitionCategory,
+                    'match_format' => $matchFormat,
                 ]);
             }
         }

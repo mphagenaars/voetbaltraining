@@ -42,12 +42,11 @@ class GameController extends BaseController {
         $this->requireTeamContext();
 
         $teamId = (int)Session::get('current_team')['id'];
+        $teamMatchFormat = $this->resolveTeamMatchFormat($teamId);
         $formData = [
             'opponent' => trim((string)($_POST['opponent'] ?? '')),
             'date' => trim((string)($_POST['date'] ?? date('Y-m-d\TH:i'))),
             'is_home' => (string)($_POST['is_home'] ?? '1'),
-            'formation' => trim((string)($_POST['formation'] ?? '11-vs-11')),
-            'formation_template_id' => trim((string)($_POST['formation_template_id'] ?? '')),
         ];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -58,28 +57,17 @@ class GameController extends BaseController {
 
             if ($validator->isValid()) {
                 $isHome = (int)($formData['is_home'] ?? '1');
-                $formation = $formData['formation'] !== '' ? $formData['formation'] : '11-vs-11';
                 $opponent = $formData['opponent'];
                 $date = $formData['date'];
-
-                // Resolve formation_template_id and auto-derive format
-                $templateId = $this->resolveFormationTemplateId($formData['formation_template_id'], $teamId);
-                if ($templateId !== null) {
-                    $template = $this->formationTemplateModel->getByIdForTeam($templateId, $teamId);
-                    if ($template) {
-                        $formation = $template['format'];
-                    } else {
-                        $templateId = null;
-                    }
-                }
+                $defaultTemplateId = $this->resolveDefaultSetupTemplateId($teamId, $teamMatchFormat);
 
                 $matchId = $this->gameModel->create(
                     $teamId,
                     $opponent,
                     $date,
                     $isHome,
-                    $formation,
-                    $templateId
+                    $teamMatchFormat,
+                    $defaultTemplateId
                 );
 
                 // Log activity
@@ -90,11 +78,8 @@ class GameController extends BaseController {
             }
         }
 
-        $speelwijzen = $this->formationTemplateModel->getForTeam($teamId);
-
         View::render('matches/form', [
             'formData' => $formData,
-            'speelwijzen' => $speelwijzen,
             'pageTitle' => 'Nieuwe Wedstrijd - Trainer Bobby'
         ]);
     }
@@ -103,11 +88,17 @@ class GameController extends BaseController {
         $this->requireTeamContext();
 
         $teamId = (int)Session::get('current_team')['id'];
+        $teamMatchFormat = $this->resolveTeamMatchFormat($teamId);
         $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
         $match = $this->gameModel->getById($id);
 
         if (!$this->canAccessMatchInCurrentTeam($match)) {
             $this->redirect('/matches');
+        }
+
+        $matchFormat = Team::normalizeMatchFormat((string)($match['formation'] ?? ''));
+        if ($matchFormat !== '') {
+            $teamMatchFormat = $matchFormat;
         }
 
         $parsedMatchDate = strtotime((string)($match['date'] ?? ''));
@@ -116,8 +107,6 @@ class GameController extends BaseController {
             'opponent' => trim((string)($_POST['opponent'] ?? ($match['opponent'] ?? ''))),
             'date' => trim((string)($_POST['date'] ?? $defaultDate)),
             'is_home' => (string)($_POST['is_home'] ?? (string)($match['is_home'] ?? '1')),
-            'formation' => trim((string)($_POST['formation'] ?? ($match['formation'] ?? '11-vs-11'))),
-            'formation_template_id' => trim((string)($_POST['formation_template_id'] ?? (string)($match['formation_template_id'] ?? ''))),
         ];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -128,22 +117,21 @@ class GameController extends BaseController {
 
             if ($validator->isValid()) {
                 $isHome = (int)($formData['is_home'] ?? '1');
-                $formation = $formData['formation'] !== '' ? $formData['formation'] : '11-vs-11';
                 $opponent = $formData['opponent'];
                 $date = $formData['date'];
-
-                // Resolve formation_template_id and auto-derive format
-                $templateId = $this->resolveFormationTemplateId($formData['formation_template_id'], $teamId);
-                if ($templateId !== null) {
-                    $template = $this->formationTemplateModel->getByIdForTeam($templateId, $teamId);
-                    if ($template) {
-                        $formation = $template['format'];
-                    } else {
-                        $templateId = null;
-                    }
+                $formation = Team::normalizeMatchFormat((string)($match['formation'] ?? ''));
+                if ($formation === '') {
+                    $formation = $teamMatchFormat;
                 }
-
-                $this->gameModel->updateMatch($id, $opponent, $date, $isHome, $formation, $templateId);
+                $templateId = isset($match['formation_template_id']) ? (int)$match['formation_template_id'] : 0;
+                $this->gameModel->updateMatch(
+                    $id,
+                    $opponent,
+                    $date,
+                    $isHome,
+                    $formation,
+                    $templateId > 0 ? $templateId : null
+                );
 
                 // Log activity
                 $this->logActivity('edit_match', $id, $opponent);
@@ -153,12 +141,9 @@ class GameController extends BaseController {
             }
         }
 
-        $speelwijzen = $this->formationTemplateModel->getForTeam($teamId);
-
         View::render('matches/form', [
             'match' => $match,
             'formData' => $formData,
-            'speelwijzen' => $speelwijzen,
             'pageTitle' => 'Wedstrijd Bewerken - Trainer Bobby'
         ]);
     }
@@ -245,14 +230,51 @@ class GameController extends BaseController {
         $matchPlayers = $this->gameModel->getPlayers($id);
         $events = $this->gameModel->getEvents($id);
         $matchTactics = $this->matchTacticModel->getForMatch($id);
+        $matchFormat = Team::normalizeMatchFormat((string)($match['formation'] ?? ''));
+        if ($matchFormat === '') {
+            $matchFormat = $this->resolveTeamMatchFormat($teamId);
+        }
+        $allTemplates = $this->formationTemplateModel->getForTeam($teamId);
+        $setupTemplates = [];
+        foreach ($allTemplates as $template) {
+            if (Team::normalizeMatchFormat((string)($template['format'] ?? '')) !== $matchFormat) {
+                continue;
+            }
+            $template['option_label'] = $this->formatSetupTemplateOptionLabel((string)($template['name'] ?? ''));
+            $setupTemplates[] = $template;
+        }
 
         // Resolve template positions if a speelwijze is linked
         $templatePositions = null;
+        $selectedSetupTemplate = null;
         $templateId = (int)($match['formation_template_id'] ?? 0);
         if ($templateId > 0) {
             $template = $this->formationTemplateModel->getByIdForTeam($templateId, $teamId);
-            if ($template) {
+            if ($template && Team::normalizeMatchFormat((string)($template['format'] ?? '')) === $matchFormat) {
                 $templatePositions = json_decode($template['positions'], true);
+                $selectedSetupTemplate = $template;
+                $selectedSetupTemplate['option_label'] = $this->formatSetupTemplateOptionLabel((string)($selectedSetupTemplate['name'] ?? ''));
+            }
+        }
+
+        if ($selectedSetupTemplate === null && !empty($setupTemplates)) {
+            $selectedSetupTemplate = $setupTemplates[0];
+            $templatePositions = json_decode((string)($selectedSetupTemplate['positions'] ?? ''), true);
+        } elseif ($selectedSetupTemplate !== null && $templatePositions === null) {
+            $templatePositions = json_decode((string)($selectedSetupTemplate['positions'] ?? ''), true);
+        }
+
+        if (!is_array($templatePositions)) {
+            $templatePositions = null;
+        }
+
+        if ($selectedSetupTemplate !== null) {
+            $selectedTemplateId = (int)($selectedSetupTemplate['id'] ?? 0);
+            foreach ($setupTemplates as $template) {
+                if ((int)($template['id'] ?? 0) === $selectedTemplateId) {
+                    $selectedSetupTemplate = $template;
+                    break;
+                }
             }
         }
 
@@ -263,6 +285,8 @@ class GameController extends BaseController {
             'events' => $events,
             'matchTactics' => $matchTactics,
             'templatePositions' => $templatePositions,
+            'setupTemplates' => $setupTemplates,
+            'selectedSetupTemplate' => $selectedSetupTemplate,
             'pageTitle' => 'Wedstrijd - Trainer Bobby'
         ]);
     }
@@ -579,6 +603,51 @@ class GameController extends BaseController {
             
             $this->redirect('/matches/view?id=' . $matchId);
         }
+    }
+
+    public function updateSetup(): void {
+        $this->requireAuth();
+        if (!Session::has('current_team')) {
+            $this->redirect('/');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/matches');
+        }
+
+        $this->verifyCsrf('/matches');
+
+        $matchId = (int)($_POST['match_id'] ?? 0);
+        $rawTemplateId = trim((string)($_POST['formation_template_id'] ?? ''));
+
+        $match = $this->gameModel->getById($matchId);
+        if (!$this->canAccessMatchInCurrentTeam($match)) {
+            $this->redirect('/matches');
+        }
+
+        $teamId = (int)Session::get('current_team')['id'];
+        $templateId = $this->resolveFormationTemplateId($rawTemplateId, $teamId);
+        if ($templateId !== null) {
+            $template = $this->formationTemplateModel->getByIdForTeam($templateId, $teamId);
+            if (!$template) {
+                Session::flash('error', 'Opstellingspreset niet gevonden.');
+                $this->redirect('/matches/view?id=' . $matchId);
+            }
+
+            $matchFormat = Team::normalizeMatchFormat((string)($match['formation'] ?? ''));
+            $templateFormat = Team::normalizeMatchFormat((string)($template['format'] ?? ''));
+            if ($matchFormat !== '' && $templateFormat !== $matchFormat) {
+                Session::flash('error', 'Deze preset past niet bij de wedstrijdvorm.');
+                $this->redirect('/matches/view?id=' . $matchId);
+            }
+        }
+
+        $this->gameModel->updateFormationTemplateId($matchId, $templateId);
+
+        $details = $templateId === null ? 'handmatig' : 'preset #' . $templateId;
+        $this->logActivity('update_match_setup', $matchId, $details);
+        Session::flash('success', 'Opstelling-instelling bijgewerkt.');
+        $this->redirect('/matches/view?id=' . $matchId);
     }
 
     public function saveLineup(): void {
@@ -1671,6 +1740,61 @@ class GameController extends BaseController {
             (int)Session::get('user_id'),
             (bool)Session::get('is_admin')
         );
+    }
+
+    private function resolveTeamMatchFormat(int $teamId): string {
+        $teamModel = new Team($this->pdo);
+        $team = $teamModel->getTeamDetails($teamId);
+        if (is_array($team)) {
+            $format = Team::resolveMatchFormatForTeam($team);
+            $currentTeam = Session::get('current_team');
+            if (is_array($currentTeam) && (int)($currentTeam['id'] ?? 0) === $teamId) {
+                $currentTeam['match_format'] = $format;
+                $currentTeam['competition_category'] = Team::resolveCompetitionCategory($team);
+                Session::set('current_team', $currentTeam);
+            }
+            return $format;
+        }
+
+        $currentTeam = Session::get('current_team');
+        if (is_array($currentTeam) && (int)($currentTeam['id'] ?? 0) === $teamId) {
+            $format = Team::normalizeMatchFormat((string)($currentTeam['match_format'] ?? ''));
+            if ($format !== '') {
+                return $format;
+            }
+        }
+
+        return '11-vs-11';
+    }
+
+    private function resolveDefaultSetupTemplateId(int $teamId, string $matchFormat): ?int {
+        $templates = $this->formationTemplateModel->getForTeam($teamId);
+        foreach ($templates as $template) {
+            if (Team::normalizeMatchFormat((string)($template['format'] ?? '')) !== $matchFormat) {
+                continue;
+            }
+            $id = (int)($template['id'] ?? 0);
+            if ($id > 0) {
+                return $id;
+            }
+        }
+        return null;
+    }
+
+    private function formatSetupTemplateOptionLabel(string $name): string {
+        $name = trim($name);
+        if ($name === '') {
+            return 'Naamloze opstelling';
+        }
+
+        if (preg_match('/^\d+\s*tegen\s*\d+\s*\(([^)]+)\)\s*$/iu', $name, $matches)) {
+            $compact = trim((string)($matches[1] ?? ''));
+            if ($compact !== '') {
+                return $compact;
+            }
+        }
+
+        return $name;
     }
 
     private function resolveFormationTemplateId(string $rawValue, int $teamId): ?int {

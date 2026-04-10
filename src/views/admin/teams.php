@@ -91,6 +91,8 @@
             <thead>
                 <tr>
                     <th>Naam</th>
+                    <th>Categorie</th>
+                    <th>Wedstrijdvorm</th>
                     <th>Club</th>
                     <th>Seizoen</th>
                     <th>Leden</th>
@@ -101,12 +103,18 @@
             <tbody>
                 <?php if (empty($teams)): ?>
                     <tr>
-                        <td colspan="6" class="tb-table-empty">Geen teams gevonden.</td>
+                        <td colspan="8" class="tb-table-empty">Geen teams gevonden.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($teams as $team): ?>
+                        <?php
+                        $category = Team::resolveCompetitionCategory($team);
+                        $matchFormat = Team::resolveMatchFormatForTeam($team);
+                        ?>
                         <tr>
                             <td><strong><?= e($team['name']) ?></strong></td>
+                            <td><?= e($category !== '' ? $category : '-') ?></td>
+                            <td><?= e(Team::matchFormatLabel($matchFormat)) ?></td>
                             <td><?= e($team['club'] ?: '-') ?></td>
                             <td><?= e($team['season'] ?: '-') ?></td>
                             <td><?= $team['member_count'] ?></td>

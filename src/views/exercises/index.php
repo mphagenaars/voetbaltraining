@@ -77,13 +77,20 @@
 <?php else: ?>
     <div class="grid">
         <?php foreach ($exercises as $exercise): ?>
-            <div class="tb-card" style="position:relative;">
+            <div class="tb-card tb-exercise-card">
+                <a
+                    href="/exercises/view?id=<?= (int)$exercise['id'] ?>"
+                    class="tb-exercise-card-link"
+                    title="Bekijk details van <?= e($exercise['title']) ?>"
+                    aria-label="Bekijk details van <?= e($exercise['title']) ?>"
+                ></a>
                 <?php if (!empty($exercise['image_path'])): ?>
                     <div class="tb-card-image">
                         <img src="/uploads/<?= e($exercise['image_path']) ?>" alt="<?= e($exercise['title']) ?>" class="tb-img-card">
                     </div>
                 <?php endif; ?>
                 <h3><?= e($exercise['title']) ?></h3>
+                <p class="tb-exercise-open-hint" aria-hidden="true">Klik voor details</p>
                 <p><?= nl2br(e(strlen($exercise['description'] ?? '') > 100 ? substr($exercise['description'], 0, 100) . '...' : ($exercise['description'] ?? ''))) ?></p>
                 
                 <div class="tb-exercise-meta">

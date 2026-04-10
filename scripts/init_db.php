@@ -94,6 +94,7 @@ try {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         invite_code TEXT UNIQUE,
+        competition_category TEXT DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
     echo "- Tabel 'teams' aangemaakt (of bestond al).\n";
@@ -181,7 +182,7 @@ try {
         echo "- Huidig seizoen ($seasonName) toegevoegd.\n";
     }
 
-    // Check columns for teams (club, season)
+    // Check columns for teams (club, season, competition_category)
     $teamColumns = $db->query("PRAGMA table_info(teams)")->fetchAll(PDO::FETCH_COLUMN, 1);
     if (!in_array('club', $teamColumns)) {
         $db->exec("ALTER TABLE teams ADD COLUMN club TEXT DEFAULT ''");
@@ -190,6 +191,10 @@ try {
     if (!in_array('season', $teamColumns)) {
         $db->exec("ALTER TABLE teams ADD COLUMN season TEXT DEFAULT ''");
         echo "- Kolom 'season' toegevoegd aan 'teams'.\n";
+    }
+    if (!in_array('competition_category', $teamColumns)) {
+        $db->exec("ALTER TABLE teams ADD COLUMN competition_category TEXT DEFAULT ''");
+        echo "- Kolom 'competition_category' toegevoegd aan 'teams'.\n";
     }
 
     // Activity Logs tabel
@@ -397,7 +402,7 @@ try {
         is_home INTEGER DEFAULT 1,
         score_home INTEGER DEFAULT 0,
         score_away INTEGER DEFAULT 0,
-        formation TEXT DEFAULT '4-3-3',
+        formation TEXT DEFAULT '11-vs-11',
         evaluation TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE

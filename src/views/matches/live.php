@@ -1,5 +1,6 @@
 <?php
 $initialTimerSeconds = (int)($timerState['total_seconds'] ?? 0);
+$initialPhaseSeconds = (int)($timerState['current_period_seconds'] ?? 0);
 $initialTimerIsPlaying = !empty($timerState['is_playing']);
 $initialTimerLabel = $initialTimerIsPlaying
     ? 'Stop tijd'
@@ -44,6 +45,9 @@ $timerButtonVariantClass = $initialTimerIsPlaying ? ' tb-button--danger' : ' tb-
         </h2>
         <div id="timer-display" class="tb-live-timer-value">
             <?= sprintf('%02d:00', $timerState['total_minutes']) ?>
+        </div>
+        <div id="phase-timer-display" class="tb-live-phase-timer-value"<?= ((int)($timerState['current_period'] ?? 0)) > 0 ? '' : ' hidden' ?>>
+            Fase: <?= sprintf('%02d:%02d', (int)floor($initialPhaseSeconds / 60), $initialPhaseSeconds % 60) ?>
         </div>
         <div class="live-scoreboard" aria-live="polite">
             <span class="live-score-team-value" id="score-home"><?= (int)$match['score_home'] ?></span>
