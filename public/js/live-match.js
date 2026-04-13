@@ -585,6 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let bestToken = null;
         let bestDistance = Number.POSITIVE_INFINITY;
+        let maxAllowed = 0;
         tokens.forEach((token) => {
             const rect = token.getBoundingClientRect();
             const centerX = rect.left + (rect.width / 2);
@@ -592,12 +593,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const dx = centerX - clientX;
             const dy = centerY - clientY;
             const distance = Math.sqrt((dx * dx) + (dy * dy));
+            // Tolerantie: binnen de token-radius + 25% marge telt als hit.
+            const tolerance = (Math.max(rect.width, rect.height) / 2) * 1.25;
+            if (tolerance > maxAllowed) {
+                maxAllowed = tolerance;
+            }
             if (distance < bestDistance) {
                 bestDistance = distance;
                 bestToken = token;
             }
         });
 
+        if (bestDistance > maxAllowed) {
+            return null;
+        }
         return bestToken;
     }
 
@@ -1083,6 +1092,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Minimale beweging (in px) voordat een touch als drag telt.
+    // Voorkomt ghost-touch swaps: een vluchtige of stilstaande aanraking
+    // activeert nooit een wissel.
+    const TOUCH_DRAG_THRESHOLD = 12;
+
     document.addEventListener('touchstart', (event) => {
         const token = event.target.closest('.live-dnd-token');
         if (!token) {
@@ -1095,52 +1109,72 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        event.preventDefault();
         const touch = event.touches[0];
         if (!touch) {
             return;
         }
 
         const rect = token.getBoundingClientRect();
-        const ghost = token.cloneNode(true);
-        ghost.style.position = 'fixed';
-        ghost.style.left = `${rect.left}px`;
-        ghost.style.top = `${rect.top}px`;
-        ghost.style.width = `${rect.width}px`;
-        ghost.style.zIndex = '5000';
-        ghost.style.pointerEvents = 'none';
-        ghost.style.opacity = '0.9';
-        ghost.style.transform = 'scale(1.08)';
-        document.body.appendChild(ghost);
-
-        token.style.opacity = '0.3';
         activeTouchDrag = {
             source,
             playerId,
             slotCode: String(token.dataset.slotCode || ''),
             sourceToken: token,
-            ghostEl: ghost,
+            ghostEl: null,
+            active: false,
+            startX: touch.clientX,
+            startY: touch.clientY,
             offsetX: touch.clientX - rect.left,
             offsetY: touch.clientY - rect.top
         };
-    }, { passive: false });
+    }, { passive: true });
 
     document.addEventListener('touchmove', (event) => {
         if (!activeTouchDrag) {
             return;
         }
-        event.preventDefault();
         const touch = event.touches[0];
         if (!touch) {
             return;
         }
 
+        if (!activeTouchDrag.active) {
+            const dx = touch.clientX - activeTouchDrag.startX;
+            const dy = touch.clientY - activeTouchDrag.startY;
+            if ((dx * dx) + (dy * dy) < (TOUCH_DRAG_THRESHOLD * TOUCH_DRAG_THRESHOLD)) {
+                return;
+            }
+
+            const token = activeTouchDrag.sourceToken;
+            const rect = token.getBoundingClientRect();
+            const ghost = token.cloneNode(true);
+            ghost.style.position = 'fixed';
+            ghost.style.left = `${rect.left}px`;
+            ghost.style.top = `${rect.top}px`;
+            ghost.style.width = `${rect.width}px`;
+            ghost.style.zIndex = '5000';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '0.9';
+            ghost.style.transform = 'scale(1.08)';
+            document.body.appendChild(ghost);
+            token.style.opacity = '0.3';
+            activeTouchDrag.ghostEl = ghost;
+            activeTouchDrag.active = true;
+        }
+
+        event.preventDefault();
         activeTouchDrag.ghostEl.style.left = `${touch.clientX - activeTouchDrag.offsetX}px`;
         activeTouchDrag.ghostEl.style.top = `${touch.clientY - activeTouchDrag.offsetY}px`;
     }, { passive: false });
 
     document.addEventListener('touchend', async (event) => {
         if (!activeTouchDrag) {
+            return;
+        }
+
+        // Geen daadwerkelijke drag gestart (bv. ghost-touch of tap): nooit wisselen.
+        if (!activeTouchDrag.active) {
+            clearTouchDragState();
             return;
         }
 
