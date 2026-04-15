@@ -42,6 +42,12 @@ Waarom niet de bestaande PHP-code porten:
 - Een port naar Laravel zou ook een near-complete rewrite zijn.
 - Bij een rewrite is de taalverschildrempel laag met AI-assistenten.
 
+Afwijking van "1-op-1 overbouwen" — zoekfunctie:
+- De huidige zoekfunctie (LIKE op titel + beschrijving, gesorteerd op datum) wordt niet as-is overgebouwd.
+- Bij T9 (oefeningen) en T16 (AI-module) wordt de verbeterde zoekfunctie uit `plan_zoekfunctie.md` direct geïmplementeerd.
+- Django + PostgreSQL lost de belangrijkste technische blokkades uit dat plan op: full-text search (SearchVector/pg_trgm), async LLM-calls (Celery), en native yt-dlp integratie.
+- Onderdelen uit het zoekplan die overbodig worden door Django: repository/adapter-abstractie voor SQLite→PostgreSQL, feature flag, SearchResultNormalizer als aparte service.
+
 ## 3. Doelstack
 
 | Laag | Technologie | Doel |
@@ -70,6 +76,11 @@ In scope:
 - Frontend JS hergebruiken met minimale aanpassingen (endpoint URLs, CSRF-token mechanisme).
 - Optioneel: data-migratie van SQLite naar PostgreSQL.
 - AVG-maatregelen in ontwerp en autorisatie.
+
+Expliciet in scope — zoekverbetering bij overbouwen:
+- Verbeterde zoekfunctie implementeren bij T9 en T16 (zie `plan_zoekfunctie.md`).
+- Dit betreft: QueryUnderstandingService, InternalExerciseSearchService (PostgreSQL FTS), YouTubeSourceSearchService, SearchRankingService, import-flow voor YouTube → concept-oefening.
+- Dit is geen nieuwe feature maar een verbetering van een bestaande feature die niet bruikbaar werkt.
 
 Buiten scope:
 - Wijzigingen aan de bestaande PHP/SQLite-versie (feature freeze).
@@ -308,14 +319,14 @@ De nieuwe versie is klaar voor livegang als:
 | T6 | 1 | URL-routing + CSRF + security middleware | Open |
 | T7 | 2 | Clubs, teams, team_seasons overbouwen | Open |
 | T8 | 2 | Spelers overbouwen | Open |
-| T9 | 2 | Oefeningen + tags overbouwen | Open |
+| T9 | 2 | Oefeningen + tags overbouwen incl. verbeterde zoekfunctie (QueryUnderstandingService, InternalExerciseSearchService met PostgreSQL FTS) — zie plan_zoekfunctie.md | Open |
 | T10 | 2 | Trainingen overbouwen | Open |
 | T11 | 2 | Wedstrijden (basis) overbouwen | Open |
 | T12 | 2 | Tactieken + formaties overbouwen | Open |
 | T13 | 2 | Account/profiel overbouwen | Open |
 | T14 | 2 | Admin-panel via Django Admin | Open |
 | T15 | 2 | Live match overbouwen | Open |
-| T16 | 2 | AI-module overbouwen | Open |
+| T16 | 2 | AI-module overbouwen incl. YouTubeSourceSearchService, SearchRankingService, import-flow en concept-prefill — zie plan_zoekfunctie.md | Open |
 | T17 | 3 | Celery + Redis configureren | Open |
 | T18 | 3 | AI-calls → Celery tasks | Open |
 | T19 | 3 | Video processing → Celery tasks | Open |
